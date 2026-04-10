@@ -1,11 +1,14 @@
+import logging
 import os
 
 from flask import (
     Blueprint,
     current_app,
+    redirect,
     render_template,
     request,
     session,
+    url_for,
     Response,
 )
 from werkzeug.utils import secure_filename
@@ -17,6 +20,8 @@ from app.utils.resume_analyzer import analyze_resume
 from app.utils.resume_parser import extract_text, get_file_extension, preview_text
 from app.utils.resume_feedback import generate_feedback
 from app.utils.role_suggester import suggest_roles
+
+logger = logging.getLogger(__name__)
 
 main_bp = Blueprint("main", __name__)
 
@@ -50,42 +55,48 @@ def index():
                 filename = secure_filename(file.filename)
                 filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
                 file.save(filepath)
+                logger.info("File uploaded: %s", filename)
 
-                ext = get_file_extension(filename)
-                text, extract_error = extract_text(filepath)
+                try:
+                    ext = get_file_extension(filename)
+                    text, extract_error = extract_text(filepath)
 
-                if extract_error:
-                    error = extract_error
-                    result = {
-                        "filename": filename,
-                        "filetype": f".{ext}",
-                        "status": "failed",
-                    }
-                else:
-                    message = f"Upload successful: {filename}"
-                    result = {
-                        "filename": filename,
-                        "filetype": f".{ext}",
-                        "status": "extracted",
-                        "preview": preview_text(text),
-                    }
-                    profile = analyze_resume(text)
-                    suggestions = suggest_roles(text, profile)
+                    if extract_error:
+                        error = extract_error
+                        result = {
+                            "filename": filename,
+                            "filetype": f".{ext}",
+                            "status": "failed",
+                        }
+                    else:
+                        message = f"Upload successful: {filename}"
+                        result = {
+                            "filename": filename,
+                            "filetype": f".{ext}",
+                            "status": "extracted",
+                            "preview": preview_text(text),
+                        }
+                        profile = analyze_resume(text)
+                        suggestions = suggest_roles(text, profile)
 
-                    target_role = request.form.get("target_role", "").strip()
-                    target_keywords = request.form.get("target_keywords", "").strip()
-                    if target_role:
-                        match = score_match(text, profile, target_role, target_keywords)
+                        target_role = request.form.get("target_role", "").strip()
+                        target_keywords = request.form.get("target_keywords", "").strip()
+                        if target_role:
+                            match = score_match(text, profile, target_role, target_keywords)
 
-                    feedback = generate_feedback(text, profile, match)
+                        feedback = generate_feedback(text, profile, match)
 
-                    session["report_data"] = {
-                        "result": result,
-                        "profile": profile,
-                        "match": match,
-                        "suggestions": suggestions,
-                        "feedback": feedback,
-                    }
+                        session["report_data"] = {
+                            "result": result,
+                            "profile": profile,
+                            "match": match,
+                            "suggestions": suggestions,
+                            "feedback": feedback,
+                        }
+                        logger.info("Analysis complete for: %s", filename)
+                except Exception as exc:
+                    logger.error("Error processing %s: %s", filename, exc)
+                    error = "An error occurred while processing the file. Please try again."
 
     return render_template(
         "index.html",
@@ -118,3 +129,8 @@ def download_report():
         mimetype="text/plain",
         headers={"Content-Disposition": "attachment; filename=offerion_report.txt"},
     )
+
+
+@main_bp.route("/<path:path>")
+def fallback(path):
+    return redirect(url_for("main.index"))

@@ -1,9 +1,13 @@
+import logging
 import os
 
-from flask import Flask
+from flask import Flask, redirect
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
 ALLOWED_EXTENSIONS = {"pdf", "doc", "docx"}
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def create_app():
@@ -17,5 +21,16 @@ def create_app():
     from app.routes import main_bp
 
     app.register_blueprint(main_bp)
+
+    @app.errorhandler(404)
+    def not_found(e):
+        return redirect("/")
+
+    @app.errorhandler(500)
+    def server_error(e):
+        logger.error("Internal server error: %s", e)
+        return "Internal Server Error", 500
+
+    logger.info("Offerion app created successfully")
 
     return app
