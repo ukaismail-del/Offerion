@@ -267,15 +267,76 @@
 
         <!-- Filter bar (M77) -->
         <form class="job-filters" method="get" action="/#section-jobs">
-          <input type="text" name="job_query" placeholder="Search title, skill, company…" value="{{ job_query }}" class="filter-input" />
-          <input type="text" name="job_location" placeholder="Location" value="{{ job_location }}" class="filter-input" />
+          <input
+            type="text"
+            name="job_query"
+            placeholder="Search title, skill, company…"
+            value="{{ job_query }}"
+            class="filter-input"
+          />
+          <input
+            type="text"
+            name="job_location"
+            placeholder="Location"
+            value="{{ job_location }}"
+            class="filter-input"
+          />
           <select name="job_remote" class="filter-select">
             <option value="">All</option>
-            <option value="true" {% if job_remote == 'true' %}selected{% endif %}>Remote only</option>
-            <option value="false" {% if job_remote == 'false' %}selected{% endif %}>On-site only</option>
+            <option
+              value="true"
+              {%
+              if
+              job_remote=""
+              ="true"
+              %}selected{%
+              endif
+              %}
+            >
+              Remote only
+            </option>
+            <option
+              value="false"
+              {%
+              if
+              job_remote=""
+              ="false"
+              %}selected{%
+              endif
+              %}
+            >
+              On-site only
+            </option>
+          </select>
+          <select name="job_source" class="filter-select">
+            <option value="">All Sources</option>
+            <option
+              value="internal"
+              {%
+              if
+              job_source=""
+              ="internal"
+              %}selected{%
+              endif
+              %}
+            >
+              Internal
+            </option>
+            <option
+              value="external"
+              {%
+              if
+              job_source=""
+              ="external"
+              %}selected{%
+              endif
+              %}
+            >
+              External
+            </option>
           </select>
           <button type="submit" class="btn btn-primary btn-sm">Filter</button>
-          {% if job_query or job_location or job_remote %}
+          {% if job_query or job_location or job_remote or job_source %}
           <a href="/#section-jobs" class="btn btn-secondary btn-sm">Clear</a>
           {% endif %}
         </form>
@@ -286,57 +347,90 @@
           <div class="job-card">
             <div class="job-card-header">
               <h3 class="job-card-title">{{ rj.title }}</h3>
-              <span class="job-score badge-{{ rj.match_level|lower }}">{{ (rj.score * 100)|int }}% · {{ rj.match_level }}</span>
+              <span class="job-score badge-{{ rj.match_level|lower }}"
+                >{{ (rj.score * 100)|int }}% · {{ rj.match_level }}</span
+              >
             </div>
             <div class="job-meta">
               <span>{{ rj.company }}</span>
-              {% if rj.location %}<span>&middot; {{ rj.location }}</span>{% endif %}
-              {% if rj.remote %}<span class="badge-remote">Remote</span>{% endif %}
+              {% if rj.location %}<span>&middot; {{ rj.location }}</span>{%
+              endif %} {% if rj.remote %}<span class="badge-remote">Remote</span
+              >{% endif %}
             </div>
             <div class="job-meta-row">
               {% if rj.source == 'external' %}
               <span class="badge-source badge-source-external">External</span>
-              {% else %}
+              {% if rj.source_name %}
+              <span class="job-provider"
+                >via {{ rj.source_name|capitalize }}</span
+              >
+              {% endif %} {% else %}
               <span class="badge-source badge-source-internal">Internal</span>
-              {% endif %}
-              {% if rj.posted_at %}
-                {% if rj.freshness_score is defined and rj.freshness_score >= 0.7 %}
-                <span class="badge-fresh">Posted recently</span>
-                {% elif rj.freshness_score is defined and rj.freshness_score >= 0.3 %}
-                <span class="badge-fresh badge-fresh-mid">Posted 7+ days ago</span>
-                {% else %}
-                <span class="badge-fresh badge-fresh-old">Posted 14+ days ago</span>
-                {% endif %}
+              {% endif %} {% if rj.posted_at %} {% if rj.freshness_score is
+              defined and rj.freshness_score >= 0.7 %}
+              <span class="badge-fresh">Posted recently</span>
+              {% elif rj.freshness_score is defined and rj.freshness_score >=
+              0.3 %}
+              <span class="badge-fresh badge-fresh-mid"
+                >Posted 7+ days ago</span
+              >
               {% else %}
+              <span class="badge-fresh badge-fresh-old"
+                >Posted 14+ days ago</span
+              >
+              {% endif %} {% else %}
               <span class="badge-fresh badge-fresh-na">Date unavailable</span>
               {% endif %}
             </div>
             <div class="job-skill-breakdown">
               {% for sk in rj.matched_skills %}
               <span class="tag tag-matched">{{ sk }}</span>
-              {% endfor %}
-              {% for sk in rj.missing_skills %}
+              {% endfor %} {% for sk in rj.missing_skills %}
               <span class="tag tag-missing">{{ sk }}</span>
               {% endfor %}
             </div>
-            <div class="job-actions">
+            <div class="job-action-row">
               {% if has_access('prepare_application') %}
-              <a href="/job-match/{{ rj.id }}" class="btn btn-primary btn-sm">Prepare Application</a>
+              <a href="/job-match/{{ rj.id }}" class="btn btn-primary btn-sm"
+                >Prepare Application</a
+              >
               {% else %}
-              <span class="btn btn-primary btn-sm btn-locked" title="Upgrade to access this feature">Prepare Application</span>
-              {% endif %}
-              {% if has_access('save_job') %}
-              <a href="/job-match/{{ rj.id }}" class="btn btn-secondary btn-sm">Save Job</a>
-              {% endif %}
-              {% if rj.url %}
-              <a href="{{ rj.url }}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm job-link">View Listing &rarr;</a>
+              <span
+                class="btn btn-primary btn-sm btn-locked"
+                title="Upgrade to access this feature"
+                >Prepare Application</span
+              >
+              {% endif %} {% if rj.apply_url or rj.url %}
+              <a
+                href="/apply/{{ rj.id }}"
+                target="_blank"
+                rel="noopener"
+                class="btn btn-accent btn-sm job-apply-link"
+                >Apply Now &rarr;</a
+              >
+              {% endif %} {% if has_access('save_job') %}
+              <a href="/job-match/{{ rj.id }}" class="btn btn-secondary btn-sm"
+                >Save Job</a
+              >
+              {% endif %} {% if rj.url %}
+              <a
+                href="{{ rj.url }}"
+                target="_blank"
+                rel="noopener"
+                class="btn btn-secondary btn-sm job-link"
+                >View Listing &rarr;</a
+              >
               {% endif %}
             </div>
           </div>
           {% endfor %}
         </div>
         {% else %}
-        <p style="text-align:center;color:var(--text-muted);padding:1rem 0;">No jobs match your filters. Try broadening your search.</p>
+        <p
+          style="text-align: center; color: var(--text-muted); padding: 1rem 0"
+        >
+          No jobs match your filters. Try broadening your search.
+        </p>
         {% endif %}
       </div>
       {% endif %}

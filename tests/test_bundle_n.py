@@ -19,6 +19,7 @@ class TestJobSources(unittest.TestCase):
             # Re-import to pick up env change
             import importlib
             import app.utils.job_sources as src
+
             importlib.reload(src)
             result = src.fetch_external_jobs()
             self.assertEqual(result, [])
@@ -27,6 +28,7 @@ class TestJobSources(unittest.TestCase):
         with patch.dict(os.environ, {"JOB_SOURCE_PROVIDER": "mock"}, clear=False):
             import importlib
             import app.utils.job_sources as src
+
             importlib.reload(src)
             result = src.fetch_external_jobs()
             self.assertGreater(len(result), 0)
@@ -38,11 +40,13 @@ class TestJobSources(unittest.TestCase):
     def test_bad_data_skipped(self):
         """Malformed items are silently skipped."""
         import app.utils.job_sources as src
+
         result = src._normalize({}, "test")
         self.assertIsNone(result)
 
     def test_normalize_valid(self):
         import app.utils.job_sources as src
+
         raw = {
             "title": "Test Job",
             "company": "TestCo",
@@ -67,8 +71,10 @@ class TestUnifiedFeed(unittest.TestCase):
         with patch.dict(os.environ, {"JOB_SOURCE_PROVIDER": ""}, clear=False):
             import importlib
             import app.utils.job_sources as src
+
             importlib.reload(src)
             import app.utils.job_feed as feed
+
             importlib.reload(feed)
             jobs = feed.get_unified_jobs()
             self.assertGreater(len(jobs), 0)
@@ -80,8 +86,10 @@ class TestUnifiedFeed(unittest.TestCase):
         with patch.dict(os.environ, {"JOB_SOURCE_PROVIDER": "mock"}, clear=False):
             import importlib
             import app.utils.job_sources as src
+
             importlib.reload(src)
             import app.utils.job_feed as feed
+
             importlib.reload(feed)
             jobs = feed.get_unified_jobs(limit=100)
             sources = {j.get("source", "internal") for j in jobs}
@@ -92,10 +100,21 @@ class TestUnifiedFeed(unittest.TestCase):
         """When internal and external share same title+company+location,
         external version wins."""
         from app.utils.job_feed import _dedup_key
-        internal = {"title": "Data Analyst", "company": "InsightHub", "location": "Remote",
-                     "source": "internal", "url": None}
-        external = {"title": "Data Analyst", "company": "InsightHub", "location": "Remote",
-                     "source": "external", "url": "https://example.com"}
+
+        internal = {
+            "title": "Data Analyst",
+            "company": "InsightHub",
+            "location": "Remote",
+            "source": "internal",
+            "url": None,
+        }
+        external = {
+            "title": "Data Analyst",
+            "company": "InsightHub",
+            "location": "Remote",
+            "source": "external",
+            "url": "https://example.com",
+        }
         self.assertEqual(_dedup_key(internal), _dedup_key(external))
 
 
@@ -104,15 +123,18 @@ class TestFreshnessScoring(unittest.TestCase):
 
     def test_today_is_max(self):
         from app.utils.job_matcher import _freshness_signal
+
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         self.assertEqual(_freshness_signal(today), 1.0)
 
     def test_missing_date_is_neutral(self):
         from app.utils.job_matcher import _freshness_signal
+
         self.assertEqual(_freshness_signal(None), 0.5)
 
     def test_old_date_is_low(self):
         from app.utils.job_matcher import _freshness_signal
+
         old = (datetime.now(timezone.utc) - timedelta(days=60)).strftime("%Y-%m-%d")
         score = _freshness_signal(old)
         self.assertLess(score, 0.1)
@@ -120,16 +142,24 @@ class TestFreshnessScoring(unittest.TestCase):
     def test_freshness_affects_ranking(self):
         """Two identical-skill jobs: the newer one should rank higher."""
         from app.utils.job_matcher import match_jobs
+
         now = datetime.now(timezone.utc)
         job_new = {
-            "id": "fresh_1", "title": "Python Dev", "company": "A",
-            "location": "Remote", "remote": True,
-            "skills": ["python", "sql"], "posted_at": now.strftime("%Y-%m-%d"),
+            "id": "fresh_1",
+            "title": "Python Dev",
+            "company": "A",
+            "location": "Remote",
+            "remote": True,
+            "skills": ["python", "sql"],
+            "posted_at": now.strftime("%Y-%m-%d"),
             "source": "external",
         }
         job_old = {
-            "id": "old_1", "title": "Python Dev", "company": "B",
-            "location": "Remote", "remote": True,
+            "id": "old_1",
+            "title": "Python Dev",
+            "company": "B",
+            "location": "Remote",
+            "remote": True,
             "skills": ["python", "sql"],
             "posted_at": (now - timedelta(days=30)).strftime("%Y-%m-%d"),
             "source": "external",
@@ -150,6 +180,7 @@ class TestMatcherOutputShape(unittest.TestCase):
     def test_output_has_new_fields(self):
         from app.utils.job_matcher import match_jobs
         from app.utils.job_data import get_all_jobs
+
         report_data = {
             "profile": {"skills": ["python", "sql"], "experience": ["2y at X"]},
             "match": {"target_role": "data analyst"},
@@ -170,9 +201,13 @@ class TestSaveJobMetadata(unittest.TestCase):
     def test_job_context_preserves_fields(self):
         """Simulate what job-match route builds for job_context."""
         job = {
-            "id": "ext_mock_1", "title": "React Developer", "company": "ExternaCorp",
-            "location": "Remote", "skills": ["react", "javascript"],
-            "source": "external", "source_name": "mock",
+            "id": "ext_mock_1",
+            "title": "React Developer",
+            "company": "ExternaCorp",
+            "location": "Remote",
+            "skills": ["react", "javascript"],
+            "source": "external",
+            "source_name": "mock",
             "url": "https://example.com/jobs/react-dev",
             "posted_at": "2026-04-10",
         }
@@ -217,7 +252,9 @@ class TestExternalFailureFallback(unittest.TestCase):
         def _exploding(**kwargs):
             raise RuntimeError("API down")
 
-        with patch.object(feed, "fetch_external_jobs", side_effect=RuntimeError("boom")):
+        with patch.object(
+            feed, "fetch_external_jobs", side_effect=RuntimeError("boom")
+        ):
             jobs = feed.get_unified_jobs()
             self.assertGreater(len(jobs), 0)
 

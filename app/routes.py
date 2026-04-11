@@ -416,13 +416,17 @@ def dashboard():
     job_query = request.args.get("job_query", "").strip()
     job_location = request.args.get("job_location", "").strip()
     job_remote = request.args.get("job_remote", "").strip()
-    remote_flag = True if job_remote == "true" else (False if job_remote == "false" else None)
+    job_source = request.args.get("job_source", "").strip()
+    remote_flag = (
+        True if job_remote == "true" else (False if job_remote == "false" else None)
+    )
 
     if report_data:
         filtered_jobs = get_unified_jobs(
             query=job_query or None,
             location=job_location or None,
             remote=remote_flag,
+            source=job_source or None,
         )
         recommended_jobs = match_jobs(report_data, jobs=filtered_jobs)
     else:
@@ -464,6 +468,7 @@ def dashboard():
         job_query=job_query,
         job_location=job_location,
         job_remote=job_remote,
+        job_source=job_source,
         show_quick_start=bool(session.get("report_data"))
         and not session.get("application_packages"),
         show_enhance_cta=bool(session.get("report_data"))
@@ -1105,6 +1110,7 @@ def save_job_route():
         job["matched_skills"] = job_ctx.get("matched_skills", job_ctx.get("skills", []))
         job["missing_skills"] = job_ctx.get("missing_skills", [])
         job["url"] = job_ctx.get("url")
+        job["apply_url"] = job_ctx.get("apply_url")
         job["posted_at"] = job_ctx.get("posted_at")
         job["freshness_score"] = job_ctx.get("freshness_score")
     else:
@@ -1565,6 +1571,7 @@ def job_match(job_id):
         "source": job.get("source", "internal"),
         "source_name": job.get("source_name"),
         "url": job.get("url"),
+        "apply_url": job.get("apply_url"),
         "posted_at": job.get("posted_at"),
         "freshness_score": freshness_score,
     }
@@ -1572,6 +1579,40 @@ def job_match(job_id):
 
     _log_event("job_match_clicked", {"job_id": job_id})
     return redirect(url_for("main.prepare_application"))
+
+
+# ------------------------------------------------------------------
+# M89 — Apply Pipeline Route
+# ------------------------------------------------------------------
+
+
+@main_bp.route("/apply/<job_id>")
+def apply_job(job_id):
+    """Redirect user to external apply URL and record analytics."""
+    user_id = session.get("user_id")
+
+    # Resolve the job from unified feed
+    job = find_job_by_id(job_id)
+    if not job:
+        unified = get_unified_jobs(limit=200)
+        job = next((j for j in unified if j.get("id") == job_id), None)
+    if not job:
+        return redirect(url_for("main.dashboard"))
+
+    apply_url = job.get("apply_url") or job.get("url")
+    if not apply_url:
+        return redirect(url_for("main.dashboard"))
+
+    _record_activity(
+        user_id,
+        "job_applied",
+        "Applied to: %s at %s" % (job.get("title", ""), job.get("company", "")),
+    )
+    _log_event(
+        "apply_clicked",
+        {"job_id": job_id, "source": job.get("source", ""), "url": apply_url},
+    )
+    return redirect(apply_url)
 
 
 @main_bp.route("/<path:path>")

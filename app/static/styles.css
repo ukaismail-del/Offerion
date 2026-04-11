@@ -1828,6 +1828,31 @@ textarea {
   font-weight: 600;
 }
 
+/* ── M90 — Apply Now + provider display ──────────────────────── */
+.job-provider {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  font-style: italic;
+}
+.job-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+.job-apply-link {
+  font-weight: 700;
+}
+.btn-accent {
+  background: var(--accent, #e67e22);
+  color: #fff;
+  border: none;
+}
+.btn-accent:hover {
+  background: #d35400;
+  color: #fff;
+}
+
 @media (max-width: 640px) {
   .job-grid { grid-template-columns: 1fr; }
   .job-filters { flex-direction: column; }

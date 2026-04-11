@@ -49,7 +49,7 @@ def _dedup_key(job):
     )
 
 
-def get_unified_jobs(query=None, location=None, remote=None, limit=25):
+def get_unified_jobs(query=None, location=None, remote=None, source=None, limit=25):
     """Merge internal dataset + external jobs, deduplicate, filter, return.
 
     When duplicates exist (same title+company+location), the external
@@ -60,7 +60,10 @@ def get_unified_jobs(query=None, location=None, remote=None, limit=25):
     internal = get_all_jobs()
     try:
         external = fetch_external_jobs(
-            query=query, location=location, remote=remote, limit=limit,
+            query=query,
+            location=location,
+            remote=remote,
+            limit=limit,
         )
     except Exception:
         logger.exception("External job fetch failed; using internal only")
@@ -80,6 +83,12 @@ def get_unified_jobs(query=None, location=None, remote=None, limit=25):
         seen[_dedup_key(j)] = j  # overwrites internal duplicate
 
     merged = list(seen.values())
+
+    # M91: source filter
+    if source == "internal":
+        merged = [j for j in merged if j.get("source") == "internal"]
+    elif source == "external":
+        merged = [j for j in merged if j.get("source") == "external"]
 
     # Apply filters on the merged list
     merged = _apply_filters(merged, query=query, location=location, remote=remote)

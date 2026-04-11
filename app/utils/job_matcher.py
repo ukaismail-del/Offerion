@@ -103,6 +103,7 @@ def match_jobs(report_data, jobs=None, limit=10):
 
     if jobs is None:
         from app.utils.job_data import get_all_jobs
+
         jobs = get_all_jobs()
 
     exp_sig = _experience_signal(profile)
@@ -144,6 +145,7 @@ def match_jobs(report_data, jobs=None, limit=10):
                     "source": job.get("source", "internal"),
                     "source_name": job.get("source_name"),
                     "url": job.get("url"),
+                    "apply_url": job.get("apply_url"),
                 }
             )
 
