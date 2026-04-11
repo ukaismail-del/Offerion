@@ -191,6 +191,13 @@
       .download-btn-alt:hover {
         background-color: #6d28d9;
       }
+      .download-btn-draft {
+        background-color: #0891b2;
+        margin-left: 0.6rem;
+      }
+      .download-btn-draft:hover {
+        background-color: #0e7490;
+      }
       .status-bar {
         text-align: center;
       }
@@ -913,6 +920,9 @@
           >Download Tailored Brief</a
         >
         {% endif %}
+        <a href="/download-resume-draft" class="download-btn download-btn-draft"
+          >Download Resume Draft</a
+        >
       </div>
       {% endif %} {% if error %}
       <div class="card status-bar">
@@ -1084,7 +1094,9 @@
         <hr class="card-divider" />
 
         <div class="copy-box" id="copy-action-plan">
-          <button class="copy-btn" onclick="copyText('copy-action-plan', this)">Copy</button>
+          <button class="copy-btn" onclick="copyText('copy-action-plan', this)">
+            Copy
+          </button>
           <div
             style="
               background: #fff3e0;
@@ -1106,7 +1118,8 @@
             {% endfor %}
           </ul>
           {% endif %}
-        </div> {% if action_plan.next_revision_steps %}
+        </div>
+        {% if action_plan.next_revision_steps %}
         <h3>Next Revision Steps</h3>
         <ul class="fb-list">
           {% for item in action_plan.next_revision_steps %}
@@ -1176,7 +1189,9 @@
         <hr class="card-divider" />
 
         <div class="copy-box" id="copy-ats-rewrite">
-          <button class="copy-btn" onclick="copyText('copy-ats-rewrite', this)">Copy</button>
+          <button class="copy-btn" onclick="copyText('copy-ats-rewrite', this)">
+            Copy
+          </button>
           <h3>Summary Focus</h3>
           <ul class="rw-list rw-focus">
             {% for item in rewrite.summary_focus %}
@@ -1226,7 +1241,12 @@
 
         <h3>Professional Summary Guidance</h3>
         <div class="copy-box" id="copy-prof-summary">
-          <button class="copy-btn" onclick="copyText('copy-prof-summary', this)">Copy</button>
+          <button
+            class="copy-btn"
+            onclick="copyText('copy-prof-summary', this)"
+          >
+            Copy
+          </button>
           <ul class="tl-list tl-summary">
             {% for item in tailored.professional_summary %}
             <li>{{ item }}</li>
@@ -1237,7 +1257,9 @@
         {% if tailored.priority_keywords %}
         <h3>Priority Keywords</h3>
         <div class="copy-box" id="copy-priority-kw">
-          <button class="copy-btn" onclick="copyText('copy-priority-kw', this)">Copy</button>
+          <button class="copy-btn" onclick="copyText('copy-priority-kw', this)">
+            Copy
+          </button>
           <table class="tl-kw-table">
             <thead>
               <tr>
@@ -1261,7 +1283,9 @@
 
         <h3>Experience Focus Points</h3>
         <div class="copy-box" id="copy-exp-focus">
-          <button class="copy-btn" onclick="copyText('copy-exp-focus', this)">Copy</button>
+          <button class="copy-btn" onclick="copyText('copy-exp-focus', this)">
+            Copy
+          </button>
           <ul class="tl-list tl-exp">
             {% for item in tailored.experience_focus_points %}
             <li>{{ item }}</li>
@@ -1364,13 +1388,13 @@
       function copyText(elementId, btn) {
         var el = document.getElementById(elementId);
         if (!el) return;
-        var text = el.innerText.replace(/^Copy\s*/, '').trim();
+        var text = el.innerText.replace(/^Copy\s*/, "").trim();
         navigator.clipboard.writeText(text).then(function () {
-          btn.textContent = 'Copied \u2713';
-          btn.classList.add('copied');
+          btn.textContent = "Copied \u2713";
+          btn.classList.add("copied");
           setTimeout(function () {
-            btn.textContent = 'Copy';
-            btn.classList.remove('copied');
+            btn.textContent = "Copy";
+            btn.classList.remove("copied");
           }, 2000);
         });
       }

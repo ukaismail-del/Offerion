@@ -267,6 +267,40 @@ UX/content upgrade to make the landing page clearer for first-time visitors.
 
 No backend changes. Preserves the card-based dashboard layout from M16.
 
+---
+
+### Module 22 — Structured Resume Draft Export
+
+Generates a downloadable plain-text resume draft template built from analysis outputs.
+
+**File:** `app/utils/resume_draft_builder.py`
+
+**Function:** `build_resume_draft(profile, tailored, rewrite, action_plan, match, jd_comparison)`
+
+**Draft sections:**
+
+- **Name & Contact Information** — pre-filled from detected profile data, with placeholders for missing fields
+- **Target Title** — from tailored output or match target role
+- **Professional Summary** — guidance-driven draft prompts from tailored/rewrite data
+- **Core Skills** — prioritized skills to feature, plus missing keywords to add
+- **Experience** — focus points and placeholder bullet templates (no fabricated content)
+- **Education** — detected education or placeholder
+- **ATS Alignment Notes** — keywords to weave in and ATS tips from rewrite guidance
+- **Revision Checklist** — carried from action plan final checklist
+
+**Route:** `/download-resume-draft` — returns `offerion_resume_draft.txt`
+
+**UI:** Teal "Download Resume Draft" button alongside existing Report and Tailored Brief buttons.
+
+**Behavior:**
+
+- Uses bracketed placeholders like `[Add 2-3 quantified bullet points here]`
+- Does not fabricate employers, dates, or achievements
+- Available whenever analysis data exists (profile or tailored)
+- Downloads as a plain-text guided editing template
+
+All logic is rule-based and local. No AI or external APIs are used.
+
 ## Run Locally
 
 ```

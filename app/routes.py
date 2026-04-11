@@ -28,6 +28,7 @@ from app.utils.tailored_resume import generate_tailored_resume
 from app.utils.storage import save_file, delete_file
 from app.utils.tailored_brief import build_tailored_brief
 from app.utils.action_plan import generate_action_plan
+from app.utils.resume_draft_builder import build_resume_draft
 
 logger = logging.getLogger(__name__)
 
@@ -233,6 +234,36 @@ def download_tailored_brief():
         mimetype="text/plain",
         headers={
             "Content-Disposition": "attachment; filename=offerion_tailored_brief.txt"
+        },
+    )
+
+
+@main_bp.route("/download-resume-draft")
+def download_resume_draft():
+    report_data = session.get("report_data")
+    if not report_data:
+        return "No analysis data available. Please upload a resume first.", 400
+
+    draft_text = build_resume_draft(
+        profile=report_data.get("profile"),
+        tailored=report_data.get("tailored"),
+        rewrite=report_data.get("rewrite"),
+        action_plan=report_data.get("action_plan"),
+        match=report_data.get("match"),
+        jd_comparison=report_data.get("jd_comparison"),
+    )
+
+    if not draft_text:
+        return (
+            "Not enough data to generate a draft. Please upload a resume first.",
+            400,
+        )
+
+    return Response(
+        draft_text,
+        mimetype="text/plain",
+        headers={
+            "Content-Disposition": "attachment; filename=offerion_resume_draft.txt"
         },
     )
 
