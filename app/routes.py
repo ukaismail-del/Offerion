@@ -23,6 +23,7 @@ from app.utils.resume_feedback import generate_feedback
 from app.utils.rewrite_guidance import generate_rewrite_guidance
 from app.utils.role_suggester import suggest_roles
 from app.utils.scorecard import generate_scorecard
+from app.utils.tailored_resume import generate_tailored_resume
 from app.utils.storage import save_file, delete_file
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,7 @@ def index():
     jd_comparison = None
     rewrite = None
     scorecard = None
+    tailored = None
 
     if request.method == "POST":
         if "resume" not in request.files:
@@ -116,6 +118,11 @@ def index():
                                 text, profile, match, jd_comparison
                             )
 
+                            tailored = generate_tailored_resume(
+                                text, profile, match, jd_comparison,
+                                rewrite, scorecard,
+                            )
+
                             session["report_data"] = {
                                 "result": result,
                                 "profile": profile,
@@ -125,6 +132,7 @@ def index():
                                 "jd_comparison": jd_comparison,
                                 "rewrite": rewrite,
                                 "scorecard": scorecard,
+                                "tailored": tailored,
                             }
                             logger.info("Analysis complete for: %s", filename)
                     except Exception as exc:
@@ -145,6 +153,7 @@ def index():
         jd_comparison=jd_comparison,
         rewrite=rewrite,
         scorecard=scorecard,
+        tailored=tailored,
     )
 
 
@@ -163,6 +172,7 @@ def download_report():
         jd_comparison=report_data.get("jd_comparison"),
         rewrite=report_data.get("rewrite"),
         scorecard=report_data.get("scorecard"),
+        tailored=report_data.get("tailored"),
     )
 
     return Response(

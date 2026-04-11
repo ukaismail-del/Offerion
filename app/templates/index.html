@@ -432,6 +432,103 @@
         left: 0;
         color: #ca8a04;
       }
+      .tailored-box {
+        text-align: left;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 1.2rem;
+        margin-top: 1.5rem;
+      }
+      .tailored-box h2 {
+        font-size: 1.2rem;
+        margin: 0 0 0.8rem 0;
+      }
+      .tailored-box h3 {
+        font-size: 1rem;
+        margin: 1rem 0 0.4rem 0;
+        color: #333;
+      }
+      .tl-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .tl-list li {
+        font-size: 0.9rem;
+        color: #555;
+        padding: 0.3rem 0 0.3rem 1.2rem;
+        position: relative;
+        line-height: 1.4;
+      }
+      .tl-list li::before {
+        position: absolute;
+        left: 0;
+      }
+      .tl-summary li::before {
+        content: "\25B8";
+        color: #7c3aed;
+      }
+      .tl-exp li::before {
+        content: "\270E";
+        color: #ca8a04;
+      }
+      .tl-section li::before {
+        content: "\2692";
+        color: #2563eb;
+      }
+      .tl-notes li::before {
+        content: "\2139";
+        color: #6b7280;
+      }
+      .tl-kw-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.3rem;
+        font-size: 0.88rem;
+      }
+      .tl-kw-table th {
+        text-align: left;
+        border-bottom: 2px solid #e5e7eb;
+        padding: 0.3rem 0.5rem;
+        color: #333;
+        font-size: 0.85rem;
+      }
+      .tl-kw-table td {
+        padding: 0.25rem 0.5rem;
+        border-bottom: 1px solid #f3f4f6;
+        color: #555;
+      }
+      .tl-status-matched { color: #16a34a; font-weight: bold; }
+      .tl-status-missing { color: #dc2626; font-weight: bold; }
+      .tl-status-present { color: #2563eb; font-weight: bold; }
+      .tl-skill-high {
+        display: inline-block;
+        background: #dcfce7;
+        color: #166534;
+        padding: 0.15rem 0.5rem;
+        border-radius: 3px;
+        font-size: 0.82rem;
+        margin: 0.1rem;
+      }
+      .tl-skill-medium {
+        display: inline-block;
+        background: #e0e7ff;
+        color: #3730a3;
+        padding: 0.15rem 0.5rem;
+        border-radius: 3px;
+        font-size: 0.82rem;
+        margin: 0.1rem;
+      }
+      .tl-skill-add {
+        display: inline-block;
+        background: #fef3c7;
+        color: #92400e;
+        padding: 0.15rem 0.5rem;
+        border-radius: 3px;
+        font-size: 0.82rem;
+        margin: 0.1rem;
+      }
     </style>
   </head>
   <body>
@@ -679,9 +776,67 @@
           {% endfor %}
         </ul>
       </div>
+      {% endif %} {% if tailored %}
+      <div class="tailored-box">
+        <h2>Tailored Resume Version Builder</h2>
+        <p class="match-field"><strong>Target Title:</strong> {{ tailored.target_title }}</p>
+
+        <h3>Professional Summary Guidance</h3>
+        <ul class="tl-list tl-summary">
+          {% for item in tailored.professional_summary %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        {% if tailored.priority_keywords %}
+        <h3>Priority Keywords</h3>
+        <table class="tl-kw-table">
+          <thead>
+            <tr><th>Keyword</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            {% for kw in tailored.priority_keywords %}
+            <tr>
+              <td>{{ kw.keyword }}</td>
+              <td class="tl-status-{{ kw.status }}">{{ kw.status }}</td>
+              <td>{{ kw.action }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+
+        <h3>Experience Focus Points</h3>
+        <ul class="tl-list tl-exp">
+          {% for item in tailored.experience_focus_points %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        {% if tailored.skills_to_feature %}
+        <h3>Skills to Feature</h3>
+        <div>
+          {% for sf in tailored.skills_to_feature %}
+          <span class="tl-skill-{{ sf.priority }}" title="{{ sf.reason }}">{{ sf.skill }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <h3>Section Focus</h3>
+        <ul class="tl-list tl-section">
+          {% for item in tailored.section_focus %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <h3>Tailoring Notes</h3>
+        <ul class="tl-list tl-notes">
+          {% for item in tailored.tailoring_notes %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </div>
       {% endif %} {% if profile %}
-      <div class="profile-box">
-        <h2>Resume Profile Summary</h2>
         <p class="profile-field">
           <strong>Name:</strong> {% if profile.name == "Not detected" %}<span
             class="not-detected"

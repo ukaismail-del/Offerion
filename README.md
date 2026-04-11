@@ -171,6 +171,30 @@ After analysis, Offerion displays a visual scorecard breaking down your resume q
 
 All scoring is rule-based and local. No AI or external APIs are used.
 
+## Module 15 — Tailored Resume Version Builder
+
+After analysis, Offerion generates a structured tailored resume draft outline based on your uploaded resume, target role, optional job description, and detected strengths/gaps.
+
+**Output fields:**
+
+- **Target Title** — the role you are tailoring for (from target role input or JD)
+- **Professional Summary Guidance** — step-by-step tips for writing a targeted summary
+- **Priority Keywords** — keywords to feature, add, or keep, with status and action for each
+- **Experience Focus Points** — how to reorder and rewrite experience bullets for the target role
+- **Skills to Feature** — prioritized list of skills (high / medium / add) with color-coded tags
+- **Section Focus** — which resume sections to strengthen, informed by scorecard scores
+- **Tailoring Notes** — overall strategy notes based on alignment scores and analysis results
+
+**Behavior:**
+
+- Requires at least a target role or a pasted job description to generate output
+- Incorporates data from match analysis, JD comparison, scorecard, and rewrite guidance when available
+- Never fabricates experience — only reframes and prioritizes existing content
+- The downloadable report includes the Tailored Resume Version Builder section when generated
+- If neither a target role nor a job description is provided, the section is hidden
+
+All logic is rule-based and local. No AI or external APIs are used.
+
 ## Run Locally
 
 ```

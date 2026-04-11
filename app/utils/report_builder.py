@@ -10,6 +10,7 @@ def build_report(
     jd_comparison=None,
     rewrite=None,
     scorecard=None,
+    tailored=None,
 ):
     """Build a plain-text analysis report from Offerion results.
 
@@ -254,6 +255,56 @@ def build_report(
 
         lines.append("ATS Notes:")
         for item in rewrite.get("ats_notes", []):
+            lines.append(f"  i {item}")
+        lines.append("")
+
+    # --- Tailored Resume Version Builder ---
+    if tailored:
+        lines.append(sub)
+        lines.append("TAILORED RESUME VERSION BUILDER")
+        lines.append(sub)
+        lines.append("")
+
+        lines.append(f"Target Title: {tailored.get('target_title', 'N/A')}")
+        lines.append("")
+
+        lines.append("Professional Summary Guidance:")
+        for item in tailored.get("professional_summary", []):
+            lines.append(f"  > {item}")
+        lines.append("")
+
+        kws = tailored.get("priority_keywords", [])
+        if kws:
+            lines.append("Priority Keywords:")
+            for kw in kws:
+                lines.append(
+                    f"  [{kw['status'].upper()}] {kw['keyword']} "
+                    f"\u2014 {kw['action']}"
+                )
+            lines.append("")
+
+        lines.append("Experience Focus Points:")
+        for item in tailored.get("experience_focus_points", []):
+            lines.append(f"  * {item}")
+        lines.append("")
+
+        skills_feat = tailored.get("skills_to_feature", [])
+        if skills_feat:
+            lines.append("Skills to Feature:")
+            for sf in skills_feat:
+                lines.append(
+                    f"  [{sf['priority'].upper()}] {sf['skill']} "
+                    f"\u2014 {sf['reason']}"
+                )
+            lines.append("")
+
+        lines.append("Section Focus:")
+        for item in tailored.get("section_focus", []):
+            lines.append(f"  # {item}")
+        lines.append("")
+
+        lines.append("Tailoring Notes:")
+        for item in tailored.get("tailoring_notes", []):
             lines.append(f"  i {item}")
         lines.append("")
 
