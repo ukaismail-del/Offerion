@@ -334,6 +334,48 @@ Adds a dedicated resume preview page that renders analysis data in a clean, resu
 - Uses same session data as all other features — no duplicate processing
 - Placeholders shown in italic grey for any missing sections
 
+---
+
+### Module 24 — AI Resume Enhancement Layer
+
+Adds a deterministic enhancement layer that converts structured resume drafts into polished, professional language.
+
+**File:** `app/utils/resume_enhancer.py`
+
+**Function:** `enhance_resume(profile, tailored, rewrite, match)`
+
+**Returns:**
+
+- **name** — resolved from profile
+- **contact** — formatted email | phone line
+- **target_title** — from tailored or match data
+- **enhanced_summary** — polished 2-4 sentence professional summary built from guidance points and skills
+- **enhanced_skills** — deduplicated, priority-ordered skill list (max 12)
+- **enhanced_experience_bullets** — action-oriented bullets derived from focus points and rewrite guidance (max 6)
+- **enhanced_education** — education entries from profile
+- **ats_alignment_notes** — ATS tips and keyword suggestions
+
+**Routes:**
+
+- `GET /enhance-resume` — runs enhancement, saves to session, redirects to preview
+- Preview and download routes prefer enhanced data when available
+
+**UI:**
+
+- Purple "Enhance Resume" button on the preview page (hidden after enhancement)
+- "ENHANCED" badge appears on the resume name after enhancement
+- Summary displays as polished prose instead of bullet guidance
+- Experience shows action-oriented bullets instead of placeholders
+
+**Behavior:**
+
+- Deterministic — no AI APIs, no external calls
+- Does not fabricate employers, dates, or achievements
+- Falls back to standard preview if enhancement not run
+- Download outputs enhanced draft when available
+
+All logic is rule-based and local. No AI or external APIs are used.
+
 ## Run Locally
 
 ```

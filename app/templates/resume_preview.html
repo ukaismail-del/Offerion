@@ -38,7 +38,9 @@
         background: #fff;
         border-radius: 12px;
         padding: 2.5rem 2.5rem 2rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+        box-shadow:
+          0 1px 3px rgba(0, 0, 0, 0.06),
+          0 1px 2px rgba(0, 0, 0, 0.04);
       }
       .resume-name {
         font-size: 2rem;
@@ -155,6 +157,30 @@
       .dl-btn-alt:hover {
         background: #1d4ed8;
       }
+      .dl-btn-enhance {
+        background: #7c3aed;
+        margin-left: 0.6rem;
+      }
+      .dl-btn-enhance:hover {
+        background: #6d28d9;
+      }
+      .enhanced-badge {
+        display: inline-block;
+        background: #7c3aed;
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.15rem 0.5rem;
+        border-radius: 12px;
+        margin-left: 0.5rem;
+        vertical-align: middle;
+        letter-spacing: 0.3px;
+      }
+      .summary-text {
+        font-size: 0.95rem;
+        color: #475569;
+        line-height: 1.7;
+      }
       .notes-box {
         background: #fffbeb;
         border-left: 3px solid #f59e0b;
@@ -185,48 +211,70 @@
       <div class="resume-page">
         <!-- Name -->
         <h1 class="resume-name">
-          {% if profile and profile.name != "Not detected" %}
+          {% if enhanced and enhanced.name %}
+            {{ enhanced.name }}
+          {% elif profile and profile.name != "Not detected" %}
             {{ profile.name }}
           {% else %}
             <span class="placeholder">[Your Full Name]</span>
+          {% endif %}
+          {% if enhanced %}
+            <span class="enhanced-badge">ENHANCED</span>
           {% endif %}
         </h1>
 
         <!-- Contact -->
         <p class="resume-contact">
-          {% if profile and profile.email != "Not detected" %}
-            {{ profile.email }}
+          {% if enhanced and enhanced.contact %}
+            {{ enhanced.contact }}
           {% else %}
-            <span class="placeholder">[email]</span>
-          {% endif %}
-          &nbsp;&bull;&nbsp;
-          {% if profile and profile.phone != "Not detected" %}
-            {{ profile.phone }}
-          {% else %}
-            <span class="placeholder">[phone]</span>
+            {% if profile and profile.email != "Not detected" %}
+              {{ profile.email }}
+            {% else %}
+              <span class="placeholder">[email]</span>
+            {% endif %}
+            &nbsp;&bull;&nbsp;
+            {% if profile and profile.phone != "Not detected" %}
+              {{ profile.phone }}
+            {% else %}
+              <span class="placeholder">[phone]</span>
+            {% endif %}
           {% endif %}
         </p>
 
         <!-- Target Title -->
-        {% if target_title %}
+        {% if enhanced and enhanced.target_title %}
+        <p class="resume-target">{{ enhanced.target_title }}</p>
+        {% elif target_title %}
         <p class="resume-target">{{ target_title }}</p>
         {% endif %}
 
         <!-- Professional Summary -->
         <h2 class="section-title">Professional Summary</h2>
-        {% if tailored and tailored.professional_summary %}
+        {% if enhanced and enhanced.enhanced_summary %}
+        <p class="summary-text">{{ enhanced.enhanced_summary }}</p>
+        {% elif tailored and tailored.professional_summary %}
         <ul class="resume-summary">
           {% for item in tailored.professional_summary %}
           <li>{{ item }}</li>
           {% endfor %}
         </ul>
         {% else %}
-        <p class="placeholder">[Write 2–3 sentences summarizing your professional background and target role alignment.]</p>
+        <p class="placeholder">
+          [Write 2–3 sentences summarizing your professional background and
+          target role alignment.]
+        </p>
         {% endif %}
 
         <!-- Skills -->
         <h2 class="section-title">Skills</h2>
-        {% if skills_list %}
+        {% if enhanced and enhanced.enhanced_skills %}
+        <ul class="skill-tags">
+          {% for skill in enhanced.enhanced_skills %}
+          <li class="skill-tag">{{ skill }}</li>
+          {% endfor %}
+        </ul>
+        {% elif skills_list %}
         <ul class="skill-tags">
           {% for skill in skills_list %}
           <li class="skill-tag">{{ skill }}</li>
@@ -238,29 +286,45 @@
 
         <!-- Experience -->
         <h2 class="section-title">Experience</h2>
-        {% if tailored and tailored.experience_focus_points %}
+        {% if enhanced and enhanced.enhanced_experience_bullets %}
         <div class="exp-entry">
-          <p class="exp-hint">Focus your experience bullets on:</p>
           <ul class="exp-bullets">
-            {% for item in tailored.experience_focus_points %}
-            <li>{{ item }}</li>
+            {% for bullet in enhanced.enhanced_experience_bullets %}
+            <li>{{ bullet }}</li>
             {% endfor %}
           </ul>
         </div>
+        {% else %}
+          {% if tailored and tailored.experience_focus_points %}
+          <div class="exp-entry">
+            <p class="exp-hint">Focus your experience bullets on:</p>
+            <ul class="exp-bullets">
+              {% for item in tailored.experience_focus_points %}
+              <li>{{ item }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+          <div class="exp-entry">
+            <p class="exp-title">
+              <span class="placeholder">[Job Title] — [Company Name]</span>
+            </p>
+            <p class="exp-hint">[Start Date] – [End Date]</p>
+            <ul class="exp-bullets">
+              <li class="placeholder">[Add 2–3 quantified bullet points here]</li>
+              <li class="placeholder">[Use action verbs: Led, Built, Improved, Delivered...]</li>
+              <li class="placeholder">[Insert relevant project outcome with numbers]</li>
+            </ul>
+          </div>
         {% endif %}
-        <div class="exp-entry">
-          <p class="exp-title"><span class="placeholder">[Job Title] — [Company Name]</span></p>
-          <p class="exp-hint">[Start Date] – [End Date]</p>
-          <ul class="exp-bullets">
-            <li class="placeholder">[Add 2–3 quantified bullet points here]</li>
-            <li class="placeholder">[Use action verbs: Led, Built, Improved, Delivered...]</li>
-            <li class="placeholder">[Insert relevant project outcome with numbers]</li>
-          </ul>
-        </div>
 
         <!-- Education -->
         <h2 class="section-title">Education</h2>
-        {% if education_list %}
+        {% if enhanced and enhanced.enhanced_education %}
+          {% for edu in enhanced.enhanced_education %}
+          <p class="edu-item">{{ edu }}</p>
+          {% endfor %}
+        {% elif education_list %}
           {% for edu in education_list %}
           <p class="edu-item">{{ edu }}</p>
           {% endfor %}
@@ -269,10 +333,19 @@
         {% endif %}
 
         <!-- ATS Notes -->
-        {% if rewrite and rewrite.ats_notes %}
+        {% if enhanced and enhanced.ats_alignment_notes %}
         <h2 class="section-title">ATS Alignment Notes</h2>
         <div class="notes-box">
-          <ul style="margin:0;padding-left:1.2rem;">
+          <ul style="margin: 0; padding-left: 1.2rem">
+            {% for note in enhanced.ats_alignment_notes %}
+            <li>{{ note }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% elif rewrite and rewrite.ats_notes %}
+        <h2 class="section-title">ATS Alignment Notes</h2>
+        <div class="notes-box">
+          <ul style="margin: 0; padding-left: 1.2rem">
             {% for note in rewrite.ats_notes %}
             <li>{{ note }}</li>
             {% endfor %}
@@ -284,6 +357,9 @@
       <!-- Action buttons -->
       <div class="actions">
         <a href="/download-resume-draft" class="dl-btn">Download Resume Draft</a>
+        {% if not enhanced %}
+        <a href="/enhance-resume" class="dl-btn dl-btn-enhance">Enhance Resume</a>
+        {% endif %}
         <a href="/" class="dl-btn dl-btn-alt">Back to Dashboard</a>
       </div>
     </div>
