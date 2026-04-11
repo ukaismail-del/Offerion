@@ -550,6 +550,63 @@ Strategic suggestions for improving fit for the target role.
 - Hidden when no match data exists
 - All logic is deterministic — no AI APIs
 
+---
+
+### Module 34 — Saved Jobs Tracker
+
+Track target jobs within your session.
+
+**File:** `app/utils/job_tracker.py`
+
+**Functions:** `create_saved_job()`, `update_job_status()`, `find_job()`, `delete_job()`
+
+**Routes:** `GET /save-job`, `GET /job/<job_id>`, `GET /delete-job/<job_id>`
+
+---
+
+### Module 35 — Application Status Tracker
+
+Move saved jobs through the application funnel.
+
+**Statuses:** Saved → Preparing → Applied → Follow-Up → Interview → Offer → Rejected
+
+**Route:** `GET /job/<job_id>/status/<new_status>`
+
+---
+
+### Module 36 — Alerts Foundation
+
+Session-based reminders tied to saved jobs.
+
+**File:** `app/utils/alerts.py`
+
+**Functions:** `create_alert()`, `complete_alert()`, `delete_alert()`, `get_active_alerts()`
+
+**Routes:** `GET /create-followup-alert/<job_id>`, `GET /complete-alert/<alert_id>`, `GET /delete-alert/<alert_id>`
+
+---
+
+### Module 37 — Follow-Up / Reminder Prompts
+
+Status-based recommended actions, message templates, and next steps.
+
+**File:** `app/utils/followup_prompts.py`
+
+**Function:** `generate_followup_prompts(job)`
+
+**Returns:** `job_id`, `status`, `recommended_actions`, `message_templates`, `next_step`
+
+---
+
+**M34-M37 Integration:**
+
+- Saved Jobs panel appears on dashboard and preview page
+- Job detail page shows status controls, follow-up prompts, and alerts
+- Alerts panel shows upcoming reminders (hidden when empty)
+- Follow-up prompts update dynamically based on job status
+- Session-based only — no database, no external integrations
+- Existing resume/application flow remains fully intact
+
 ## Run Locally
 
 ```

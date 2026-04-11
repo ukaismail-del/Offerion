@@ -48,6 +48,20 @@ from app.utils.match_explainer import explain_match
 from app.utils.keyword_gap_detector import detect_keyword_gaps
 from app.utils.priority_fixes import generate_priority_fixes
 from app.utils.role_fit_suggestions import suggest_role_fit
+from app.utils.job_tracker import (
+    create_saved_job,
+    update_job_status,
+    find_job,
+    delete_job,
+    ALLOWED_STATUSES,
+)
+from app.utils.alerts import (
+    create_alert,
+    complete_alert,
+    delete_alert,
+    get_active_alerts,
+)
+from app.utils.followup_prompts import generate_followup_prompts
 
 logger = logging.getLogger(__name__)
 
@@ -227,6 +241,8 @@ def index():
     keyword_gaps = session.get("keyword_gaps")
     priority_fixes = session.get("priority_fixes")
     role_fit = session.get("role_fit_suggestions")
+    saved_jobs = session.get("saved_jobs", [])
+    alerts = get_active_alerts(session.get("alerts", []))
 
     return render_template(
         "index.html",
@@ -249,6 +265,9 @@ def index():
         keyword_gaps=keyword_gaps,
         priority_fixes=priority_fixes,
         role_fit=role_fit,
+        saved_jobs=saved_jobs,
+        alerts=alerts,
+        allowed_statuses=ALLOWED_STATUSES,
     )
 
 
@@ -431,6 +450,13 @@ def resume_preview():
     keyword_gaps = session.get("keyword_gaps")
     priority_fixes = session.get("priority_fixes")
     role_fit = session.get("role_fit_suggestions")
+    saved_jobs = session.get("saved_jobs", [])
+    alerts = get_active_alerts(session.get("alerts", []))
+
+    # Generate follow-up prompts for active/selected job
+    followup = None
+    if saved_jobs:
+        followup = generate_followup_prompts(saved_jobs[0])
 
     return render_template(
         "resume_preview.html",
@@ -449,6 +475,10 @@ def resume_preview():
         keyword_gaps=keyword_gaps,
         priority_fixes=priority_fixes,
         role_fit=role_fit,
+        saved_jobs=saved_jobs,
+        alerts=alerts,
+        followup=followup,
+        allowed_statuses=ALLOWED_STATUSES,
     )
 
 
@@ -730,6 +760,94 @@ def download_application_package_version(package_id):
 def delete_application_package_route(package_id):
     packages = session.get("application_packages", [])
     session["application_packages"] = delete_package(packages, package_id)
+    return redirect(url_for("main.index"))
+
+
+# ------------------------------------------------------------------
+# M34 — Saved Jobs Tracker
+# ------------------------------------------------------------------
+
+@main_bp.route("/save-job")
+def save_job_route():
+    report_data = session.get("report_data")
+    job = create_saved_job(report_data=report_data)
+    saved_jobs = session.get("saved_jobs", [])
+    saved_jobs.append(job)
+    session["saved_jobs"] = saved_jobs
+    return redirect(url_for("main.index"))
+
+
+@main_bp.route("/job/<job_id>")
+def open_job(job_id):
+    saved_jobs = session.get("saved_jobs", [])
+    job = find_job(saved_jobs, job_id)
+    if not job:
+        return redirect(url_for("main.index"))
+
+    followup = generate_followup_prompts(job)
+
+    return render_template(
+        "job_detail.html",
+        job=job,
+        followup=followup,
+        alerts=get_active_alerts(session.get("alerts", [])),
+        allowed_statuses=ALLOWED_STATUSES,
+    )
+
+
+@main_bp.route("/delete-job/<job_id>")
+def delete_job_route(job_id):
+    saved_jobs = session.get("saved_jobs", [])
+    session["saved_jobs"] = delete_job(saved_jobs, job_id)
+    # Also clean up alerts tied to this job
+    alerts = session.get("alerts", [])
+    session["alerts"] = [a for a in alerts if a.get("job_id") != job_id]
+    return redirect(url_for("main.index"))
+
+
+# ------------------------------------------------------------------
+# M35 — Application Status Tracker
+# ------------------------------------------------------------------
+
+@main_bp.route("/job/<job_id>/status/<new_status>")
+def update_job_status_route(job_id, new_status):
+    saved_jobs = session.get("saved_jobs", [])
+    update_job_status(saved_jobs, job_id, new_status)
+    session["saved_jobs"] = saved_jobs
+    return redirect(url_for("main.open_job", job_id=job_id))
+
+
+# ------------------------------------------------------------------
+# M36 — Alerts Foundation
+# ------------------------------------------------------------------
+
+@main_bp.route("/create-followup-alert/<job_id>")
+def create_followup_alert(job_id):
+    saved_jobs = session.get("saved_jobs", [])
+    job = find_job(saved_jobs, job_id)
+    alert = create_alert(
+        job_id=job_id,
+        alert_type="follow_up",
+        message=f"Follow up on {job['title']}" if job else "Follow up on application",
+    )
+    alerts = session.get("alerts", [])
+    alerts.append(alert)
+    session["alerts"] = alerts
+    return redirect(url_for("main.open_job", job_id=job_id))
+
+
+@main_bp.route("/complete-alert/<alert_id>")
+def complete_alert_route(alert_id):
+    alerts = session.get("alerts", [])
+    complete_alert(alerts, alert_id)
+    session["alerts"] = alerts
+    return redirect(url_for("main.index"))
+
+
+@main_bp.route("/delete-alert/<alert_id>")
+def delete_alert_route(alert_id):
+    alerts = session.get("alerts", [])
+    session["alerts"] = delete_alert(alerts, alert_id)
     return redirect(url_for("main.index"))
 
 

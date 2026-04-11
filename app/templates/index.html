@@ -282,6 +282,33 @@
       .fit-developing { background: #dc2626; }
       .section-target { font-size: 0.88rem; color: #475569; margin-bottom: 0.3rem; }
       .section-target strong { color: #1e293b; }
+
+      /* --- Job tracker & alerts (M34-M37) --- */
+      .job-row { display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
+      .job-row:last-child { border-bottom: none; }
+      .job-title { font-weight: 600; color: #1e293b; }
+      .job-company { color: #64748b; font-size: 0.85rem; margin-left: 0.4rem; }
+      .job-actions { display: flex; gap: 0.4rem; align-items: center; }
+      .status-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600; color: #fff; margin-right: 0.4rem; }
+      .status-Saved { background: #64748b; }
+      .status-Preparing { background: #f59e0b; }
+      .status-Applied { background: #3b82f6; }
+      .status-Follow-Up { background: #8b5cf6; }
+      .status-Interview { background: #06b6d4; }
+      .status-Offer { background: #10b981; }
+      .status-Rejected { background: #ef4444; }
+      .status-select { font-size: 0.78rem; padding: 0.2rem 0.4rem; border: 1.5px solid #d1d5db; border-radius: 6px; background: #f8fafc; cursor: pointer; }
+      .alert-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+      .alert-row:last-child { border-bottom: none; }
+      .alert-msg { color: #334155; }
+      .alert-due { font-size: 0.82rem; color: #64748b; margin-left: 0.5rem; }
+      .alert-actions a { font-size: 0.78rem; margin-left: 0.4rem; text-decoration: none; font-weight: 600; }
+      .alert-complete { color: #10b981; }
+      .alert-delete { color: #ef4444; }
+      .empty-state { color: #94a3b8; font-size: 0.9rem; font-style: italic; }
+      .save-job-btn { display: inline-block; background: #2563eb; color: #fff; padding: 0.45rem 1rem; border-radius: 8px; font-size: 0.88rem; font-weight: 600; text-decoration: none; margin-top: 0.6rem; }
+      .save-job-btn:hover { background: #1d4ed8; }
+
       .status-bar {
         text-align: center;
       }
@@ -1066,6 +1093,56 @@
             <a href="/application-package/{{ p.id }}" class="ver-btn ver-btn-open">Open</a>
             <a href="/application-package/{{ p.id }}/download" class="ver-btn ver-btn-dl">Download</a>
             <a href="/delete-application-package/{{ p.id }}" class="ver-btn ver-btn-del">Delete</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Saved Jobs (M34) -->
+      <div class="card">
+        <h2 class="card-title">Saved Jobs</h2>
+        <hr class="card-divider" />
+        {% if saved_jobs %}
+        {% for job in saved_jobs %}
+        <div class="job-row">
+          <div>
+            <span class="status-badge status-{{ job.status }}">{{ job.status }}</span>
+            <span class="job-title">{{ job.title }}</span>
+            {% if job.company %}<span class="job-company">– {{ job.company }}</span>{% endif %}
+          </div>
+          <div class="job-actions">
+            <select class="status-select" onchange="if(this.value) window.location='/job/{{ job.id }}/status/'+this.value">
+              <option value="">Status…</option>
+              {% for s in allowed_statuses %}
+              <option value="{{ s }}" {% if s == job.status %}selected{% endif %}>{{ s }}</option>
+              {% endfor %}
+            </select>
+            <a href="/job/{{ job.id }}" class="ver-btn ver-btn-open">Open</a>
+            <a href="/delete-job/{{ job.id }}" class="ver-btn ver-btn-del">Delete</a>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="empty-state">No saved jobs yet.</p>
+        {% endif %}
+        <a href="/save-job" class="save-job-btn">Save Current Job</a>
+      </div>
+
+      <!-- Upcoming Alerts (M36) -->
+      {% if alerts %}
+      <div class="card">
+        <h2 class="card-title">Upcoming Alerts</h2>
+        <hr class="card-divider" />
+        {% for a in alerts %}
+        <div class="alert-row">
+          <div>
+            <span class="alert-msg">{{ a.message }}</span>
+            <span class="alert-due">Due: {{ a.due_at }}</span>
+          </div>
+          <div class="alert-actions">
+            <a href="/complete-alert/{{ a.id }}" class="alert-complete">Complete</a>
+            <a href="/delete-alert/{{ a.id }}" class="alert-delete">Delete</a>
           </div>
         </div>
         {% endfor %}

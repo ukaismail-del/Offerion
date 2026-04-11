@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Offerion — {{ job.title }}</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      body { font-family: "Segoe UI", Arial, sans-serif; min-height: 100vh; margin: 0; padding: 0; background: #f0f2f5; color: #333; line-height: 1.6; }
+      .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+      .header { text-align: center; margin-bottom: 2rem; }
+      .header h1 { font-size: 2rem; font-weight: 700; margin: 0 0 0.2rem; color: #1e293b; }
+      .header .subtitle { font-size: 1rem; color: #64748b; margin: 0; }
+      .card { background: #fff; border-radius: 12px; padding: 1.5rem 1.8rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04); }
+      .card-title { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin: 0 0 0.6rem; }
+      .card-divider { border: none; border-top: 2px solid #e2e8f0; margin: 0 0 1.2rem; }
+      .field { margin: 0.4rem 0; font-size: 0.95rem; }
+      h3 { font-size: 1rem; font-weight: 600; margin: 1.2rem 0 0.5rem; color: #334155; }
+
+      /* Status badge */
+      .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.82rem; font-weight: 600; color: #fff; }
+      .status-Saved { background: #64748b; }
+      .status-Preparing { background: #f59e0b; }
+      .status-Applied { background: #3b82f6; }
+      .status-Follow-Up { background: #8b5cf6; }
+      .status-Interview { background: #06b6d4; }
+      .status-Offer { background: #10b981; }
+      .status-Rejected { background: #ef4444; }
+
+      /* Status links */
+      .status-links { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
+      .status-link { display: inline-block; padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.82rem; font-weight: 500; text-decoration: none; border: 1.5px solid #d1d5db; color: #475569; transition: background 0.15s, border-color 0.15s; }
+      .status-link:hover { background: #f1f5f9; border-color: #94a3b8; }
+      .status-link.active { background: #2563eb; color: #fff; border-color: #2563eb; pointer-events: none; }
+
+      /* Action list */
+      .action-list { list-style: none; padding: 0; margin: 0.5rem 0; }
+      .action-list li { padding: 0.4rem 0; font-size: 0.93rem; border-bottom: 1px solid #f1f5f9; }
+      .action-list li:last-child { border-bottom: none; }
+      .action-list li::before { content: "→ "; color: #3b82f6; font-weight: 600; }
+
+      /* Templates */
+      .template-block { background: #f8fafc; border-left: 3px solid #3b82f6; padding: 0.8rem 1rem; margin: 0.5rem 0; border-radius: 0 8px 8px 0; font-size: 0.9rem; color: #475569; font-style: italic; }
+
+      /* Next step */
+      .next-step { background: #f0fdf4; border: 1.5px solid #bbf7d0; padding: 0.8rem 1rem; border-radius: 8px; font-size: 0.93rem; color: #166534; margin-top: 0.8rem; }
+
+      /* Alert rows */
+      .alert-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f1f5f9; }
+      .alert-row:last-child { border-bottom: none; }
+      .alert-msg { font-size: 0.93rem; }
+      .alert-due { font-size: 0.82rem; color: #64748b; margin-left: 0.5rem; }
+      .alert-actions a { font-size: 0.82rem; margin-left: 0.5rem; text-decoration: none; font-weight: 500; }
+      .alert-complete { color: #10b981; }
+      .alert-delete { color: #ef4444; }
+
+      /* Buttons */
+      .btn-row { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1rem; }
+      .btn { display: inline-block; padding: 0.6rem 1.4rem; border-radius: 8px; font-size: 0.95rem; font-weight: 600; text-decoration: none; transition: background 0.2s; }
+      .btn-primary { background: #2563eb; color: #fff; }
+      .btn-primary:hover { background: #1d4ed8; }
+      .btn-alert { background: #8b5cf6; color: #fff; }
+      .btn-alert:hover { background: #7c3aed; }
+      .btn-danger { background: #ef4444; color: #fff; }
+      .btn-danger:hover { background: #dc2626; }
+      .btn-back { background: #e2e8f0; color: #475569; }
+      .btn-back:hover { background: #cbd5e1; }
+
+      .meta { font-size: 0.85rem; color: #94a3b8; margin-top: 0.3rem; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>{{ job.title }}</h1>
+        <p class="subtitle">
+          {% if job.company %}{{ job.company }}{% endif %}
+          {% if job.location %} · {{ job.location }}{% endif %}
+        </p>
+      </div>
+
+      <!-- Job Details -->
+      <div class="card">
+        <h2 class="card-title">Job Details</h2>
+        <hr class="card-divider" />
+        <p class="field"><strong>Status:</strong> <span class="status-badge status-{{ job.status }}">{{ job.status }}</span></p>
+        {% if job.job_url %}
+        <p class="field"><strong>URL:</strong> <a href="{{ job.job_url }}" target="_blank" rel="noopener noreferrer">{{ job.job_url }}</a></p>
+        {% endif %}
+        {% if job.source %}
+        <p class="field"><strong>Source:</strong> {{ job.source }}</p>
+        {% endif %}
+        {% if job.notes %}
+        <p class="field"><strong>Notes:</strong> {{ job.notes }}</p>
+        {% endif %}
+        <p class="meta">Saved on {{ job.created_at }}</p>
+
+        <h3>Update Status</h3>
+        <div class="status-links">
+          {% for s in allowed_statuses %}
+          <a href="/job/{{ job.id }}/status/{{ s }}" class="status-link {% if s == job.status %}active{% endif %}">{{ s }}</a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Follow-Up Prompts (M37) -->
+      {% if followup %}
+      <div class="card">
+        <h2 class="card-title">Follow-Up Suggestions</h2>
+        <hr class="card-divider" />
+
+        {% if followup.recommended_actions %}
+        <h3>Recommended Actions</h3>
+        <ul class="action-list">
+          {% for action in followup.recommended_actions %}
+          <li>{{ action }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if followup.message_templates %}
+        <h3>Message Templates</h3>
+        {% for tmpl in followup.message_templates %}
+        <div class="template-block">{{ tmpl }}</div>
+        {% endfor %}
+        {% endif %}
+
+        {% if followup.next_step %}
+        <div class="next-step"><strong>Next Step:</strong> {{ followup.next_step }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Alerts for this job -->
+      {% set job_alerts = [] %}
+      {% for a in alerts %}
+        {% if a.job_id == job.id %}
+          {% if job_alerts.append(a) %}{% endif %}
+        {% endif %}
+      {% endfor %}
+      <div class="card">
+        <h2 class="card-title">Alerts &amp; Reminders</h2>
+        <hr class="card-divider" />
+        {% if job_alerts %}
+        {% for a in job_alerts %}
+        <div class="alert-row">
+          <div>
+            <span class="alert-msg">{{ a.message }}</span>
+            <span class="alert-due">Due: {{ a.due_at }}</span>
+          </div>
+          <div class="alert-actions">
+            <a href="/complete-alert/{{ a.id }}" class="alert-complete">Complete</a>
+            <a href="/delete-alert/{{ a.id }}" class="alert-delete">Delete</a>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p style="color: #94a3b8; font-size: 0.93rem;">No alerts set for this job.</p>
+        {% endif %}
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="btn-row">
+        <a href="/create-followup-alert/{{ job.id }}" class="btn btn-alert">Create Follow-Up Alert</a>
+        <a href="/delete-job/{{ job.id }}" class="btn btn-danger">Delete Job</a>
+        <a href="/" class="btn btn-back">Back to Dashboard</a>
+      </div>
+    </div>
+  </body>
+</html>

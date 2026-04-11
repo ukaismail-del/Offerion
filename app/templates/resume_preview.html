@@ -334,6 +334,28 @@
       .fit-developing { background: #dc2626; }
       .section-target { font-size: 0.86rem; color: #475569; margin-bottom: 0.25rem; }
       .section-target strong { color: #1e293b; }
+
+      /* --- Job tracker & alerts (M34-M37) --- */
+      .job-panel { background: #fff; border-radius: 12px; padding: 1.5rem 1.8rem; margin-top: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04); }
+      .job-row { display: flex; align-items: center; justify-content: space-between; padding: 0.45rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.88rem; }
+      .job-row:last-child { border-bottom: none; }
+      .job-title-sm { font-weight: 600; color: #1e293b; }
+      .job-company-sm { color: #64748b; font-size: 0.82rem; margin-left: 0.3rem; }
+      .status-badge-sm { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; color: #fff; margin-right: 0.3rem; }
+      .status-Saved { background: #64748b; }
+      .status-Preparing { background: #f59e0b; }
+      .status-Applied { background: #3b82f6; }
+      .status-Follow-Up { background: #8b5cf6; }
+      .status-Interview { background: #06b6d4; }
+      .status-Offer { background: #10b981; }
+      .status-Rejected { background: #ef4444; }
+      .alert-row-sm { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.86rem; }
+      .alert-row-sm:last-child { border-bottom: none; }
+      .followup-action { padding: 0.3rem 0; font-size: 0.88rem; border-bottom: 1px solid #f8fafc; }
+      .followup-action:last-child { border-bottom: none; }
+      .followup-action::before { content: "→ "; color: #3b82f6; font-weight: 600; }
+      .followup-next { background: #f0fdf4; border: 1.5px solid #bbf7d0; padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.88rem; color: #166534; margin-top: 0.6rem; }
+
       @media (max-width: 640px) {
         .resume-page {
           padding: 1.5rem 1.2rem;
@@ -609,6 +631,55 @@
         {% if role_fit.next_step %}
         <h3>Next Step</h3>
         <p class="intel-summary">{{ role_fit.next_step }}</p>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Saved Jobs (M34) -->
+      {% if saved_jobs %}
+      <div class="job-panel">
+        <h2 class="section-title" style="margin-top: 0">Saved Jobs</h2>
+        {% for job in saved_jobs %}
+        <div class="job-row">
+          <div>
+            <span class="status-badge-sm status-{{ job.status }}">{{ job.status }}</span>
+            <span class="job-title-sm">{{ job.title }}</span>
+            {% if job.company %}<span class="job-company-sm">– {{ job.company }}</span>{% endif %}
+          </div>
+          <a href="/job/{{ job.id }}" class="ver-btn ver-btn-open" style="font-size:0.75rem">Open</a>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Upcoming Alerts (M36) -->
+      {% if alerts %}
+      <div class="job-panel">
+        <h2 class="section-title" style="margin-top: 0">Upcoming Alerts</h2>
+        {% for a in alerts %}
+        <div class="alert-row-sm">
+          <div>
+            <span>{{ a.message }}</span>
+            <span style="color:#64748b; font-size:0.8rem; margin-left:0.4rem">Due: {{ a.due_at }}</span>
+          </div>
+          <div>
+            <a href="/complete-alert/{{ a.id }}" style="color:#10b981; font-size:0.8rem; font-weight:600; text-decoration:none; margin-left:0.4rem">Complete</a>
+            <a href="/delete-alert/{{ a.id }}" style="color:#ef4444; font-size:0.8rem; font-weight:600; text-decoration:none; margin-left:0.4rem">Delete</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Follow-Up Suggestions (M37) -->
+      {% if followup and followup.recommended_actions %}
+      <div class="job-panel">
+        <h2 class="section-title" style="margin-top: 0">Follow-Up Suggestions</h2>
+        {% for action in followup.recommended_actions %}
+        <div class="followup-action">{{ action }}</div>
+        {% endfor %}
+        {% if followup.next_step %}
+        <div class="followup-next"><strong>Next Step:</strong> {{ followup.next_step }}</div>
         {% endif %}
       </div>
       {% endif %}
