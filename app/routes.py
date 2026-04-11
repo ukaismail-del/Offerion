@@ -524,6 +524,7 @@ def dashboard():
         and not session.get("application_packages"),
         show_enhance_cta=bool(session.get("report_data"))
         and not session.get("enhanced_resume"),
+        dashboard_notice_message=session.pop("dashboard_notice_message", None),
         package_recovery_message=session.pop("package_recovery_message", None),
         **_tier_ctx(),
         **_onboarding_ctx(),
@@ -708,6 +709,7 @@ def resume_preview():
             selected_job_intel=None,
             selected_job_gap=None,
             selected_job_context=None,
+            preview_notice_message=session.pop("resume_preview_message", None),
             no_report=True,
             **_tier_ctx(),
         )
@@ -785,6 +787,7 @@ def resume_preview():
         selected_job_intel=_selected_job_state()[0],
         selected_job_gap=_selected_job_state()[1],
         selected_job_context=_selected_job_state()[2],
+        preview_notice_message=session.pop("resume_preview_message", None),
         no_report=False,
         **_tier_ctx(),
     )
@@ -798,6 +801,9 @@ def enhance_resume_route():
     user_id = session.get("user_id")
     report_data = session.get("report_data")
     if not report_data:
+        session["dashboard_notice_message"] = (
+            "Start with a resume analysis before enhancing your draft."
+        )
         return redirect(url_for("main.dashboard"))
 
     enhanced = enhance_resume(
@@ -812,6 +818,11 @@ def enhance_resume_route():
         session["enhanced_resume"] = enhanced
         set_last_action(session, "Resume enhanced")
         _record_activity(user_id, "resume_enhanced", "Enhanced resume")
+    else:
+        session["resume_preview_message"] = (
+            "We couldn't build an enhanced resume from the current data. "
+            "Try uploading a fuller resume or updating your target role."
+        )
 
     _increment_usage("enhance_resume")
     _log_event("enhance_resume_clicked")
@@ -930,6 +941,9 @@ def generate_cover_letter_route():
     user_id = session.get("user_id")
     report_data = session.get("report_data")
     if not report_data:
+        session["dashboard_notice_message"] = (
+            "Analyze your resume first, then generate a cover letter from the preview page."
+        )
         return redirect(url_for("main.dashboard"))
 
     enhanced_resume = session.get("enhanced_resume")
@@ -951,6 +965,16 @@ def generate_cover_letter_route():
             "cover_letter_generated",
             "Generated cover letter draft",
         )
+        if not report_data.get("job_context"):
+            session["resume_preview_message"] = (
+                "This cover letter was generated without a selected job. "
+                "Pick a job on the dashboard for a more targeted draft."
+            )
+    else:
+        session["resume_preview_message"] = (
+            "We couldn't generate a cover letter from the current data yet. "
+            "Try enhancing your resume first or adding a target role."
+        )
 
     _increment_usage("generate_cl")
     _log_event("generate_cl_clicked")
@@ -970,6 +994,9 @@ def enhance_cover_letter_route():
     user_id = session.get("user_id")
     draft = session.get("cover_letter_draft")
     if not draft:
+        session["resume_preview_message"] = (
+            "Generate a cover letter draft first, then enhance it."
+        )
         return redirect(url_for("main.resume_preview"))
 
     enhanced_resume = session.get("enhanced_resume")
@@ -984,6 +1011,11 @@ def enhance_cover_letter_route():
         session["enhanced_cover_letter"] = enhanced_cl
         set_last_action(session, "Cover letter enhanced")
         _record_activity(user_id, "cover_letter_enhanced", "Enhanced cover letter")
+    else:
+        session["resume_preview_message"] = (
+            "We couldn't enhance this cover letter with the current data. "
+            "Review the draft and try again after selecting a job."
+        )
 
     return redirect(url_for("main.resume_preview"))
 
@@ -1137,6 +1169,10 @@ def open_application_package(package_id):
     # M105: ensure report_data is at least a dict so downstream never crashes
     if not report_data or not isinstance(report_data, dict):
         report_data = {}
+        session["resume_preview_message"] = (
+            "This saved package only included partial data. Review what loaded here, "
+            "then rebuild a fresh package from the dashboard if needed."
+        )
 
     session["report_data"] = report_data
     session["enhanced_resume"] = enhanced_resume
@@ -1324,6 +1360,7 @@ def open_job(job_id):
         job_match_info=job_match_info,
         job_intel=job_intel,
         job_gap_info=job_gap_info,
+        has_report_data=bool(session.get("report_data")),
         alerts=get_active_alerts(session.get("alerts", [])),
         allowed_statuses=ALLOWED_STATUSES,
         **_tier_ctx(),
@@ -1438,6 +1475,9 @@ def prepare_application():
     user_id = session.get("user_id")
     report_data = session.get("report_data")
     if not report_data:
+        session["dashboard_notice_message"] = (
+            "Analyze your resume first, then prepare a complete application package."
+        )
         return redirect(url_for("main.dashboard"))
 
     # Step 2: Enhance resume if not done
@@ -1511,6 +1551,12 @@ def prepare_application():
         "Application prepared for %s" % (target_title or "target role"),
     )
 
+    if not report_data.get("job_context"):
+        session["resume_preview_message"] = (
+            "This application package was prepared without a selected job. "
+            "Choose a job on the dashboard to add role-specific targeting and gap analysis."
+        )
+
     session["next_best_action"] = get_next_action(session)
 
     return redirect(url_for("main.resume_preview"))
@@ -1531,6 +1577,7 @@ def pricing():
         "pricing.html",
         tiers=TIER_CONFIG,
         tier_order=display_order,
+        full_tier_order=TIER_ORDER,
         gate_message=gate_message,
         **_tier_ctx(),
     )

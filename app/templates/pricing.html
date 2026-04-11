@@ -82,11 +82,11 @@
         <div
           class="pricing-card {% if tier_key == user_tier %}pricing-card-active{% endif %} {% if tier_key == 'operator' %}pricing-card-featured{% endif %}"
         >
-          {% if is_trial and tier_key in ('operator', 'professional', 'elite') %}
-          <span class="badge badge-trial-unlock">Unlocked in Trial</span>
-          {% endif %}
           {% if tier_key == 'operator' %}
           <div class="pricing-featured-badge">Most Popular</div>
+          {% endif %} {% if is_trial and tier_key in ('operator',
+          'professional') %}
+          <span class="badge badge-trial-unlock">Unlocked in Trial</span>
           {% endif %}
           <h3 class="pricing-tier-name">{{ tier.label }}</h3>
           <p class="pricing-tagline">{{ tier.tagline }}</p>
@@ -107,12 +107,9 @@
             href="/upgrade/{{ tier_key }}"
             class="btn {% if tier_key == 'operator' %}btn-primary{% else %}btn-outline{% endif %} pricing-btn"
           >
-            {% if is_trial %}
-            Choose {{ tier.label }}
-            {% elif tier_order.index(tier_key) > tier_order.index(user_tier) %}
-            Upgrade to {{ tier.label }}
-            {% else %}
-            Switch to {{ tier.label }}
+            {% if is_trial %} Choose {{ tier.label }} {% elif
+            full_tier_order.index(tier_key) > full_tier_order.index(user_tier)
+            %} Upgrade to {{ tier.label }} {% else %} Switch to {{ tier.label }}
             {% endif %}
           </a>
           {% endif %}
@@ -132,8 +129,22 @@
       </p>
 
       <!-- M114: Value clarity -->
-      <div style="text-align:center;margin-top:var(--space-md);color:var(--text-muted);font-size:var(--font-sm);max-width:520px;margin-left:auto;margin-right:auto">
-        <p style="margin:0 0 0.5rem"><strong>Why upgrade?</strong> Free gets you started. Comet unlocks AI enhancement. Operator adds full application prep and job tracking. Professional automates follow-ups so you never miss an opportunity.</p>
+      <div
+        style="
+          text-align: center;
+          margin-top: var(--space-md);
+          color: var(--text-muted);
+          font-size: var(--font-sm);
+          max-width: 520px;
+          margin-left: auto;
+          margin-right: auto;
+        "
+      >
+        <p style="margin: 0 0 0.5rem">
+          <strong>Why upgrade?</strong> Free gets you started. Comet unlocks AI
+          enhancement. Operator adds full application prep and job tracking.
+          Professional automates follow-ups so you never miss an opportunity.
+        </p>
       </div>
     </div>
   </body>

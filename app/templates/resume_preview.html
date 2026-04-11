@@ -44,6 +44,10 @@
           see your enhanced preview, cover letter, and application package here.
         </p>
       </div>
+      {% endif %} {% if preview_notice_message %}
+      <div class="guidance-banner guidance-warning">
+        <p class="guidance-text">{{ preview_notice_message }}</p>
+      </div>
       {% endif %}
 
       <!-- ═══════════════════════════════════════════
@@ -64,6 +68,10 @@
         </p>
         {% endif %}
         <div class="btn-row">
+          {% if no_report %}
+          <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
+          <a href="/pricing" class="btn btn-outline">View Plans</a>
+          {% else %}
           <a href="/download-resume-draft" class="btn btn-success"
             >Download Resume Draft</a
           >
@@ -78,7 +86,10 @@
           <span class="locked-hint">Unlock in Comet</span>
           {% endif %} {% if not enhanced %} {% if has_access('enhance_resume')
           %}
-          <a href="/enhance-resume" class="btn btn-purple btn-loading-trigger"
+          <a
+            href="/enhance-resume"
+            class="btn btn-purple btn-loading-trigger"
+            data-loading-label="Enhancing…"
             >Enhance Resume</a
           >
           {% else %}
@@ -93,6 +104,7 @@
           <a
             href="/generate-cover-letter"
             class="btn btn-amber btn-loading-trigger"
+            data-loading-label="Generating…"
             >Generate Cover Letter</a
           >
           {% else %}
@@ -107,6 +119,7 @@
           <a
             href="/enhance-cover-letter"
             class="btn btn-purple btn-loading-trigger"
+            data-loading-label="Enhancing…"
             >Enhance Cover Letter</a
           >
           {% else %}
@@ -137,19 +150,20 @@
             title="Upgrade to access this feature"
             >Save Package</span
           >
-          {% endif %} {% endif %}
+          {% endif %} {% endif %} {% endif %}
         </div>
-        {% if not has_access('enhance_resume') or not
-        has_access('generate_cover_letter') %}
+        {% if not no_report and (not has_access('enhance_resume') or not
+        has_access('generate_cover_letter')) %}
         <p class="upsell-hint" style="margin-top: var(--space-sm)">
           Some actions are locked.
           <a href="/pricing">Upgrade</a> to unlock AI-enhanced resume, cover
           letter generation, and full application packages.
         </p>
-        {% endif %}
+        {% endif %} {% if not no_report %}
         <div style="margin-top: var(--space-sm)">
           <a href="/share/create" class="btn btn-dark btn-sm">Share Report</a>
         </div>
+        {% endif %}
       </div>
 
       <!-- Upgrade Nudge (M60) -->
@@ -161,7 +175,7 @@
       {% endif %}
 
       <!-- Next Best Action (M42/M45) -->
-      {% if next_best_action %}
+      {% if next_best_action and not no_report %}
       <div class="nba-card">
         {% if next_best_action.label != 'Analyze Resume' %}
         <a href="{{ next_best_action.route }}" class="nba-btn"
@@ -170,8 +184,8 @@
         {% endif %}
         <a
           href="/prepare-application"
-          class="nba-btn btn-action"
-          onclick="offerionLoading(this, 'Preparing\u2026')"
+          class="nba-btn btn-action btn-loading-trigger"
+          data-loading-label="Preparing…"
           style="
             margin-left: 0.5rem;
             background: rgba(255, 255, 255, 0.15);
@@ -279,7 +293,16 @@
         </p>
 
         <!-- Target Title -->
-        {% if enhanced and enhanced.target_title %}
+
+        {% if not no_report and not selected_job_context %}
+        <div class="guidance-banner guidance-warning">
+          <p class="guidance-text">
+            This draft is usable, but it is not tied to a selected job yet.
+            Choose a job from the dashboard to add targeting, skill matching,
+            and a clearer application story.
+          </p>
+        </div>
+        {% endif %} {% if enhanced and enhanced.target_title %}
         <p class="resume-target">{{ enhanced.target_title }}</p>
         {% elif target_title %}
         <p class="resume-target">{{ target_title }}</p>
@@ -816,16 +839,27 @@
     <!-- /container -->
 
     <script>
-      /* M112: Loading feedback for action buttons */
-      document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('a.btn-loading-trigger').forEach(function(link) {
-          link.addEventListener('click', function(e) {
-            if (link.classList.contains('is-loading')) { e.preventDefault(); return; }
-            link.classList.add('is-loading');
-            link.dataset.origText = link.textContent;
-            link.textContent = 'Processing\u2026';
+      function offerionLoading(el, label) {
+        if (!el || el.classList.contains("is-loading")) {
+          return false;
+        }
+        el.classList.add("is-loading");
+        el.setAttribute("aria-busy", "true");
+        el.dataset.origText = el.textContent;
+        el.textContent = label || el.dataset.loadingLabel || "Processing\u2026";
+        return true;
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        document
+          .querySelectorAll(".btn-loading-trigger")
+          .forEach(function (link) {
+            link.addEventListener("click", function (e) {
+              if (!offerionLoading(link, link.dataset.loadingLabel)) {
+                e.preventDefault();
+              }
+            });
           });
-        });
       });
     </script>
   </body>

@@ -40,6 +40,20 @@
         >
         <a href="/pricing" class="btn btn-primary btn-sm">Choose a plan</a>
       </div>
+      {% endif %} {% if not has_report_data %}
+      <div class="guidance-banner">
+        <p class="guidance-text">
+          Analyze your resume on the <a href="/dashboard">dashboard</a> first to
+          see how this role fits and to prepare a targeted application.
+        </p>
+      </div>
+      {% elif not job_match_info and not job_gap_info %}
+      <div class="guidance-banner guidance-warning">
+        <p class="guidance-text">
+          This saved job is ready to track. Reopen it from the dashboard after
+          analyzing your resume to unlock fit analysis and tailored prep.
+        </p>
+      </div>
       {% endif %}
 
       <!-- Job Header -->
