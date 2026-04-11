@@ -492,6 +492,64 @@ Save and manage combined resume + cover letter packages per session.
 - Opening a package restores resume, cover letter, and enhancement state
 - Existing resume-only flow works unchanged when no cover letter or packages exist
 
+---
+
+### Module 30 — Match Score Explanation Panel
+
+Explains the match score in plain English.
+
+**File:** `app/utils/match_explainer.py`
+
+**Function:** `explain_match(match, profile, tailored, rewrite)`
+
+**Returns:** `score`, `strengths`, `gaps`, `summary`, `confidence_note`
+
+---
+
+### Module 31 — Missing Keyword Gap Detector
+
+Surfaces missing or underrepresented keywords that could improve fit.
+
+**File:** `app/utils/keyword_gap_detector.py`
+
+**Function:** `detect_keyword_gaps(match, tailored, rewrite, profile)`
+
+**Returns:** `missing_keywords`, `underused_keywords`, `recommended_additions`
+
+---
+
+### Module 32 — Priority Fixes / Quick Wins
+
+Identifies the fastest actions to improve resume-job fit.
+
+**File:** `app/utils/priority_fixes.py`
+
+**Function:** `generate_priority_fixes(match, profile, tailored, rewrite, scorecard)`
+
+**Returns:** `top_priority`, `quick_wins`, `section_targets`
+
+---
+
+### Module 33 — Role-Fit Improvement Suggestions
+
+Strategic suggestions for improving fit for the target role.
+
+**File:** `app/utils/role_fit_suggestions.py`
+
+**Function:** `suggest_role_fit(match, profile, tailored, rewrite, enhanced_resume)`
+
+**Returns:** `target_title`, `fit_level`, `improvement_suggestions`, `positioning_advice`, `next_step`
+
+---
+
+**M30-M33 Integration:**
+
+- Intelligence is generated automatically after analysis and stored in session
+- Refreshed when loading saved versions or application packages
+- Panels appear on both dashboard and preview page
+- Hidden when no match data exists
+- All logic is deterministic — no AI APIs
+
 ## Run Locally
 
 ```

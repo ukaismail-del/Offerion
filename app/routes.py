@@ -44,6 +44,10 @@ from app.utils.application_package import (
     find_package,
     delete_package,
 )
+from app.utils.match_explainer import explain_match
+from app.utils.keyword_gap_detector import detect_keyword_gaps
+from app.utils.priority_fixes import generate_priority_fixes
+from app.utils.role_fit_suggestions import suggest_role_fit
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +56,33 @@ main_bp = Blueprint("main", __name__)
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def _refresh_intelligence(report_data):
+    """Generate M30-M33 intelligence data from report_data and store in session."""
+    if not report_data:
+        return
+    match_data = report_data.get("match")
+    profile = report_data.get("profile")
+    tailored = report_data.get("tailored")
+    rewrite = report_data.get("rewrite")
+    scorecard = report_data.get("scorecard")
+    enhanced = session.get("enhanced_resume")
+
+    session["match_explanation"] = explain_match(
+        match=match_data, profile=profile, tailored=tailored, rewrite=rewrite
+    )
+    session["keyword_gaps"] = detect_keyword_gaps(
+        match=match_data, tailored=tailored, rewrite=rewrite, profile=profile
+    )
+    session["priority_fixes"] = generate_priority_fixes(
+        match=match_data, profile=profile, tailored=tailored,
+        rewrite=rewrite, scorecard=scorecard
+    )
+    session["role_fit_suggestions"] = suggest_role_fit(
+        match=match_data, profile=profile, tailored=tailored,
+        rewrite=rewrite, enhanced_resume=enhanced
+    )
 
 
 @main_bp.route("/", methods=["GET", "POST"])
@@ -180,6 +211,8 @@ def index():
                             )
                             session["history"] = history[-5:]
 
+                            _refresh_intelligence(session["report_data"])
+
                             logger.info("Analysis complete for: %s", filename)
                     except Exception as exc:
                         logger.error("Error processing %s: %s", filename, exc)
@@ -190,6 +223,10 @@ def index():
     history = session.get("history", [])
     resume_versions = session.get("resume_versions", [])
     application_packages = session.get("application_packages", [])
+    match_explanation = session.get("match_explanation")
+    keyword_gaps = session.get("keyword_gaps")
+    priority_fixes = session.get("priority_fixes")
+    role_fit = session.get("role_fit_suggestions")
 
     return render_template(
         "index.html",
@@ -208,6 +245,10 @@ def index():
         history=history,
         resume_versions=resume_versions,
         application_packages=application_packages,
+        match_explanation=match_explanation,
+        keyword_gaps=keyword_gaps,
+        priority_fixes=priority_fixes,
+        role_fit=role_fit,
     )
 
 
@@ -386,6 +427,10 @@ def resume_preview():
     cover_letter_draft = session.get("cover_letter_draft")
     enhanced_cover_letter = session.get("enhanced_cover_letter")
     application_packages = session.get("application_packages", [])
+    match_explanation = session.get("match_explanation")
+    keyword_gaps = session.get("keyword_gaps")
+    priority_fixes = session.get("priority_fixes")
+    role_fit = session.get("role_fit_suggestions")
 
     return render_template(
         "resume_preview.html",
@@ -400,6 +445,10 @@ def resume_preview():
         cover_letter_draft=cover_letter_draft,
         enhanced_cover_letter=enhanced_cover_letter,
         application_packages=application_packages,
+        match_explanation=match_explanation,
+        keyword_gaps=keyword_gaps,
+        priority_fixes=priority_fixes,
+        role_fit=role_fit,
     )
 
 
@@ -445,6 +494,7 @@ def open_resume_version(version_id):
     report_data, enhanced = load_version(version)
     session["report_data"] = report_data
     session["enhanced_resume"] = enhanced
+    _refresh_intelligence(report_data)
 
     return redirect(url_for("main.resume_preview"))
 
@@ -648,6 +698,7 @@ def open_application_package(package_id):
     session["enhanced_resume"] = enhanced_resume
     session["cover_letter_draft"] = cl_draft
     session["enhanced_cover_letter"] = enhanced_cl
+    _refresh_intelligence(report_data)
 
     return redirect(url_for("main.resume_preview"))
 

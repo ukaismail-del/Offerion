@@ -315,6 +315,25 @@
         color: #1e293b;
         margin: 0 0 0.8rem 0;
       }
+      .intel-panel {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.5rem 1.8rem;
+        margin-top: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      }
+      .intel-panel h3 { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin: 1rem 0 0.4rem; }
+      .intel-panel h3:first-of-type { margin-top: 0.2rem; }
+      .intel-list { padding-left: 1.2rem; margin: 0.3rem 0 0.6rem; }
+      .intel-list li { font-size: 0.88rem; color: #475569; margin-bottom: 0.25rem; line-height: 1.5; }
+      .intel-summary { font-size: 0.9rem; color: #334155; line-height: 1.6; margin-bottom: 0.4rem; }
+      .intel-note { font-size: 0.8rem; color: #94a3b8; font-style: italic; margin-top: 0.4rem; }
+      .fit-badge { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; color: #fff; margin-left: 0.4rem; }
+      .fit-strong { background: #16a34a; }
+      .fit-moderate { background: #ca8a04; }
+      .fit-developing { background: #dc2626; }
+      .section-target { font-size: 0.86rem; color: #475569; margin-bottom: 0.25rem; }
+      .section-target strong { color: #1e293b; }
       @media (max-width: 640px) {
         .resume-page {
           padding: 1.5rem 1.2rem;
@@ -481,6 +500,115 @@
         <div class="cl-text">{{ enhanced_cover_letter.full_text }}</div>
         {% elif cover_letter_draft and cover_letter_draft.full_text %}
         <div class="cl-text">{{ cover_letter_draft.full_text }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Match Intelligence (M30-M33) -->
+      {% if match_explanation %}
+      <div class="intel-panel">
+        <h2 class="section-title" style="margin-top: 0">Match Score Explanation</h2>
+        <p class="intel-summary">{{ match_explanation.summary }}</p>
+        <h3>Strengths</h3>
+        <ul class="intel-list">
+          {% for s in match_explanation.strengths %}
+          <li>{{ s }}</li>
+          {% endfor %}
+        </ul>
+        <h3>Gaps</h3>
+        <ul class="intel-list">
+          {% for g in match_explanation.gaps %}
+          <li>{{ g }}</li>
+          {% endfor %}
+        </ul>
+        <p class="intel-note">{{ match_explanation.confidence_note }}</p>
+      </div>
+      {% endif %}
+
+      {% if keyword_gaps %}
+      <div class="intel-panel">
+        <h2 class="section-title" style="margin-top: 0">Missing Keyword Gaps</h2>
+        {% if keyword_gaps.missing_keywords %}
+        <h3>Missing Keywords</h3>
+        <ul class="intel-list">
+          {% for kw in keyword_gaps.missing_keywords %}
+          <li>{{ kw }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if keyword_gaps.underused_keywords %}
+        <h3>Underused Keywords</h3>
+        <ul class="intel-list">
+          {% for kw in keyword_gaps.underused_keywords %}
+          <li>{{ kw }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if keyword_gaps.recommended_additions %}
+        <h3>Recommended Additions</h3>
+        <ul class="intel-list">
+          {% for r in keyword_gaps.recommended_additions %}
+          <li>{{ r }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if priority_fixes %}
+      <div class="intel-panel">
+        <h2 class="section-title" style="margin-top: 0">Priority Fixes / Quick Wins</h2>
+        {% if priority_fixes.top_priority %}
+        <h3>Top Priority</h3>
+        <ul class="intel-list">
+          {% for item in priority_fixes.top_priority %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if priority_fixes.quick_wins %}
+        <h3>Quick Wins</h3>
+        <ul class="intel-list">
+          {% for item in priority_fixes.quick_wins %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if priority_fixes.section_targets %}
+        <h3>Section Targets</h3>
+        {% for t in priority_fixes.section_targets %}
+        <p class="section-target"><strong>{{ t.section }}:</strong> {{ t.action }}</p>
+        {% endfor %}
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if role_fit %}
+      <div class="intel-panel">
+        <h2 class="section-title" style="margin-top: 0">Role-Fit Suggestions</h2>
+        <p class="intel-summary">
+          <strong>{{ role_fit.target_title }}</strong>
+          <span class="fit-badge {% if role_fit.fit_level == 'Strong' %}fit-strong{% elif role_fit.fit_level == 'Moderate' %}fit-moderate{% else %}fit-developing{% endif %}">{{ role_fit.fit_level }}</span>
+        </p>
+        {% if role_fit.improvement_suggestions %}
+        <h3>Improvement Suggestions</h3>
+        <ul class="intel-list">
+          {% for s in role_fit.improvement_suggestions %}
+          <li>{{ s }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if role_fit.positioning_advice %}
+        <h3>Positioning Advice</h3>
+        <ul class="intel-list">
+          {% for a in role_fit.positioning_advice %}
+          <li>{{ a }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if role_fit.next_step %}
+        <h3>Next Step</h3>
+        <p class="intel-summary">{{ role_fit.next_step }}</p>
         {% endif %}
       </div>
       {% endif %}
