@@ -1,527 +1,610 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Resume Preview — Offerion</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/styles.css" />
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resume Preview — Offerion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+      <div class="top-nav-inner">
+        <a href="/" class="top-nav-brand">Offerion</a>
+        <div class="top-nav-links">
+          <a href="/dashboard">Dashboard</a>
+          <a href="#resume-section">Resume</a>
+          {% if cover_letter_draft or enhanced_cover_letter %}<a
+            href="#cover-letter-section"
+            >Cover Letter</a
+          >{% endif %}
+          <a href="#actions-section">Actions</a>
+          <a href="/pricing">Pricing</a>
+        </div>
+        <span class="tier-badge tier-badge-{{ user_tier }}"
+          >{{ tier_label }}</span
+        >
+      </div>
+    </nav>
 
-<!-- Top Navigation -->
-<nav class="top-nav">
-  <div class="top-nav-inner">
-    <a href="/" class="top-nav-brand">Offerion</a>
-    <div class="top-nav-links">
-      <a href="/dashboard">Dashboard</a>
-      <a href="#resume-section">Resume</a>
-      {% if cover_letter_draft or enhanced_cover_letter %}<a href="#cover-letter-section">Cover Letter</a>{% endif %}
-      <a href="#actions-section">Actions</a>
-      <a href="/pricing">Pricing</a>
-    </div>
-    <span class="tier-badge tier-badge-{{ user_tier }}">{{ tier_label }}</span>
-  </div>
-</nav>
+    <div class="container">
+      <a href="/dashboard" class="back-link">&larr; Back to Dashboard</a>
 
-<div class="container">
-  <a href="/dashboard" class="back-link">&larr; Back to Dashboard</a>
-
-  <!-- ═══════════════════════════════════════════
+      <!-- ═══════════════════════════════════════════
        PRIMARY ACTIONS BAR
        ═══════════════════════════════════════════ -->
-  <div class="card" id="actions-section">
-    <h2 class="card-title">Actions</h2>
-    <hr class="card-divider" />
-    <p class="form-hint">Prepare a complete package in one guided step, or use individual actions below.</p>
-    <div class="btn-row">
-      <a href="/download-resume-draft" class="btn btn-success">Download Resume Draft</a>
-      {% if has_access('save_version') %}
-      <a href="/save-resume-version" class="btn btn-teal">Save Version</a>
-      {% else %}
-      <span class="btn btn-teal btn-locked" title="Upgrade to access this feature">Save Version</span>
-      <span class="locked-hint">Unlock in Comet</span>
-      {% endif %}
-      {% if not enhanced %}
-        {% if has_access('enhance_resume') %}
-        <a href="/enhance-resume" class="btn btn-purple">Enhance Resume</a>
-        {% else %}
-        <span class="btn btn-purple btn-locked" title="Upgrade to access this feature">Enhance Resume</span>
-        <span class="locked-hint">Unlock in Comet</span>
+      <div class="card" id="actions-section">
+        <h2 class="card-title">Actions</h2>
+        <hr class="card-divider" />
+        <p class="form-hint">
+          Prepare a complete package in one guided step, or use individual
+          actions below.
+        </p>
+        <div class="btn-row">
+          <a href="/download-resume-draft" class="btn btn-success"
+            >Download Resume Draft</a
+          >
+          {% if has_access('save_version') %}
+          <a href="/save-resume-version" class="btn btn-teal">Save Version</a>
+          {% else %}
+          <span
+            class="btn btn-teal btn-locked"
+            title="Upgrade to access this feature"
+            >Save Version</span
+          >
+          <span class="locked-hint">Unlock in Comet</span>
+          {% endif %} {% if not enhanced %} {% if has_access('enhance_resume')
+          %}
+          <a href="/enhance-resume" class="btn btn-purple">Enhance Resume</a>
+          {% else %}
+          <span
+            class="btn btn-purple btn-locked"
+            title="Upgrade to access this feature"
+            >Enhance Resume</span
+          >
+          <span class="locked-hint">Unlock in Comet</span>
+          {% endif %} {% endif %} {% if not cover_letter_draft %} {% if
+          has_access('generate_cover_letter') %}
+          <a href="/generate-cover-letter" class="btn btn-amber"
+            >Generate Cover Letter</a
+          >
+          {% else %}
+          <span
+            class="btn btn-amber btn-locked"
+            title="Upgrade to access this feature"
+            >Generate Cover Letter</span
+          >
+          <span class="locked-hint">Unlock in Comet</span>
+          {% endif %} {% endif %} {% if cover_letter_draft and not
+          enhanced_cover_letter %} {% if has_access('enhance_cover_letter') %}
+          <a href="/enhance-cover-letter" class="btn btn-purple"
+            >Enhance Cover Letter</a
+          >
+          {% else %}
+          <span
+            class="btn btn-purple btn-locked"
+            title="Upgrade to access this feature"
+            >Enhance Cover Letter</span
+          >
+          <span class="locked-hint">Unlock in Operator</span>
+          {% endif %} {% endif %} {% if cover_letter_draft or
+          enhanced_cover_letter %} {% if has_access('download_package') %}
+          <a href="/download-application-package" class="btn btn-success"
+            >Download Package</a
+          >
+          {% else %}
+          <span
+            class="btn btn-success btn-locked"
+            title="Upgrade to access this feature"
+            >Download Package</span
+          >
+          {% endif %} {% if has_access('save_package') %}
+          <a href="/save-application-package" class="btn btn-teal"
+            >Save Package</a
+          >
+          {% else %}
+          <span
+            class="btn btn-teal btn-locked"
+            title="Upgrade to access this feature"
+            >Save Package</span
+          >
+          {% endif %} {% endif %}
+        </div>
+        {% if not has_access('enhance_resume') or not
+        has_access('generate_cover_letter') %}
+        <p class="upsell-hint" style="margin-top: var(--space-sm)">
+          Some actions are locked. <a href="/pricing">View plans to unlock</a>
+        </p>
         {% endif %}
-      {% endif %}
-      {% if not cover_letter_draft %}
-        {% if has_access('generate_cover_letter') %}
-        <a href="/generate-cover-letter" class="btn btn-amber">Generate Cover Letter</a>
-        {% else %}
-        <span class="btn btn-amber btn-locked" title="Upgrade to access this feature">Generate Cover Letter</span>
-        <span class="locked-hint">Unlock in Comet</span>
-        {% endif %}
-      {% endif %}
-      {% if cover_letter_draft and not enhanced_cover_letter %}
-        {% if has_access('enhance_cover_letter') %}
-        <a href="/enhance-cover-letter" class="btn btn-purple">Enhance Cover Letter</a>
-        {% else %}
-        <span class="btn btn-purple btn-locked" title="Upgrade to access this feature">Enhance Cover Letter</span>
-        <span class="locked-hint">Unlock in Operator</span>
-        {% endif %}
-      {% endif %}
-      {% if cover_letter_draft or enhanced_cover_letter %}
-        {% if has_access('download_package') %}
-        <a href="/download-application-package" class="btn btn-success">Download Package</a>
-        {% else %}
-        <span class="btn btn-success btn-locked" title="Upgrade to access this feature">Download Package</span>
-        {% endif %}
-        {% if has_access('save_package') %}
-        <a href="/save-application-package" class="btn btn-teal">Save Package</a>
-        {% else %}
-        <span class="btn btn-teal btn-locked" title="Upgrade to access this feature">Save Package</span>
-        {% endif %}
-      {% endif %}
-    </div>
-    {% if not has_access('enhance_resume') or not has_access('generate_cover_letter') %}
-    <p class="upsell-hint" style="margin-top:var(--space-sm)">Some actions are locked. <a href="/pricing">View plans to unlock</a></p>
-    {% endif %}
-    <div style="margin-top:var(--space-sm)">
-      <a href="/share/create" class="btn btn-dark btn-sm">Share Report</a>
-    </div>
-  </div>
+        <div style="margin-top: var(--space-sm)">
+          <a href="/share/create" class="btn btn-dark btn-sm">Share Report</a>
+        </div>
+      </div>
 
-  <!-- Upgrade Nudge (M60) -->
-  {% if upgrade_nudge_message %}
-  <div class="upgrade-nudge">
-    <span>{{ upgrade_nudge_message }}</span>
-    <a href="/pricing" class="btn btn-primary btn-sm">View Plans</a>
-  </div>
-  {% endif %}
+      <!-- Upgrade Nudge (M60) -->
+      {% if upgrade_nudge_message %}
+      <div class="upgrade-nudge">
+        <span>{{ upgrade_nudge_message }}</span>
+        <a href="/pricing" class="btn btn-primary btn-sm">View Plans</a>
+      </div>
+      {% endif %}
 
-  <!-- Next Best Action (M42/M45) -->
-  {% if next_best_action %}
-  <div class="nba-card">
-    {% if next_best_action.label != 'Analyze Resume' %}
-    <a href="{{ next_best_action.route }}" class="nba-btn">{{ next_best_action.label }}</a>
-    {% endif %}
-    <a href="/prepare-application" class="nba-btn" style="margin-left:0.5rem;background:rgba(255,255,255,0.15);color:#fff;box-shadow:none">Prepare Full Application</a>
-  </div>
-  {% endif %}
+      <!-- Next Best Action (M42/M45) -->
+      {% if next_best_action %}
+      <div class="nba-card">
+        {% if next_best_action.label != 'Analyze Resume' %}
+        <a href="{{ next_best_action.route }}" class="nba-btn"
+          >{{ next_best_action.label }}</a
+        >
+        {% endif %}
+        <a
+          href="/prepare-application"
+          class="nba-btn"
+          style="
+            margin-left: 0.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            box-shadow: none;
+          "
+          >Prepare Full Application</a
+        >
+      </div>
+      {% endif %}
 
-  <!-- ═══════════════════════════════════════════
+      <!-- ═══════════════════════════════════════════
        RESUME PREVIEW
        ═══════════════════════════════════════════ -->
-  <div class="resume-page" id="resume-section">
-    <!-- Name -->
-    <h1 class="resume-name">
-      {% if enhanced and enhanced.name %}
-        {{ enhanced.name }}
-      {% elif profile and profile.name != "Not detected" %}
-        {{ profile.name }}
-      {% else %}
-        <span class="placeholder">[Your Full Name]</span>
-      {% endif %}
-      {% if enhanced %}
-      <span class="badge badge-enhanced">ENHANCED</span>
-      {% endif %}
-    </h1>
+      <div class="resume-page" id="resume-section">
+        <!-- Name -->
+        <h1 class="resume-name">
+          {% if enhanced and enhanced.name %} {{ enhanced.name }} {% elif
+          profile and profile.name != "Not detected" %} {{ profile.name }} {%
+          else %}
+          <span class="placeholder">[Your Full Name]</span>
+          {% endif %} {% if enhanced %}
+          <span class="badge badge-enhanced">ENHANCED</span>
+          {% endif %}
+        </h1>
 
-    <!-- Contact -->
-    <p class="resume-contact">
-      {% if enhanced and enhanced.contact %}
-        {{ enhanced.contact }}
-      {% else %}
-        {% if profile and profile.email != "Not detected" %}{{ profile.email }}{% else %}<span class="placeholder">[email]</span>{% endif %}
-        &nbsp;&bull;&nbsp;
-        {% if profile and profile.phone != "Not detected" %}{{ profile.phone }}{% else %}<span class="placeholder">[phone]</span>{% endif %}
-      {% endif %}
-    </p>
+        <!-- Contact -->
+        <p class="resume-contact">
+          {% if enhanced and enhanced.contact %} {{ enhanced.contact }} {% else
+          %} {% if profile and profile.email != "Not detected" %}{{
+          profile.email }}{% else %}<span class="placeholder">[email]</span>{%
+          endif %} &nbsp;&bull;&nbsp; {% if profile and profile.phone != "Not
+          detected" %}{{ profile.phone }}{% else %}<span class="placeholder"
+            >[phone]</span
+          >{% endif %} {% endif %}
+        </p>
 
-    <!-- Target Title -->
-    {% if enhanced and enhanced.target_title %}
-    <p class="resume-target">{{ enhanced.target_title }}</p>
-    {% elif target_title %}
-    <p class="resume-target">{{ target_title }}</p>
-    {% endif %}
+        <!-- Target Title -->
+        {% if enhanced and enhanced.target_title %}
+        <p class="resume-target">{{ enhanced.target_title }}</p>
+        {% elif target_title %}
+        <p class="resume-target">{{ target_title }}</p>
+        {% endif %}
 
-    <!-- Professional Summary -->
-    <h2 class="section-title">Professional Summary</h2>
-    {% if enhanced and enhanced.enhanced_summary %}
-    <p class="summary-text">{{ enhanced.enhanced_summary }}</p>
-    {% elif tailored and tailored.professional_summary %}
-    <ul class="resume-summary">
-      {% for item in tailored.professional_summary %}
-      <li>{{ item }}</li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <p class="placeholder">[Write 2–3 sentences summarizing your professional background and target role alignment.]</p>
-    {% endif %}
-
-    <!-- Skills -->
-    <h2 class="section-title">Skills</h2>
-    {% if enhanced and enhanced.enhanced_skills %}
-    <ul class="skill-tags">
-      {% for skill in enhanced.enhanced_skills %}
-      <li class="skill-tag">{{ skill }}</li>
-      {% endfor %}
-    </ul>
-    {% elif skills_list %}
-    <ul class="skill-tags">
-      {% for skill in skills_list %}
-      <li class="skill-tag">{{ skill }}</li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <p class="placeholder">[List 8–10 relevant skills]</p>
-    {% endif %}
-
-    <!-- Experience -->
-    <h2 class="section-title">Experience</h2>
-    {% if enhanced and enhanced.enhanced_experience_bullets %}
-    <div class="exp-entry">
-      <ul class="exp-bullets">
-        {% for bullet in enhanced.enhanced_experience_bullets %}
-        <li>{{ bullet }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-    {% else %}
-      {% if tailored and tailored.experience_focus_points %}
-      <div class="exp-entry">
-        <p class="exp-hint">Focus your experience bullets on:</p>
-        <ul class="exp-bullets">
-          {% for item in tailored.experience_focus_points %}
+        <!-- Professional Summary -->
+        <h2 class="section-title">Professional Summary</h2>
+        {% if enhanced and enhanced.enhanced_summary %}
+        <p class="summary-text">{{ enhanced.enhanced_summary }}</p>
+        {% elif tailored and tailored.professional_summary %}
+        <ul class="resume-summary">
+          {% for item in tailored.professional_summary %}
           <li>{{ item }}</li>
           {% endfor %}
         </ul>
-      </div>
-      {% endif %}
-      <div class="exp-entry">
-        <p class="exp-title"><span class="placeholder">[Job Title] — [Company Name]</span></p>
-        <p class="exp-hint">[Start Date] – [End Date]</p>
-        <ul class="exp-bullets">
-          <li class="placeholder">[Add 2–3 quantified bullet points here]</li>
-          <li class="placeholder">[Use action verbs: Led, Built, Improved, Delivered...]</li>
-          <li class="placeholder">[Insert relevant project outcome with numbers]</li>
+        {% else %}
+        <p class="placeholder">
+          [Write 2–3 sentences summarizing your professional background and
+          target role alignment.]
+        </p>
+        {% endif %}
+
+        <!-- Skills -->
+        <h2 class="section-title">Skills</h2>
+        {% if enhanced and enhanced.enhanced_skills %}
+        <ul class="skill-tags">
+          {% for skill in enhanced.enhanced_skills %}
+          <li class="skill-tag">{{ skill }}</li>
+          {% endfor %}
         </ul>
+        {% elif skills_list %}
+        <ul class="skill-tags">
+          {% for skill in skills_list %}
+          <li class="skill-tag">{{ skill }}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="placeholder">[List 8–10 relevant skills]</p>
+        {% endif %}
+
+        <!-- Experience -->
+        <h2 class="section-title">Experience</h2>
+        {% if enhanced and enhanced.enhanced_experience_bullets %}
+        <div class="exp-entry">
+          <ul class="exp-bullets">
+            {% for bullet in enhanced.enhanced_experience_bullets %}
+            <li>{{ bullet }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% else %} {% if tailored and tailored.experience_focus_points %}
+        <div class="exp-entry">
+          <p class="exp-hint">Focus your experience bullets on:</p>
+          <ul class="exp-bullets">
+            {% for item in tailored.experience_focus_points %}
+            <li>{{ item }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        <div class="exp-entry">
+          <p class="exp-title">
+            <span class="placeholder">[Job Title] — [Company Name]</span>
+          </p>
+          <p class="exp-hint">[Start Date] – [End Date]</p>
+          <ul class="exp-bullets">
+            <li class="placeholder">[Add 2–3 quantified bullet points here]</li>
+            <li class="placeholder">
+              [Use action verbs: Led, Built, Improved, Delivered...]
+            </li>
+            <li class="placeholder">
+              [Insert relevant project outcome with numbers]
+            </li>
+          </ul>
+        </div>
+        {% endif %}
+
+        <!-- Education -->
+        <h2 class="section-title">Education</h2>
+        {% if enhanced and enhanced.enhanced_education %} {% for edu in
+        enhanced.enhanced_education %}
+        <p class="edu-item">{{ edu }}</p>
+        {% endfor %} {% elif education_list %} {% for edu in education_list %}
+        <p class="edu-item">{{ edu }}</p>
+        {% endfor %} {% else %}
+        <p class="placeholder">[Degree] — [Institution], [Year]</p>
+        {% endif %}
+
+        <!-- ATS Notes -->
+        {% if enhanced and enhanced.ats_alignment_notes %}
+        <h2 class="section-title">ATS Alignment Notes</h2>
+        <div class="notes-box">
+          <ul style="margin: 0; padding-left: 1.2rem">
+            {% for note in enhanced.ats_alignment_notes %}
+            <li>{{ note }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% elif rewrite and rewrite.ats_notes %}
+        <h2 class="section-title">ATS Alignment Notes</h2>
+        <div class="notes-box">
+          <ul style="margin: 0; padding-left: 1.2rem">
+            {% for note in rewrite.ats_notes %}
+            <li>{{ note }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
       </div>
-    {% endif %}
 
-    <!-- Education -->
-    <h2 class="section-title">Education</h2>
-    {% if enhanced and enhanced.enhanced_education %}
-      {% for edu in enhanced.enhanced_education %}
-      <p class="edu-item">{{ edu }}</p>
-      {% endfor %}
-    {% elif education_list %}
-      {% for edu in education_list %}
-      <p class="edu-item">{{ edu }}</p>
-      {% endfor %}
-    {% else %}
-    <p class="placeholder">[Degree] — [Institution], [Year]</p>
-    {% endif %}
-
-    <!-- ATS Notes -->
-    {% if enhanced and enhanced.ats_alignment_notes %}
-    <h2 class="section-title">ATS Alignment Notes</h2>
-    <div class="notes-box">
-      <ul style="margin:0;padding-left:1.2rem">
-        {% for note in enhanced.ats_alignment_notes %}
-        <li>{{ note }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-    {% elif rewrite and rewrite.ats_notes %}
-    <h2 class="section-title">ATS Alignment Notes</h2>
-    <div class="notes-box">
-      <ul style="margin:0;padding-left:1.2rem">
-        {% for note in rewrite.ats_notes %}
-        <li>{{ note }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-    {% endif %}
-  </div>
-
-  <!-- ═══════════════════════════════════════════
+      <!-- ═══════════════════════════════════════════
        COVER LETTER PREVIEW
        ═══════════════════════════════════════════ -->
-  {% if enhanced_cover_letter or cover_letter_draft %}
-  <div class="cl-page" id="cover-letter-section">
-    <h2 class="section-title" style="margin-top:0">
-      Cover Letter
-      {% if enhanced_cover_letter %}<span class="badge badge-cover">ENHANCED</span>{% endif %}
-    </h2>
-    {% if enhanced_cover_letter and enhanced_cover_letter.full_text %}
-    <div class="cl-text">{{ enhanced_cover_letter.full_text }}</div>
-    {% elif cover_letter_draft and cover_letter_draft.full_text %}
-    <div class="cl-text">{{ cover_letter_draft.full_text }}</div>
-    {% endif %}
-  </div>
-  {% endif %}
+      {% if enhanced_cover_letter or cover_letter_draft %}
+      <div class="cl-page" id="cover-letter-section">
+        <h2 class="section-title" style="margin-top: 0">
+          Cover Letter {% if enhanced_cover_letter %}<span
+            class="badge badge-cover"
+            >ENHANCED</span
+          >{% endif %}
+        </h2>
+        {% if enhanced_cover_letter and enhanced_cover_letter.full_text %}
+        <div class="cl-text">{{ enhanced_cover_letter.full_text }}</div>
+        {% elif cover_letter_draft and cover_letter_draft.full_text %}
+        <div class="cl-text">{{ cover_letter_draft.full_text }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
 
-  <!-- ═══════════════════════════════════════════
+      <!-- ═══════════════════════════════════════════
        MATCH INTELLIGENCE (on preview page)
        ═══════════════════════════════════════════ -->
-  {% if match_explanation %}
-  <div class="card">
-    <h2 class="card-title">Match Score Explanation</h2>
-    <hr class="card-divider" />
-    <p class="intel-summary">{{ match_explanation.summary }}</p>
-    <h3>Strengths</h3>
-    <ul class="intel-list">
-      {% for s in match_explanation.strengths %}
-      <li>{{ s }}</li>
-      {% endfor %}
-    </ul>
-    <h3>Gaps</h3>
-    <ul class="intel-list">
-      {% for g in match_explanation.gaps %}
-      <li>{{ g }}</li>
-      {% endfor %}
-    </ul>
-    <p class="intel-note">{{ match_explanation.confidence_note }}</p>
-  </div>
-  {% endif %}
-
-  {% if keyword_gaps %}
-  <div class="card">
-    <h2 class="card-title">Missing Keyword Gaps</h2>
-    <hr class="card-divider" />
-    {% if keyword_gaps.missing_keywords %}
-    <h3>Missing Keywords</h3>
-    <ul class="intel-list">
-      {% for kw in keyword_gaps.missing_keywords %}
-      <li>{{ kw }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    {% if keyword_gaps.underused_keywords %}
-    <h3>Underused Keywords</h3>
-    <ul class="intel-list">
-      {% for kw in keyword_gaps.underused_keywords %}
-      <li>{{ kw }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    {% if keyword_gaps.recommended_additions %}
-    <h3>Recommended Additions</h3>
-    <ul class="intel-list">
-      {% for r in keyword_gaps.recommended_additions %}
-      <li>{{ r }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-  </div>
-  {% endif %}
-
-  {% if priority_fixes %}
-  <div class="card">
-    <h2 class="card-title">Priority Fixes / Quick Wins</h2>
-    <hr class="card-divider" />
-    {% if priority_fixes.top_priority %}
-    <h3>Top Priority</h3>
-    <ul class="intel-list">
-      {% for item in priority_fixes.top_priority %}
-      <li>{{ item }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    {% if priority_fixes.quick_wins %}
-    <h3>Quick Wins</h3>
-    <ul class="intel-list">
-      {% for item in priority_fixes.quick_wins %}
-      <li>{{ item }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    {% if priority_fixes.section_targets %}
-    <h3>Section Targets</h3>
-    {% for t in priority_fixes.section_targets %}
-    <p class="section-target"><strong>{{ t.section }}:</strong> {{ t.action }}</p>
-    {% endfor %}
-    {% endif %}
-  </div>
-  {% endif %}
-
-  {% if role_fit %}
-  <div class="card">
-    <h2 class="card-title">Role-Fit Suggestions</h2>
-    <hr class="card-divider" />
-    <p class="intel-summary">
-      <strong>{{ role_fit.target_title }}</strong>
-      <span class="badge {% if role_fit.fit_level == 'Strong' %}badge-fit-strong{% elif role_fit.fit_level == 'Moderate' %}badge-fit-moderate{% else %}badge-fit-developing{% endif %}">{{ role_fit.fit_level }}</span>
-    </p>
-    {% if role_fit.improvement_suggestions %}
-    <h3>Improvement Suggestions</h3>
-    <ul class="intel-list">
-      {% for s in role_fit.improvement_suggestions %}
-      <li>{{ s }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    {% if role_fit.positioning_advice %}
-    <h3>Positioning Advice</h3>
-    <ul class="intel-list">
-      {% for a in role_fit.positioning_advice %}
-      <li>{{ a }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    {% if role_fit.next_step %}
-    <h3>Next Step</h3>
-    <p class="intel-summary">{{ role_fit.next_step }}</p>
-    {% endif %}
-  </div>
-  {% endif %}
-
-  <!-- Saved Jobs -->
-  {% if saved_jobs %}
-  <div class="card">
-    <h2 class="card-title">Saved Jobs</h2>
-    <hr class="card-divider" />
-    {% for job in saved_jobs %}
-    <div class="item-row">
-      <div>
-        <span class="status-badge status-{{ job.status }}">{{ job.status }}</span>
-        <span class="item-label">{{ job.title }}</span>
-        {% if job.company %}<span class="item-meta">&ndash; {{ job.company }}</span>{% endif %}
+      {% if match_explanation %}
+      <div class="card">
+        <h2 class="card-title">Match Score Explanation</h2>
+        <hr class="card-divider" />
+        <p class="intel-summary">{{ match_explanation.summary }}</p>
+        <h3>Strengths</h3>
+        <ul class="intel-list">
+          {% for s in match_explanation.strengths %}
+          <li>{{ s }}</li>
+          {% endfor %}
+        </ul>
+        <h3>Gaps</h3>
+        <ul class="intel-list">
+          {% for g in match_explanation.gaps %}
+          <li>{{ g }}</li>
+          {% endfor %}
+        </ul>
+        <p class="intel-note">{{ match_explanation.confidence_note }}</p>
       </div>
-      <a href="/job/{{ job.id }}" class="pill pill-primary" style="font-size:0.75rem">Open</a>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-
-  <!-- Upcoming Alerts -->
-  {% if alerts %}
-  <div class="card">
-    <h2 class="card-title">Upcoming Alerts</h2>
-    <hr class="card-divider" />
-    {% for a in alerts %}
-    <div class="alert-row">
-      <div>
-        <span class="alert-msg">{{ a.message }}</span>
-        <span class="alert-due">Due: {{ a.due_at }}</span>
+      {% endif %} {% if keyword_gaps %}
+      <div class="card">
+        <h2 class="card-title">Missing Keyword Gaps</h2>
+        <hr class="card-divider" />
+        {% if keyword_gaps.missing_keywords %}
+        <h3>Missing Keywords</h3>
+        <ul class="intel-list">
+          {% for kw in keyword_gaps.missing_keywords %}
+          <li>{{ kw }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %} {% if keyword_gaps.underused_keywords %}
+        <h3>Underused Keywords</h3>
+        <ul class="intel-list">
+          {% for kw in keyword_gaps.underused_keywords %}
+          <li>{{ kw }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %} {% if keyword_gaps.recommended_additions %}
+        <h3>Recommended Additions</h3>
+        <ul class="intel-list">
+          {% for r in keyword_gaps.recommended_additions %}
+          <li>{{ r }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
       </div>
-      <div class="alert-actions">
-        <a href="/complete-alert/{{ a.id }}" class="link-success">Complete</a>
-        <a href="/delete-alert/{{ a.id }}" class="link-danger">Delete</a>
+      {% endif %} {% if priority_fixes %}
+      <div class="card">
+        <h2 class="card-title">Priority Fixes / Quick Wins</h2>
+        <hr class="card-divider" />
+        {% if priority_fixes.top_priority %}
+        <h3>Top Priority</h3>
+        <ul class="intel-list">
+          {% for item in priority_fixes.top_priority %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %} {% if priority_fixes.quick_wins %}
+        <h3>Quick Wins</h3>
+        <ul class="intel-list">
+          {% for item in priority_fixes.quick_wins %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %} {% if priority_fixes.section_targets %}
+        <h3>Section Targets</h3>
+        {% for t in priority_fixes.section_targets %}
+        <p class="section-target">
+          <strong>{{ t.section }}:</strong> {{ t.action }}
+        </p>
+        {% endfor %} {% endif %}
       </div>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-
-  <!-- Follow-Up Suggestions -->
-  {% if followup and followup.recommended_actions %}
-  <div class="card">
-    <h2 class="card-title">Follow-Up Suggestions</h2>
-    <hr class="card-divider" />
-    {% for action in followup.recommended_actions %}
-    <div class="followup-action">{{ action }}</div>
-    {% endfor %}
-    {% if followup.next_step %}
-    <div class="followup-next"><strong>Next Step:</strong> {{ followup.next_step }}</div>
-    {% endif %}
-  </div>
-  {% endif %}
-
-  <!-- Session Context -->
-  {% if not session_memory_empty %}
-  <div class="card">
-    <h2 class="card-title">Session Context</h2>
-    <hr class="card-divider" />
-    <div class="ctx-grid">
-      {% if session_memory.active_target_title %}
-      <span class="ctx-label">Role:</span>
-      <span class="ctx-value">{{ session_memory.active_target_title }}</span>
+      {% endif %} {% if role_fit %}
+      <div class="card">
+        <h2 class="card-title">Role-Fit Suggestions</h2>
+        <hr class="card-divider" />
+        <p class="intel-summary">
+          <strong>{{ role_fit.target_title }}</strong>
+          <span
+            class="badge {% if role_fit.fit_level == 'Strong' %}badge-fit-strong{% elif role_fit.fit_level == 'Moderate' %}badge-fit-moderate{% else %}badge-fit-developing{% endif %}"
+            >{{ role_fit.fit_level }}</span
+          >
+        </p>
+        {% if role_fit.improvement_suggestions %}
+        <h3>Improvement Suggestions</h3>
+        <ul class="intel-list">
+          {% for s in role_fit.improvement_suggestions %}
+          <li>{{ s }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %} {% if role_fit.positioning_advice %}
+        <h3>Positioning Advice</h3>
+        <ul class="intel-list">
+          {% for a in role_fit.positioning_advice %}
+          <li>{{ a }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %} {% if role_fit.next_step %}
+        <h3>Next Step</h3>
+        <p class="intel-summary">{{ role_fit.next_step }}</p>
+        {% endif %}
+      </div>
       {% endif %}
-      {% if session_memory.active_company %}
-      <span class="ctx-label">Company:</span>
-      <span class="ctx-value">{{ session_memory.active_company }}</span>
+
+      <!-- Saved Jobs -->
+      {% if saved_jobs %}
+      <div class="card">
+        <h2 class="card-title">Saved Jobs</h2>
+        <hr class="card-divider" />
+        {% for job in saved_jobs %}
+        <div class="item-row">
+          <div>
+            <span class="status-badge status-{{ job.status }}"
+              >{{ job.status }}</span
+            >
+            <span class="item-label">{{ job.title }}</span>
+            {% if job.company %}<span class="item-meta"
+              >&ndash; {{ job.company }}</span
+            >{% endif %}
+          </div>
+          <a
+            href="/job/{{ job.id }}"
+            class="pill pill-primary"
+            style="font-size: 0.75rem"
+            >Open</a
+          >
+        </div>
+        {% endfor %}
+      </div>
       {% endif %}
-      {% if session_memory.last_action %}
-      <span class="ctx-label">Last:</span>
-      <span class="ctx-value">{{ session_memory.last_action }}</span>
+
+      <!-- Upcoming Alerts -->
+      {% if alerts %}
+      <div class="card">
+        <h2 class="card-title">Upcoming Alerts</h2>
+        <hr class="card-divider" />
+        {% for a in alerts %}
+        <div class="alert-row">
+          <div>
+            <span class="alert-msg">{{ a.message }}</span>
+            <span class="alert-due">Due: {{ a.due_at }}</span>
+          </div>
+          <div class="alert-actions">
+            <a href="/complete-alert/{{ a.id }}" class="link-success"
+              >Complete</a
+            >
+            <a href="/delete-alert/{{ a.id }}" class="link-danger">Delete</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
       {% endif %}
-    </div>
-  </div>
-  {% endif %}
 
-  <!-- Confidence & Sources -->
-  {% if provenance and provenance.resume_source != 'none' %}
-  <div class="card">
-    <h2 class="card-title">Confidence &amp; Sources</h2>
-    <hr class="card-divider" />
-    <div style="font-size:var(--font-sm)">
-      <span class="prov-key">Resume:</span>
-      <span class="prov-val">{{ get_source_label(provenance.resume_source) }}</span>
-      &middot;
-      <span class="prov-key">Cover Letter:</span>
-      <span class="prov-val">{{ get_source_label(provenance.cover_letter_source) }}</span>
-    </div>
-    {% if provenance.confidence_labels %}
-    <div class="confidence-grid" style="margin-top:0.3rem">
-      {% for key, lvl in provenance.confidence_labels.items() %}
-      <span class="conf-tag conf-{{ lvl }}">{{ key.replace('_', ' ').title() }}: {{ lvl }}</span>
-      {% endfor %}
-    </div>
-    {% endif %}
-    {% if provenance.notes %}
-    <div class="prov-notes">{{ provenance.notes[-1] }}</div>
-    {% endif %}
-  </div>
-  {% endif %}
-
-  <!-- Saved Resume Versions -->
-  {% if resume_versions %}
-  <div class="card">
-    <h2 class="card-title">Saved Resume Versions</h2>
-    <hr class="card-divider" />
-    {% for v in resume_versions %}
-    <div class="item-row">
-      <div>
-        <span class="item-label">{{ v.label }}</span>
-        <span class="item-meta">{{ v.created_at }}</span>
+      <!-- Follow-Up Suggestions -->
+      {% if followup and followup.recommended_actions %}
+      <div class="card">
+        <h2 class="card-title">Follow-Up Suggestions</h2>
+        <hr class="card-divider" />
+        {% for action in followup.recommended_actions %}
+        <div class="followup-action">{{ action }}</div>
+        {% endfor %} {% if followup.next_step %}
+        <div class="followup-next">
+          <strong>Next Step:</strong> {{ followup.next_step }}
+        </div>
+        {% endif %}
       </div>
-      <div class="item-actions">
-        <a href="/resume-version/{{ v.id }}" class="pill pill-primary">Open</a>
-        <a href="/resume-version/{{ v.id }}/download" class="pill pill-success">Download</a>
-        <a href="/delete-resume-version/{{ v.id }}" class="pill pill-danger">Delete</a>
+      {% endif %}
+
+      <!-- Session Context -->
+      {% if not session_memory_empty %}
+      <div class="card">
+        <h2 class="card-title">Session Context</h2>
+        <hr class="card-divider" />
+        <div class="ctx-grid">
+          {% if session_memory.active_target_title %}
+          <span class="ctx-label">Role:</span>
+          <span class="ctx-value"
+            >{{ session_memory.active_target_title }}</span
+          >
+          {% endif %} {% if session_memory.active_company %}
+          <span class="ctx-label">Company:</span>
+          <span class="ctx-value">{{ session_memory.active_company }}</span>
+          {% endif %} {% if session_memory.last_action %}
+          <span class="ctx-label">Last:</span>
+          <span class="ctx-value">{{ session_memory.last_action }}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Confidence & Sources -->
+      {% if provenance and provenance.resume_source != 'none' %}
+      <div class="card">
+        <h2 class="card-title">Confidence &amp; Sources</h2>
+        <hr class="card-divider" />
+        <div style="font-size: var(--font-sm)">
+          <span class="prov-key">Resume:</span>
+          <span class="prov-val"
+            >{{ get_source_label(provenance.resume_source) }}</span
+          >
+          &middot;
+          <span class="prov-key">Cover Letter:</span>
+          <span class="prov-val"
+            >{{ get_source_label(provenance.cover_letter_source) }}</span
+          >
+        </div>
+        {% if provenance.confidence_labels %}
+        <div class="confidence-grid" style="margin-top: 0.3rem">
+          {% for key, lvl in provenance.confidence_labels.items() %}
+          <span class="conf-tag conf-{{ lvl }}"
+            >{{ key.replace('_', ' ').title() }}: {{ lvl }}</span
+          >
+          {% endfor %}
+        </div>
+        {% endif %} {% if provenance.notes %}
+        <div class="prov-notes">{{ provenance.notes[-1] }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Saved Resume Versions -->
+      {% if resume_versions %}
+      <div class="card">
+        <h2 class="card-title">Saved Resume Versions</h2>
+        <hr class="card-divider" />
+        {% for v in resume_versions %}
+        <div class="item-row">
+          <div>
+            <span class="item-label">{{ v.label }}</span>
+            <span class="item-meta">{{ v.created_at }}</span>
+          </div>
+          <div class="item-actions">
+            <a href="/resume-version/{{ v.id }}" class="pill pill-primary"
+              >Open</a
+            >
+            <a
+              href="/resume-version/{{ v.id }}/download"
+              class="pill pill-success"
+              >Download</a
+            >
+            <a href="/delete-resume-version/{{ v.id }}" class="pill pill-danger"
+              >Delete</a
+            >
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Saved Application Packages -->
+      {% if application_packages %}
+      <div class="card">
+        <h2 class="card-title">Saved Application Packages</h2>
+        <hr class="card-divider" />
+        {% for p in application_packages %}
+        <div class="item-row">
+          <div>
+            <span class="item-label">{{ p.label }}</span>
+            {% if p.company %}<span class="item-meta"
+              >&ndash; {{ p.company }}</span
+            >{% endif %}
+            <span class="item-meta">{{ p.created_at }}</span>
+          </div>
+          <div class="item-actions">
+            <a href="/application-package/{{ p.id }}" class="pill pill-primary"
+              >Open</a
+            >
+            <a
+              href="/application-package/{{ p.id }}/download"
+              class="pill pill-success"
+              >Download</a
+            >
+            <a
+              href="/delete-application-package/{{ p.id }}"
+              class="pill pill-danger"
+              >Delete</a
+            >
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Secondary nav -->
+      <div style="text-align: center; margin-top: var(--space-xl)">
+        <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
       </div>
     </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-
-  <!-- Saved Application Packages -->
-  {% if application_packages %}
-  <div class="card">
-    <h2 class="card-title">Saved Application Packages</h2>
-    <hr class="card-divider" />
-    {% for p in application_packages %}
-    <div class="item-row">
-      <div>
-        <span class="item-label">{{ p.label }}</span>
-        {% if p.company %}<span class="item-meta">&ndash; {{ p.company }}</span>{% endif %}
-        <span class="item-meta">{{ p.created_at }}</span>
-      </div>
-      <div class="item-actions">
-        <a href="/application-package/{{ p.id }}" class="pill pill-primary">Open</a>
-        <a href="/application-package/{{ p.id }}/download" class="pill pill-success">Download</a>
-        <a href="/delete-application-package/{{ p.id }}" class="pill pill-danger">Delete</a>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-
-  <!-- Secondary nav -->
-  <div style="text-align:center;margin-top:var(--space-xl)">
-    <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
-  </div>
-
-</div><!-- /container -->
-</body>
+    <!-- /container -->
+  </body>
 </html>

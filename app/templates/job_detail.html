@@ -1,137 +1,188 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Offerion — {{ job.title }}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/styles.css" />
-</head>
-<body>
-
-<!-- Top Navigation -->
-<nav class="top-nav">
-  <div class="top-nav-inner">
-    <a href="/" class="top-nav-brand">Offerion</a>
-    <div class="top-nav-links">
-      <a href="/dashboard">Dashboard</a>
-      <a href="/resume-preview">Resume</a>
-      <a href="/pricing">Pricing</a>
-    </div>
-    <span class="tier-badge tier-badge-{{ user_tier }}">{{ tier_label }}</span>
-  </div>
-</nav>
-
-<div class="container">
-  <a href="/dashboard" class="back-link">&larr; Back to Dashboard</a>
-
-  <!-- Job Header -->
-  <div style="text-align:center;margin-bottom:var(--space-xl)">
-    <h1 style="font-size:var(--font-3xl);font-weight:700;margin:0 0 0.2rem;color:var(--text-primary)">{{ job.title }}</h1>
-    <p style="font-size:var(--font-md);color:var(--text-muted);margin:0">
-      {% if job.company %}{{ job.company }}{% endif %}
-      {% if job.location %} &middot; {{ job.location }}{% endif %}
-    </p>
-  </div>
-
-  <!-- Job Details -->
-  <div class="card">
-    <h2 class="card-title">Job Details</h2>
-    <hr class="card-divider" />
-    <p class="field">
-      <strong>Status:</strong>
-      <span class="status-badge status-{{ job.status }}">{{ job.status }}</span>
-    </p>
-    {% if job.job_url %}
-    <p class="field">
-      <strong>URL:</strong>
-      <a href="{{ job.job_url }}" target="_blank" rel="noopener noreferrer">{{ job.job_url }}</a>
-    </p>
-    {% endif %}
-    {% if job.source %}
-    <p class="field"><strong>Source:</strong> {{ job.source }}</p>
-    {% endif %}
-    {% if job.notes %}
-    <p class="field"><strong>Notes:</strong> {{ job.notes }}</p>
-    {% endif %}
-    <p class="meta">Saved on {{ job.created_at }}</p>
-
-    <h3>Update Status</h3>
-    <div class="status-links">
-      {% for s in allowed_statuses %}
-      <a href="/job/{{ job.id }}/status/{{ s }}" class="status-link {% if s == job.status %}active{% endif %}">{{ s }}</a>
-      {% endfor %}
-    </div>
-  </div>
-
-  <!-- Follow-Up Prompts (M37) -->
-  {% if followup %}
-  <div class="card">
-    <h2 class="card-title">Follow-Up Suggestions</h2>
-    <hr class="card-divider" />
-    {% if followup.recommended_actions %}
-    <h3>Recommended Actions</h3>
-    <ul class="action-list">
-      {% for action in followup.recommended_actions %}
-      <li>{{ action }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    {% if followup.message_templates %}
-    <h3>Message Templates</h3>
-    {% for tmpl in followup.message_templates %}
-    <div class="template-block">{{ tmpl }}</div>
-    {% endfor %}
-    {% endif %}
-    {% if followup.next_step %}
-    <div class="next-step"><strong>Next Step:</strong> {{ followup.next_step }}</div>
-    {% endif %}
-  </div>
-  {% endif %}
-
-  <!-- Alerts for this job -->
-  {% set job_alerts = [] %}
-  {% for a in alerts %}
-    {% if a.job_id == job.id %}
-      {% if job_alerts.append(a) %}{% endif %}
-    {% endif %}
-  {% endfor %}
-  <div class="card">
-    <h2 class="card-title">Alerts &amp; Reminders</h2>
-    <hr class="card-divider" />
-    {% if job_alerts %}
-    {% for a in job_alerts %}
-    <div class="alert-row">
-      <div>
-        <span class="alert-msg">{{ a.message }}</span>
-        <span class="alert-due">Due: {{ a.due_at }}</span>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Offerion — {{ job.title }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+      <div class="top-nav-inner">
+        <a href="/" class="top-nav-brand">Offerion</a>
+        <div class="top-nav-links">
+          <a href="/dashboard">Dashboard</a>
+          <a href="/resume-preview">Resume</a>
+          <a href="/pricing">Pricing</a>
+        </div>
+        <span class="tier-badge tier-badge-{{ user_tier }}"
+          >{{ tier_label }}</span
+        >
       </div>
-      <div class="alert-actions">
-        <a href="/complete-alert/{{ a.id }}" class="link-success">Complete</a>
-        <a href="/delete-alert/{{ a.id }}" class="link-danger">Delete</a>
+    </nav>
+
+    <div class="container">
+      <a href="/dashboard" class="back-link">&larr; Back to Dashboard</a>
+
+      <!-- Job Header -->
+      <div style="text-align: center; margin-bottom: var(--space-xl)">
+        <h1
+          style="
+            font-size: var(--font-3xl);
+            font-weight: 700;
+            margin: 0 0 0.2rem;
+            color: var(--text-primary);
+          "
+        >
+          {{ job.title }}
+        </h1>
+        <p
+          style="font-size: var(--font-md); color: var(--text-muted); margin: 0"
+        >
+          {% if job.company %}{{ job.company }}{% endif %} {% if job.location %}
+          &middot; {{ job.location }}{% endif %}
+        </p>
+      </div>
+
+      <!-- Job Details -->
+      <div class="card">
+        <h2 class="card-title">Job Details</h2>
+        <hr class="card-divider" />
+        <p class="field">
+          <strong>Status:</strong>
+          <span class="status-badge status-{{ job.status }}"
+            >{{ job.status }}</span
+          >
+        </p>
+        {% if job.job_url %}
+        <p class="field">
+          <strong>URL:</strong>
+          <a href="{{ job.job_url }}" target="_blank" rel="noopener noreferrer"
+            >{{ job.job_url }}</a
+          >
+        </p>
+        {% endif %} {% if job.source %}
+        <p class="field"><strong>Source:</strong> {{ job.source }}</p>
+        {% endif %} {% if job.notes %}
+        <p class="field"><strong>Notes:</strong> {{ job.notes }}</p>
+        {% endif %}
+        <p class="meta">Saved on {{ job.created_at }}</p>
+
+        <h3>Update Status</h3>
+        <div class="status-links">
+          {% for s in allowed_statuses %}
+          <a
+            href="/job/{{ job.id }}/status/{{ s }}"
+            class="status-link {% if s == job.status %}active{% endif %}"
+            >{{ s }}</a
+          >
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- M74: Why This Job Fits You -->
+      {% if job_match_info %}
+      <div class="card">
+        <h2 class="card-title">Why This Job Fits You</h2>
+        <hr class="card-divider" />
+        {% if job_match_info.score is not none %}
+        <p class="field"><strong>Match Score:</strong>
+          <span class="score-display {% if job_match_info.score >= 70 %}level-strong{% elif job_match_info.score >= 40 %}level-moderate{% else %}level-low{% endif %}" style="display:inline; font-size:var(--font-md)">
+            {{ job_match_info.score }}%
+          </span>
+        </p>
+        {% endif %}
+        {% if job_match_info.matched_skills %}
+        <h3>Matched Skills</h3>
+        <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:var(--space-sm)">
+          {% for sk in job_match_info.matched_skills %}
+          <span class="tag tag-matched">{{ sk }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if job_match_info.description %}
+        <p class="field"><strong>Role:</strong> {{ job_match_info.description }}</p>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Follow-Up Prompts (M37) -->
+      {% if followup %}
+      <div class="card">
+        <h2 class="card-title">Follow-Up Suggestions</h2>
+        <hr class="card-divider" />
+        {% if followup.recommended_actions %}
+        <h3>Recommended Actions</h3>
+        <ul class="action-list">
+          {% for action in followup.recommended_actions %}
+          <li>{{ action }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %} {% if followup.message_templates %}
+        <h3>Message Templates</h3>
+        {% for tmpl in followup.message_templates %}
+        <div class="template-block">{{ tmpl }}</div>
+        {% endfor %} {% endif %} {% if followup.next_step %}
+        <div class="next-step">
+          <strong>Next Step:</strong> {{ followup.next_step }}
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Alerts for this job -->
+      {% set job_alerts = [] %} {% for a in alerts %} {% if a.job_id == job.id
+      %} {% if job_alerts.append(a) %}{% endif %} {% endif %} {% endfor %}
+      <div class="card">
+        <h2 class="card-title">Alerts &amp; Reminders</h2>
+        <hr class="card-divider" />
+        {% if job_alerts %} {% for a in job_alerts %}
+        <div class="alert-row">
+          <div>
+            <span class="alert-msg">{{ a.message }}</span>
+            <span class="alert-due">Due: {{ a.due_at }}</span>
+          </div>
+          <div class="alert-actions">
+            <a href="/complete-alert/{{ a.id }}" class="link-success"
+              >Complete</a
+            >
+            <a href="/delete-alert/{{ a.id }}" class="link-danger">Delete</a>
+          </div>
+        </div>
+        {% endfor %} {% else %}
+        <p class="empty-state">No alerts set for this job.</p>
+        {% endif %}
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="btn-row">
+        {% if has_access('create_alert') %}
+        <a href="/create-followup-alert/{{ job.id }}" class="btn btn-purple"
+          >Create Follow-Up Alert</a
+        >
+        {% else %}
+        <span
+          class="btn btn-purple btn-locked"
+          title="Upgrade to access this feature"
+          >Create Follow-Up Alert</span
+        >
+        <span class="locked-hint"
+          >Unlock in Professional &mdash;
+          <a href="/pricing">upgrade to continue</a></span
+        >
+        {% endif %}
+        <div style="flex: 1"></div>
+        <a href="/delete-job/{{ job.id }}" class="btn btn-danger">Delete Job</a>
+        <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
       </div>
     </div>
-    {% endfor %}
-    {% else %}
-    <p class="empty-state">No alerts set for this job.</p>
-    {% endif %}
-  </div>
-
-  <!-- Action Buttons -->
-  <div class="btn-row">
-    {% if has_access('create_alert') %}
-    <a href="/create-followup-alert/{{ job.id }}" class="btn btn-purple">Create Follow-Up Alert</a>
-    {% else %}
-    <span class="btn btn-purple btn-locked" title="Upgrade to access this feature">Create Follow-Up Alert</span>
-    <span class="locked-hint">Unlock in Professional &mdash; <a href="/pricing">upgrade to continue</a></span>
-    {% endif %}
-    <div style="flex:1"></div>
-    <a href="/delete-job/{{ job.id }}" class="btn btn-danger">Delete Job</a>
-    <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
-  </div>
-
-</div><!-- /container -->
-</body>
+    <!-- /container -->
+  </body>
 </html>

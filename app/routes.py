@@ -96,6 +96,8 @@ from app.utils.tier_config import (
     TIER_CONFIG,
     TIER_ORDER,
 )
+from app.utils.job_data import find_job_by_id
+from app.utils.job_matcher import match_jobs
 
 logger = logging.getLogger(__name__)
 
@@ -407,6 +409,9 @@ def dashboard():
     next_action = get_next_action(session)
     session["next_best_action"] = next_action
 
+    report_data = session.get("report_data")
+    recommended_jobs = match_jobs(report_data) if report_data else []
+
     return render_template(
         "index.html",
         message=message,
@@ -439,8 +444,11 @@ def dashboard():
         next_best_action=next_action,
         report_data_exists=bool(session.get("report_data")),
         upgrade_nudge_message=_upgrade_nudge(),
-        show_quick_start=bool(session.get("report_data")) and not session.get("application_packages"),
-        show_enhance_cta=bool(session.get("report_data")) and not session.get("enhanced_resume"),
+        recommended_jobs=recommended_jobs,
+        show_quick_start=bool(session.get("report_data"))
+        and not session.get("application_packages"),
+        show_enhance_cta=bool(session.get("report_data"))
+        and not session.get("enhanced_resume"),
         **_tier_ctx(),
         **_onboarding_ctx(),
     )
@@ -1060,7 +1068,21 @@ def save_job_route():
         return blocked
     user_id = session.get("user_id")
     report_data = session.get("report_data")
-    job = create_saved_job(report_data=report_data, session_data=session)
+
+    # M73: Use job_context from dataset if available
+    job_ctx = report_data.get("job_context") if report_data else None
+    if job_ctx:
+        job = create_saved_job(
+            report_data=report_data,
+            title=job_ctx.get("title"),
+            company=job_ctx.get("company"),
+            location=job_ctx.get("location"),
+            session_data=session,
+        )
+        job["dataset_job_id"] = job_ctx.get("job_id")
+        job["matched_skills"] = job_ctx.get("skills", [])
+    else:
+        job = create_saved_job(report_data=report_data, session_data=session)
     saved_jobs = session.get("saved_jobs", [])
     saved_jobs.append(job)
     session["saved_jobs"] = saved_jobs
@@ -1090,10 +1112,28 @@ def open_job(job_id):
 
     followup = generate_followup_prompts(job)
 
+    # M74: Compute match info if job came from dataset
+    job_match_info = None
+    if job.get("dataset_job_id"):
+        dataset_job = find_job_by_id(job["dataset_job_id"])
+        if dataset_job:
+            report_data = session.get("report_data")
+            profile = report_data.get("profile") if report_data else None
+            resume_skills = {s.lower() for s in (profile.get("skills", []) if profile else [])}
+            job_skills = {s.lower() for s in dataset_job.get("skills", [])}
+            overlap = resume_skills & job_skills
+            score = round(len(overlap) / len(job_skills) * 100) if job_skills else 0
+            job_match_info = {
+                "matched_skills": sorted(overlap),
+                "score": score,
+                "description": dataset_job.get("description", ""),
+            }
+
     return render_template(
         "job_detail.html",
         job=job,
         followup=followup,
+        job_match_info=job_match_info,
         alerts=get_active_alerts(session.get("alerts", [])),
         allowed_statuses=ALLOWED_STATUSES,
         **_tier_ctx(),
@@ -1447,6 +1487,44 @@ def capture_email():
     session["email_capture_status"] = "success"
     _log_event("email_captured")
     return redirect(url_for("main.landing"))
+
+
+# ------------------------------------------------------------------
+# M72 — Job Match Route
+# ------------------------------------------------------------------
+
+
+@main_bp.route("/job-match/<job_id>")
+def job_match(job_id):
+    """Inject a dataset job into session context, then prepare application."""
+    blocked = _gate("prepare_application")
+    if blocked:
+        return blocked
+
+    job = find_job_by_id(job_id)
+    if not job:
+        return redirect(url_for("main.dashboard"))
+
+    report_data = session.get("report_data")
+    if not report_data:
+        return redirect(url_for("main.dashboard"))
+
+    # Inject job context into report_data for the prepare-application flow
+    if not report_data.get("match"):
+        report_data["match"] = {}
+    report_data["match"]["target_role"] = job["title"]
+    report_data["job_context"] = {
+        "job_id": job["id"],
+        "title": job["title"],
+        "company": job["company"],
+        "location": job.get("location", ""),
+        "description": job.get("description", ""),
+        "skills": job.get("skills", []),
+    }
+    session["report_data"] = report_data
+
+    _log_event("job_match_clicked", {"job_id": job_id})
+    return redirect(url_for("main.prepare_application"))
 
 
 @main_bp.route("/<path:path>")
