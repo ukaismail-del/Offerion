@@ -20,6 +20,7 @@ from app.utils.resume_analyzer import analyze_resume
 from app.utils.resume_parser import extract_text, get_file_extension, preview_text
 from app.utils.resume_feedback import generate_feedback
 from app.utils.role_suggester import suggest_roles
+from app.utils.storage import save_file, delete_file
 
 logger = logging.getLogger(__name__)
 
@@ -52,51 +53,54 @@ def index():
                     "Unsupported file type. Please upload a .pdf, .doc, or .docx file."
                 )
             else:
-                filename = secure_filename(file.filename)
-                filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
-                file.save(filepath)
-                logger.info("File uploaded: %s", filename)
+                filepath, filename = save_file(file)
+                if not filepath:
+                    error = "Failed to save the uploaded file. Please try again."
+                else:
+                    logger.info("File uploaded: %s", filename)
 
-                try:
-                    ext = get_file_extension(filename)
-                    text, extract_error = extract_text(filepath)
+                    try:
+                        ext = get_file_extension(filename)
+                        text, extract_error = extract_text(filepath)
 
-                    if extract_error:
-                        error = extract_error
-                        result = {
-                            "filename": filename,
-                            "filetype": f".{ext}",
-                            "status": "failed",
-                        }
-                    else:
-                        message = f"Upload successful: {filename}"
-                        result = {
-                            "filename": filename,
-                            "filetype": f".{ext}",
-                            "status": "extracted",
-                            "preview": preview_text(text),
-                        }
-                        profile = analyze_resume(text)
-                        suggestions = suggest_roles(text, profile)
+                        if extract_error:
+                            error = extract_error
+                            result = {
+                                "filename": filename,
+                                "filetype": f".{ext}",
+                                "status": "failed",
+                            }
+                        else:
+                            message = f"Upload successful: {filename}"
+                            result = {
+                                "filename": filename,
+                                "filetype": f".{ext}",
+                                "status": "extracted",
+                                "preview": preview_text(text),
+                            }
+                            profile = analyze_resume(text)
+                            suggestions = suggest_roles(text, profile)
 
-                        target_role = request.form.get("target_role", "").strip()
-                        target_keywords = request.form.get("target_keywords", "").strip()
-                        if target_role:
-                            match = score_match(text, profile, target_role, target_keywords)
+                            target_role = request.form.get("target_role", "").strip()
+                            target_keywords = request.form.get("target_keywords", "").strip()
+                            if target_role:
+                                match = score_match(text, profile, target_role, target_keywords)
 
-                        feedback = generate_feedback(text, profile, match)
+                            feedback = generate_feedback(text, profile, match)
 
-                        session["report_data"] = {
-                            "result": result,
-                            "profile": profile,
-                            "match": match,
-                            "suggestions": suggestions,
-                            "feedback": feedback,
-                        }
-                        logger.info("Analysis complete for: %s", filename)
-                except Exception as exc:
-                    logger.error("Error processing %s: %s", filename, exc)
-                    error = "An error occurred while processing the file. Please try again."
+                            session["report_data"] = {
+                                "result": result,
+                                "profile": profile,
+                                "match": match,
+                                "suggestions": suggestions,
+                                "feedback": feedback,
+                            }
+                            logger.info("Analysis complete for: %s", filename)
+                    except Exception as exc:
+                        logger.error("Error processing %s: %s", filename, exc)
+                        error = "An error occurred while processing the file. Please try again."
+                    finally:
+                        delete_file(filepath)
 
     return render_template(
         "index.html",

@@ -84,6 +84,20 @@ After completing a resume analysis, a **Download Report** button appears. Clicki
 
 The report is generated on the server from session data stored during the most recent analysis. No database is used — the data lives only in the current browser session.
 
+## Module 11 — Storage Abstraction Layer
+
+Uploaded files are now handled through a **storage abstraction layer** (`app/utils/storage.py`) instead of direct filesystem calls in routes.
+
+**Key changes:**
+
+- **Unique filenames** — each upload is saved with a UUID suffix to prevent overwrites
+- **Temp directory** — files are stored in `/tmp/uploads` (Render-friendly) instead of the project root
+- **Auto-cleanup** — uploaded files are deleted immediately after processing
+- **Error safety** — the app will not crash if an uploaded file is missing or cannot be saved
+- **Cloud-ready** — the storage module can be swapped to use S3, GCS, or any cloud provider by updating `save_file()`, `get_file_path()`, and `delete_file()` without changing any other code
+
+**Current limitation:** Files are temporary and not persisted across deploys or restarts. A future module will integrate real persistent cloud storage (e.g., AWS S3).
+
 ## Run Locally
 
 ```
