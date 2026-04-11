@@ -6,7 +6,12 @@ Deterministic — no AI APIs, no fabrication.
 
 
 def build_cover_letter(
-    profile=None, tailored=None, rewrite=None, match=None, enhanced_resume=None
+    profile=None,
+    tailored=None,
+    rewrite=None,
+    match=None,
+    enhanced_resume=None,
+    job_context=None,
 ):
     """Generate a structured cover letter draft.
 
@@ -17,8 +22,8 @@ def build_cover_letter(
     if not profile:
         return None
 
-    target_title = _resolve_target_title(tailored, match, enhanced_resume)
-    company = _resolve_company(match)
+    target_title = _resolve_target_title(tailored, match, enhanced_resume, job_context)
+    company = _resolve_company(match, job_context)
     recipient = "Hiring Team"
     name = _resolve_name(profile, enhanced_resume)
 
@@ -26,7 +31,9 @@ def build_cover_letter(
     opening = _build_opening(name, target_title, company)
 
     # --- Body points ---
-    body_points = _build_body(profile, tailored, rewrite, match, enhanced_resume)
+    body_points = _build_body(
+        profile, tailored, rewrite, match, enhanced_resume, job_context
+    )
 
     # --- Closing paragraph ---
     closing = _build_closing(name, target_title)
@@ -50,7 +57,9 @@ def build_cover_letter(
 # ------------------------------------------------------------------
 
 
-def _resolve_target_title(tailored, match, enhanced_resume):
+def _resolve_target_title(tailored, match, enhanced_resume, job_context=None):
+    if job_context and job_context.get("title"):
+        return job_context["title"]
     if enhanced_resume and enhanced_resume.get("target_title"):
         return enhanced_resume["target_title"]
     if tailored and tailored.get("target_title"):
@@ -60,7 +69,9 @@ def _resolve_target_title(tailored, match, enhanced_resume):
     return "the advertised position"
 
 
-def _resolve_company(match):
+def _resolve_company(match, job_context=None):
+    if job_context and job_context.get("company"):
+        return job_context["company"]
     if match and match.get("company"):
         return match["company"]
     return "your organization"
@@ -83,26 +94,44 @@ def _build_opening(name, target_title, company):
     )
 
 
-def _build_body(profile, tailored, rewrite, match, enhanced_resume):
+def _build_body(profile, tailored, rewrite, match, enhanced_resume, job_context=None):
     points = []
 
-    # Skills alignment
-    skills = _gather_skills(profile, tailored, enhanced_resume)
-    if skills:
-        top = skills[:6]
+    # M96: job-targeted skills alignment
+    if job_context and job_context.get("matched_skills"):
+        top = job_context["matched_skills"][:6]
         points.append(
             f"My core competencies include {', '.join(top)}, which directly "
             f"support the key requirements of this role."
         )
+    else:
+        # Skills alignment
+        skills = _gather_skills(profile, tailored, enhanced_resume)
+        if skills:
+            top = skills[:6]
+            points.append(
+                f"My core competencies include {', '.join(top)}, which directly "
+                f"support the key requirements of this role."
+            )
 
-    # Experience focus
-    exp = _gather_experience(tailored, enhanced_resume)
-    if exp:
-        points.append(
-            "In my professional experience, I have focused on areas such as "
-            + "; ".join(exp[:3])
-            + "."
-        )
+    # M96: job-targeted focus areas
+    if job_context and job_context.get("gap"):
+        focus = job_context["gap"].get("recommended_focus", [])
+        if focus:
+            points.append(
+                "My experience is particularly strong in areas such as "
+                + "; ".join(focus[:2])
+                + "."
+            )
+    else:
+        # Experience focus
+        exp = _gather_experience(tailored, enhanced_resume)
+        if exp:
+            points.append(
+                "In my professional experience, I have focused on areas such as "
+                + "; ".join(exp[:3])
+                + "."
+            )
 
     # Match strengths
     if match and match.get("matched_keywords"):

@@ -158,6 +158,56 @@
       {% endif %}
 
       <!-- ═══════════════════════════════════════════
+       SELECTED JOB FIT PANEL (M97)
+       ═══════════════════════════════════════════ -->
+      {% if selected_job_gap and selected_job_context %}
+      <div class="card" id="fit-analysis">
+        <h2 class="card-title">
+          Targeting: {{ selected_job_context.title }} at {{
+          selected_job_context.company }}
+        </h2>
+        <hr class="card-divider" />
+        <div class="fit-grid">
+          <div class="fit-panel">
+            <h3>Fit Level</h3>
+            <span
+              class="score-display {% if selected_job_gap.fit_level == 'Strong' %}level-strong{% elif selected_job_gap.fit_level == 'Moderate' %}level-moderate{% else %}level-low{% endif %}"
+            >
+              {{ (selected_job_gap.fit_score * 100)|int }}% — {{
+              selected_job_gap.fit_level }}
+            </span>
+          </div>
+          <div class="fit-panel">
+            <h3>Why You Fit</h3>
+            <div class="fit-list">
+              {% for sk in selected_job_gap.matched_skills %}
+              <span class="tag tag-matched">{{ sk }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="fit-panel">
+            <h3>What To Improve</h3>
+            <div class="fit-list">
+              {% for sk in selected_job_gap.missing_skills %}
+              <span class="tag tag-missing">{{ sk }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          {% if selected_job_gap.recommended_focus %}
+          <div class="fit-panel">
+            <h3>Recommended Focus</h3>
+            <div class="fit-list">
+              {% for f in selected_job_gap.recommended_focus %}
+              <span class="focus-chip">{{ f }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ═══════════════════════════════════════════
        RESUME PREVIEW
        ═══════════════════════════════════════════ -->
       <div class="resume-page" id="resume-section">

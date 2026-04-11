@@ -1853,6 +1853,50 @@ textarea {
   color: #fff;
 }
 
+/* ── M97 — Fit analysis panels ───────────────────────────────── */
+.fit-panel {
+  background: var(--bg-section, #f9fafb);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: var(--radius-md, 0.5rem);
+  padding: var(--space-md, 1rem);
+}
+.fit-panel h3 {
+  margin: 0 0 0.5rem;
+  font-size: var(--font-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.fit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md, 1rem);
+  margin-top: var(--space-sm, 0.5rem);
+}
+.fit-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+.gap-list {
+  margin: 0.5rem 0 0 1rem;
+  padding: 0;
+  font-size: var(--font-sm, 0.875rem);
+  color: var(--text-secondary, #4b5563);
+}
+.gap-list li {
+  margin-bottom: 0.25rem;
+}
+.focus-chip {
+  display: inline-block;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: var(--font-xs, 0.75rem);
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-sm, 0.25rem);
+}
+
 @media (max-width: 640px) {
   .job-grid { grid-template-columns: 1fr; }
   .job-filters { flex-direction: column; }

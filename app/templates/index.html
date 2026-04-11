@@ -283,57 +283,13 @@
           />
           <select name="job_remote" class="filter-select">
             <option value="">All</option>
-            <option
-              value="true"
-              {%
-              if
-              job_remote=""
-              ="true"
-              %}selected{%
-              endif
-              %}
-            >
-              Remote only
-            </option>
-            <option
-              value="false"
-              {%
-              if
-              job_remote=""
-              ="false"
-              %}selected{%
-              endif
-              %}
-            >
-              On-site only
-            </option>
+            <option value="true" {{ "selected" if job_remote=="true" else "" }}>Remote only</option>
+            <option value="false" {{ "selected" if job_remote=="false" else "" }}>On-site only</option>
           </select>
           <select name="job_source" class="filter-select">
             <option value="">All Sources</option>
-            <option
-              value="internal"
-              {%
-              if
-              job_source=""
-              ="internal"
-              %}selected{%
-              endif
-              %}
-            >
-              Internal
-            </option>
-            <option
-              value="external"
-              {%
-              if
-              job_source=""
-              ="external"
-              %}selected{%
-              endif
-              %}
-            >
-              External
-            </option>
+            <option value="internal" {{ "selected" if job_source=="internal" else "" }}>Internal</option>
+            <option value="external" {{ "selected" if job_source=="external" else "" }}>External</option>
           </select>
           <button type="submit" class="btn btn-primary btn-sm">Filter</button>
           {% if job_query or job_location or job_remote or job_source %}
@@ -431,6 +387,117 @@
         >
           No jobs match your filters. Try broadening your search.
         </p>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- ═══════════════════════════════════════════
+     SECTION — SELECTED JOB FIT ANALYSIS (M97)
+     ═══════════════════════════════════════════ -->
+      {% if selected_job_gap and selected_job_context %}
+      <div class="section" id="section-fit">
+        <h2 class="section-heading">
+          Job Fit Analysis — {{ selected_job_context.title }}
+        </h2>
+        <p style="color: var(--text-muted); margin-bottom: var(--space-md)">
+          {{ selected_job_context.company }} {% if selected_job_context.location
+          %} &middot; {{ selected_job_context.location }}{% endif %}
+        </p>
+
+        <div class="fit-grid">
+          <!-- Fit Score -->
+          <div class="fit-panel">
+            <h3 class="card-title">Fit Level</h3>
+            <span
+              class="score-display {% if selected_job_gap.fit_level == 'Strong' %}level-strong{% elif selected_job_gap.fit_level == 'Moderate' %}level-moderate{% else %}level-low{% endif %}"
+              style="font-size: var(--font-2xl)"
+            >
+              {{ (selected_job_gap.fit_score * 100)|int }}% — {{
+              selected_job_gap.fit_level }}
+            </span>
+          </div>
+
+          <!-- Why You Fit -->
+          <div class="fit-panel">
+            <h3 class="card-title">Why You Fit</h3>
+            {% if selected_job_gap.matched_skills %}
+            <div class="fit-list">
+              {% for sk in selected_job_gap.matched_skills %}
+              <span class="tag tag-matched">{{ sk }}</span>
+              {% endfor %}
+            </div>
+            {% endif %} {% if selected_job_gap.resume_strengths %}
+            <ul class="gap-list">
+              {% for s in selected_job_gap.resume_strengths %}
+              <li>{{ s }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+          </div>
+
+          <!-- What To Improve -->
+          <div class="fit-panel">
+            <h3 class="card-title">What To Improve</h3>
+            {% if selected_job_gap.missing_skills %}
+            <div class="fit-list">
+              {% for sk in selected_job_gap.missing_skills %}
+              <span class="tag tag-missing">{{ sk }}</span>
+              {% endfor %}
+            </div>
+            {% endif %} {% if selected_job_gap.resume_gaps %}
+            <ul class="gap-list">
+              {% for g in selected_job_gap.resume_gaps %}
+              <li>{{ g }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+          </div>
+
+          <!-- Recommended Focus -->
+          {% if selected_job_gap.recommended_focus %}
+          <div class="fit-panel">
+            <h3 class="card-title">Recommended Focus</h3>
+            <div class="fit-list">
+              {% for f in selected_job_gap.recommended_focus %}
+              <span class="focus-chip">{{ f }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Intelligence Hints -->
+          {% if selected_job_intel %}
+          <div class="fit-panel">
+            <h3 class="card-title">Job Insights</h3>
+            {% if selected_job_intel.seniority_hint %}
+            <p class="field">
+              <strong>Seniority:</strong> {{ selected_job_intel.seniority_hint
+              }}
+            </p>
+            {% endif %} {% if selected_job_intel.domain_hint %}
+            <p class="field">
+              <strong>Domain:</strong> {{ selected_job_intel.domain_hint }}
+            </p>
+            {% endif %} {% if selected_job_intel.responsibility_signals %}
+            <p class="field">
+              <strong>Key Responsibilities:</strong>
+              {{ selected_job_intel.responsibility_signals|join(', ') }}
+            </p>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+
+        {% if selected_job_context.apply_url or selected_job_context.url %}
+        <div style="text-align: center; margin-top: var(--space-md)">
+          <a
+            href="/apply/{{ selected_job_context.job_id }}"
+            target="_blank"
+            rel="noopener"
+            class="btn btn-accent"
+            >Apply Now &rarr;</a
+          >
+        </div>
         {% endif %}
       </div>
       {% endif %}
@@ -652,13 +719,7 @@
                 {% for s in allowed_statuses %}
                 <option
                   value="{{ s }}"
-                  {%
-                  if
-                  s=""
-                  ="job.status"
-                  %}selected{%
-                  endif
-                  %}
+                  {{ "selected" if s == job.status else "" }}
                 >
                   {{ s }}
                 </option>

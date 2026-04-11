@@ -124,6 +124,92 @@
       </div>
       {% endif %}
 
+      <!-- M98: Richer Job Intelligence -->
+      {% if job_gap_info %}
+      <div class="card">
+        <h2 class="card-title">Fit Analysis</h2>
+        <hr class="card-divider" />
+        <div class="fit-grid">
+          {% if job_gap_info.missing_skills %}
+          <div class="fit-panel">
+            <h3>Missing Skills</h3>
+            <div class="fit-list">
+              {% for sk in job_gap_info.missing_skills %}
+              <span class="tag tag-missing">{{ sk }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %} {% if job_gap_info.recommended_focus %}
+          <div class="fit-panel">
+            <h3>Recommended Focus</h3>
+            <div class="fit-list">
+              {% for f in job_gap_info.recommended_focus %}
+              <span class="focus-chip">{{ f }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %} {% if job_intel %}
+      <div class="card">
+        <h2 class="card-title">Job Insights</h2>
+        <hr class="card-divider" />
+        {% if job_intel.seniority_hint %}
+        <p class="field">
+          <strong>Seniority Level:</strong> {{ job_intel.seniority_hint }}
+        </p>
+        {% endif %} {% if job_intel.domain_hint %}
+        <p class="field">
+          <strong>Domain:</strong> {{ job_intel.domain_hint }}
+        </p>
+        {% endif %} {% if job_intel.required_skills %}
+        <h3>Required Skills</h3>
+        <div
+          style="
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: var(--space-sm);
+          "
+        >
+          {% for sk in job_intel.required_skills %}
+          <span class="tag tag-matched">{{ sk }}</span>
+          {% endfor %}
+        </div>
+        {% endif %} {% if job_intel.preferred_skills %}
+        <h3>Preferred Skills</h3>
+        <div
+          style="
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: var(--space-sm);
+          "
+        >
+          {% for sk in job_intel.preferred_skills %}
+          <span class="tag">{{ sk }}</span>
+          {% endfor %}
+        </div>
+        {% endif %} {% if job_intel.responsibility_signals %}
+        <p class="field">
+          <strong>Key Responsibilities:</strong>
+          {{ job_intel.responsibility_signals|join(', ') }}
+        </p>
+        {% endif %}
+      </div>
+      {% endif %} {% if job.apply_url or job.url %}
+      <div style="text-align: center; margin-bottom: var(--space-lg)">
+        <a
+          href="{{ job.apply_url or job.url }}"
+          target="_blank"
+          rel="noopener"
+          class="btn btn-accent"
+          >Apply Now &rarr;</a
+        >
+      </div>
+      {% endif %}
+
       <!-- Follow-Up Prompts (M37) -->
       {% if followup %}
       <div class="card">

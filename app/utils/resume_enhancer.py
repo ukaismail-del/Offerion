@@ -23,20 +23,26 @@ _STRONG_VERBS = [
 ]
 
 
-def enhance_resume(profile=None, tailored=None, rewrite=None, match=None):
+def enhance_resume(
+    profile=None, tailored=None, rewrite=None, match=None, job_context=None
+):
     """Build an enhanced resume object from analysis outputs.
 
     Returns a dict with polished summary, skills, experience bullets,
     education, and ATS notes. Returns None if insufficient data.
+    When *job_context* is provided (M96), skills and summary are
+    auto-targeted toward the selected job.
     """
     if not profile and not tailored:
         return None
 
-    target_title = _resolve_target_title(tailored, match)
+    target_title = _resolve_target_title(tailored, match, job_context)
     name = _resolve_field(profile, "name")
     contact = _build_contact_line(profile)
-    enhanced_summary = _build_summary(profile, tailored, rewrite, target_title)
-    enhanced_skills = _build_skills(profile, tailored)
+    enhanced_summary = _build_summary(
+        profile, tailored, rewrite, target_title, job_context
+    )
+    enhanced_skills = _build_skills(profile, tailored, job_context)
     enhanced_experience = _build_experience(tailored, rewrite)
     enhanced_education = _build_education(profile)
     ats_notes = _build_ats_notes(rewrite)
@@ -53,7 +59,9 @@ def enhance_resume(profile=None, tailored=None, rewrite=None, match=None):
     }
 
 
-def _resolve_target_title(tailored, match):
+def _resolve_target_title(tailored, match, job_context=None):
+    if job_context and job_context.get("title"):
+        return job_context["title"]
     if tailored and tailored.get("target_title"):
         return tailored["target_title"]
     if match and match.get("target_role"):
@@ -81,7 +89,7 @@ def _build_contact_line(profile):
     return " | ".join(parts)
 
 
-def _build_summary(profile, tailored, rewrite, target_title):
+def _build_summary(profile, tailored, rewrite, target_title, job_context=None):
     """Compose a polished 2-4 sentence professional summary."""
     fragments = []
 
@@ -91,15 +99,29 @@ def _build_summary(profile, tailored, rewrite, target_title):
     elif rewrite and rewrite.get("summary_focus"):
         fragments.extend(rewrite["summary_focus"])
 
+    # M96: incorporate job-specific focus when available
+    focus_areas_from_job = []
+    if job_context and job_context.get("gap"):
+        focus_areas_from_job = job_context["gap"].get("recommended_focus", [])
+
     if not fragments:
         skills = profile.get("skills", []) if profile else []
-        if target_title and skills:
+        # M96: prefer matched skills from job context
+        if job_context and job_context.get("matched_skills"):
+            top = ", ".join(job_context["matched_skills"][:4])
+        elif skills:
             top = ", ".join(skills[:4])
-            return (
+        else:
+            top = "core competencies"
+        if target_title and top:
+            summary = (
                 f"Results-driven professional with expertise in {top}, "
                 f"seeking to leverage proven capabilities in a {target_title} role. "
                 "Committed to delivering measurable outcomes and continuous improvement."
             )
+            if focus_areas_from_job:
+                summary += f" Key focus: {focus_areas_from_job[0]}."
+            return summary
         return (
             "Dedicated professional with a strong track record of delivering results. "
             "Seeking to apply core competencies to drive impact in the target role."
@@ -136,10 +158,18 @@ def _build_summary(profile, tailored, rewrite, target_title):
     return summary
 
 
-def _build_skills(profile, tailored):
+def _build_skills(profile, tailored, job_context=None):
     """Deduplicated, priority-ordered skill list."""
     skills = []
     seen = set()
+
+    # M96: job-targeted required skills first
+    if job_context and job_context.get("intelligence"):
+        for s in job_context["intelligence"].get("required_skills", []):
+            s = s.strip()
+            if s and s.lower() not in seen:
+                skills.append(s)
+                seen.add(s.lower())
 
     # Priority: tailored skills first
     if tailored and tailored.get("skills_to_feature"):

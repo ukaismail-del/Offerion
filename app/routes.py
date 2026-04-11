@@ -99,6 +99,8 @@ from app.utils.tier_config import (
 from app.utils.job_data import find_job_by_id
 from app.utils.job_feed import get_unified_jobs
 from app.utils.job_matcher import match_jobs
+from app.utils.job_intelligence import extract_job_intelligence
+from app.utils.job_gap_analyzer import analyze_job_gap
 
 logger = logging.getLogger(__name__)
 
@@ -469,6 +471,9 @@ def dashboard():
         job_location=job_location,
         job_remote=job_remote,
         job_source=job_source,
+        selected_job_intel=session.get("selected_job_intelligence"),
+        selected_job_gap=session.get("selected_job_gap"),
+        selected_job_context=report_data.get("job_context") if report_data else None,
         show_quick_start=bool(session.get("report_data"))
         and not session.get("application_packages"),
         show_enhance_cta=bool(session.get("report_data"))
@@ -697,6 +702,9 @@ def resume_preview():
         get_source_label=get_source_label,
         next_best_action=next_action,
         upgrade_nudge_message=_upgrade_nudge(),
+        selected_job_intel=session.get("selected_job_intelligence"),
+        selected_job_gap=session.get("selected_job_gap"),
+        selected_job_context=report_data.get("job_context") if report_data else None,
         **_tier_ctx(),
     )
 
@@ -1146,6 +1154,9 @@ def open_job(job_id):
 
     # M74: Compute match info if job came from dataset
     job_match_info = None
+    job_intel = None
+    job_gap_info = None
+    dataset_job = None
     if job.get("dataset_job_id"):
         dataset_job = find_job_by_id(job["dataset_job_id"])
         if dataset_job:
@@ -1162,12 +1173,18 @@ def open_job(job_id):
                 "score": score,
                 "description": dataset_job.get("description", ""),
             }
+            # M98: compute richer intelligence + gap
+            job_intel = extract_job_intelligence(dataset_job)
+            if report_data:
+                job_gap_info = analyze_job_gap(report_data, dataset_job)
 
     return render_template(
         "job_detail.html",
         job=job,
         followup=followup,
         job_match_info=job_match_info,
+        job_intel=job_intel,
+        job_gap_info=job_gap_info,
         alerts=get_active_alerts(session.get("alerts", [])),
         allowed_statuses=ALLOWED_STATUSES,
         **_tier_ctx(),
@@ -1291,6 +1308,7 @@ def prepare_application():
             tailored=report_data.get("tailored"),
             rewrite=report_data.get("rewrite"),
             match=report_data.get("match"),
+            job_context=report_data.get("job_context"),
         )
         if enhanced:
             session["enhanced_resume"] = enhanced
@@ -1303,6 +1321,7 @@ def prepare_application():
             rewrite=report_data.get("rewrite"),
             match=report_data.get("match"),
             enhanced_resume=session.get("enhanced_resume"),
+            job_context=report_data.get("job_context"),
         )
         if draft:
             session["cover_letter_draft"] = draft
@@ -1575,6 +1594,15 @@ def job_match(job_id):
         "posted_at": job.get("posted_at"),
         "freshness_score": freshness_score,
     }
+    session["report_data"] = report_data
+
+    # M95: Compute and store job intelligence + gap analysis
+    job_intel = extract_job_intelligence(job)
+    job_gap = analyze_job_gap(report_data, job)
+    session["selected_job_intelligence"] = job_intel
+    session["selected_job_gap"] = job_gap
+    report_data["job_context"]["intelligence"] = job_intel
+    report_data["job_context"]["gap"] = job_gap
     session["report_data"] = report_data
 
     _log_event("job_match_clicked", {"job_id": job_id})
