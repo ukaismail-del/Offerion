@@ -896,6 +896,7 @@ def generate_cover_letter_route():
         rewrite=report_data.get("rewrite"),
         match=report_data.get("match"),
         enhanced_resume=enhanced_resume,
+        job_context=report_data.get("job_context"),
     )
 
     if draft:
@@ -928,7 +929,12 @@ def enhance_cover_letter_route():
         return redirect(url_for("main.resume_preview"))
 
     enhanced_resume = session.get("enhanced_resume")
-    enhanced_cl = enhance_cover_letter(draft, enhanced_resume)
+    report_data = session.get("report_data")
+    enhanced_cl = enhance_cover_letter(
+        draft,
+        enhanced_resume,
+        job_context=(report_data or {}).get("job_context"),
+    )
 
     if enhanced_cl:
         session["enhanced_cover_letter"] = enhanced_cl
@@ -1072,28 +1078,28 @@ def open_application_package(package_id):
     if not pkg:
         return redirect(url_for("main.dashboard"))
 
-    report_data, enhanced_resume, cl_draft, enhanced_cl = load_package(pkg)
+    # M105: wrap load in try/except so stale/corrupt packages degrade gracefully
+    try:
+        report_data, enhanced_resume, cl_draft, enhanced_cl = load_package(pkg)
+    except Exception:
+        logger.warning("Package %s failed to load; redirecting.", package_id)
+        return redirect(url_for("main.dashboard"))
+
+    # M105: ensure report_data is at least a dict so downstream never crashes
+    if not report_data or not isinstance(report_data, dict):
+        report_data = {}
+
     session["report_data"] = report_data
     session["enhanced_resume"] = enhanced_resume
     session["cover_letter_draft"] = cl_draft
     session["enhanced_cover_letter"] = enhanced_cl
-    _refresh_intelligence(report_data)
 
-    # M100: rehydrate selected-job intelligence from package context
-    job_ctx = (report_data or {}).get("job_context")
-    if job_ctx:
-        intel = job_ctx.get("intelligence") or pkg.get("selected_job_intelligence")
-        gap = job_ctx.get("gap") or pkg.get("selected_job_gap")
-        if intel:
-            session["selected_job_intelligence"] = intel
-        if gap:
-            session["selected_job_gap"] = gap
-        # If not embedded, regenerate on the fly
-        if not intel or not gap:
-            _selected_job_state()  # will regenerate and cache
-    else:
-        session.pop("selected_job_intelligence", None)
-        session.pop("selected_job_gap", None)
+    # M105: only refresh intelligence when report_data has content
+    if report_data:
+        _refresh_intelligence(report_data)
+
+    # M100/M105: rehydrate selected-job intelligence from package context
+    _rehydrate_selected_job(pkg, report_data)
 
     update_memory(
         session,
@@ -1107,6 +1113,35 @@ def open_application_package(package_id):
     )
 
     return redirect(url_for("main.resume_preview"))
+
+
+def _rehydrate_selected_job(pkg, report_data):
+    """M105: Safely restore selected-job intel/gap from a package.
+
+    Uses package-embedded data first, falls back to job_context fields,
+    and finally attempts regeneration via ``_selected_job_state()``.
+    """
+    job_ctx = (report_data or {}).get("job_context")
+    if not job_ctx:
+        session.pop("selected_job_intelligence", None)
+        session.pop("selected_job_gap", None)
+        return
+
+    # Prefer package-level snapshots (M100), fall back to inline context
+    intel = pkg.get("selected_job_intelligence") or job_ctx.get("intelligence")
+    gap = pkg.get("selected_job_gap") or job_ctx.get("gap")
+
+    if intel:
+        session["selected_job_intelligence"] = intel
+    if gap:
+        session["selected_job_gap"] = gap
+
+    # If still missing, regenerate on the fly
+    if not intel or not gap:
+        try:
+            _selected_job_state()
+        except Exception:
+            logger.debug("_rehydrate_selected_job: regen failed", exc_info=True)
 
 
 @main_bp.route("/application-package/<package_id>/download")

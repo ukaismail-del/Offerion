@@ -41,6 +41,9 @@ def enhance_cover_letter(cover_letter_draft, enhanced_resume=None, job_context=N
         recipient, enhanced_opening, enhanced_body, enhanced_closing, name
     )
 
+    # M107/M108: note the targeting mode
+    targeting_mode = "job-targeted" if job_context else "generic"
+
     return {
         "recipient": recipient,
         "company": company,
@@ -49,6 +52,7 @@ def enhance_cover_letter(cover_letter_draft, enhanced_resume=None, job_context=N
         "enhanced_body": enhanced_body,
         "enhanced_closing": enhanced_closing,
         "full_text": full_text,
+        "targeting_mode": targeting_mode,
     }
 
 

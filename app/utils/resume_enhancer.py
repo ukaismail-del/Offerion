@@ -47,6 +47,9 @@ def enhance_resume(
     enhanced_education = _build_education(profile)
     ats_notes = _build_ats_notes(rewrite)
 
+    # M107/M108: targeting metadata for UX clarity + explainability
+    targeting = _build_targeting_metadata(job_context, enhanced_skills, profile)
+
     return {
         "name": name,
         "contact": contact,
@@ -56,6 +59,7 @@ def enhance_resume(
         "enhanced_experience_bullets": enhanced_experience,
         "enhanced_education": enhanced_education,
         "ats_alignment_notes": ats_notes,
+        "targeting": targeting,
     }
 
 
@@ -271,3 +275,49 @@ def _build_ats_notes(rewrite):
         kws = ", ".join(rewrite["keyword_additions"][:5])
         notes.append(f"Consider weaving in: {kws}")
     return notes
+
+
+# ------------------------------------------------------------------
+# M107/M108 — Targeting metadata
+# ------------------------------------------------------------------
+
+
+def _build_targeting_metadata(job_context, enhanced_skills, profile):
+    """Return a compact dict describing what influenced the enhancement.
+
+    Keys:
+        mode       – "job-targeted" | "generic"
+        job_title  – the job title used, or None
+        company    – the company used, or None
+        matched    – skills the candidate already has that matched the job
+        emphasized – focus areas that were prioritised
+        omitted    – missing skills NOT inserted (user should review)
+    """
+    if not job_context:
+        return {
+            "mode": "generic",
+            "job_title": None,
+            "company": None,
+            "matched": [],
+            "emphasized": [],
+            "omitted": [],
+        }
+
+    matched = job_context.get("matched_skills") or []
+    gap = job_context.get("gap") or {}
+    intel = job_context.get("intelligence") or {}
+    missing = gap.get("missing_skills") or intel.get("preferred_skills") or []
+    focus = gap.get("recommended_focus") or []
+
+    # Skills that were in the job but NOT inserted into the resume
+    enhanced_lower = {s.lower() for s in (enhanced_skills or [])}
+    omitted = [s for s in missing if s.lower() not in enhanced_lower]
+
+    return {
+        "mode": "job-targeted",
+        "job_title": job_context.get("title"),
+        "company": job_context.get("company"),
+        "matched": list(matched[:8]),
+        "emphasized": list(focus[:4]),
+        "omitted": list(omitted[:6]),
+    }

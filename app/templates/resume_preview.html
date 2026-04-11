@@ -365,6 +365,90 @@
       </div>
 
       <!-- ═══════════════════════════════════════════
+       M107/M108 — TARGETING CONTEXT + EXPLAINABILITY
+       ═══════════════════════════════════════════ -->
+      {% if enhanced and enhanced.targeting %}
+      <div class="card" id="targeting-section">
+        {% if enhanced.targeting.mode == "job-targeted" %}
+        <h2 class="card-title">
+          Targeted for: {{ enhanced.targeting.job_title or "Selected Job" }} {%
+          if enhanced.targeting.company %} at {{ enhanced.targeting.company }}{%
+          endif %}
+        </h2>
+        <hr class="card-divider" />
+        <p class="form-hint" style="margin-bottom: var(--space-sm)">
+          This resume was tailored to the selected job. Review all sections
+          before submitting — outputs are guidance, not final copy.
+        </p>
+        {% if enhanced.targeting.matched %}
+        <div style="margin-bottom: var(--space-sm)">
+          <strong style="font-size: var(--font-sm)"
+            >Skills that matched:</strong
+          >
+          <div class="fit-list" style="margin-top: 0.3rem">
+            {% for sk in enhanced.targeting.matched %}
+            <span class="tag tag-matched">{{ sk }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %} {% if enhanced.targeting.omitted %}
+        <div style="margin-bottom: var(--space-sm)">
+          <strong style="font-size: var(--font-sm)"
+            >Not inserted (review manually):</strong
+          >
+          <div class="fit-list" style="margin-top: 0.3rem">
+            {% for sk in enhanced.targeting.omitted %}
+            <span class="tag tag-missing">{{ sk }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %} {% if enhanced.targeting.emphasized %}
+        <div>
+          <strong style="font-size: var(--font-sm)"
+            >Focus areas emphasized:</strong
+          >
+          <div class="fit-list" style="margin-top: 0.3rem">
+            {% for f in enhanced.targeting.emphasized %}
+            <span class="focus-chip">{{ f }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %} {% else %}
+        <h2 class="card-title">Generic Enhancement</h2>
+        <hr class="card-divider" />
+        <p class="form-hint">
+          This resume was enhanced without a specific job target. Select a job
+          from the dashboard to get a tailored version with skill matching and
+          gap analysis.
+        </p>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- ═══════════════════════════════════════════
+       M107 — COVER LETTER TARGETING LABEL
+       ═══════════════════════════════════════════ -->
+      {% if enhanced_cover_letter and enhanced_cover_letter.targeting_mode %}
+      <div class="card" style="margin-bottom: var(--space-md)">
+        {% if enhanced_cover_letter.targeting_mode == "job-targeted" %}
+        <p class="form-hint" style="margin: 0">
+          <strong>Cover letter</strong> was tailored to
+          <strong>{{ enhanced_cover_letter.target_title }}</strong>
+          {% if enhanced_cover_letter.company and enhanced_cover_letter.company
+          != "your organization" %} at
+          <strong>{{ enhanced_cover_letter.company }}</strong>{% endif %}.
+          Review before sending.
+        </p>
+        {% else %}
+        <p class="form-hint" style="margin: 0">
+          <strong>Cover letter</strong> uses generic positioning. Select a job
+          on the dashboard for a targeted version.
+        </p>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- ═══════════════════════════════════════════
        COVER LETTER PREVIEW
        ═══════════════════════════════════════════ -->
       {% if enhanced_cover_letter or cover_letter_draft %}

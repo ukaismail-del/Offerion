@@ -739,7 +739,7 @@
             <div class="item-actions">
               <select
                 class="status-select"
-                onchange="if(this.value) window.location='/job/'+{{ job.id }}+'/status/'+this.value"
+                onchange="if(this.value) window.location='/job/'+'{{ job.id }}'+'/status/'+this.value"
               >
                 <option value="">Status…</option>
                 {% for s in allowed_statuses %}
