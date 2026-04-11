@@ -1,34 +1,20 @@
-"""M75 — Job Feed Abstraction Layer.
+"""M75/M82 — Job Feed Abstraction Layer.
 
 Provides a single entry-point for fetching jobs with optional filters.
-Currently backed by the static dataset; designed so an external API
-source can be swapped in later without changing callers.
+``get_unified_jobs`` merges internal + external sources with deduplication.
+``fetch_jobs`` filters a given list (or the internal dataset) by query/location/remote.
 """
 
+import logging
+
 from app.utils.job_data import get_all_jobs
+from app.utils.job_sources import fetch_external_jobs
+
+logger = logging.getLogger(__name__)
 
 
-def fetch_jobs(query=None, location=None, remote=None, limit=25):
-    """Return jobs matching the given filters.
-
-    Parameters
-    ----------
-    query : str | None
-        Free-text search matched against job title, company, and skills.
-    location : str | None
-        Substring match on the job's location field.
-    remote : bool | None
-        If True, only remote jobs. If False, only on-site. None = all.
-    limit : int
-        Maximum results to return.
-
-    Returns
-    -------
-    list[dict]
-        Filtered list of job dicts (same shape as job_data entries).
-    """
-    jobs = get_all_jobs()
-
+def _apply_filters(jobs, query=None, location=None, remote=None):
+    """Apply query/location/remote filters to a job list."""
     if remote is not None:
         jobs = [j for j in jobs if j.get("remote") is remote]
 
@@ -51,4 +37,58 @@ def fetch_jobs(query=None, location=None, remote=None, limit=25):
                 filtered.append(j)
         jobs = filtered
 
+    return jobs
+
+
+def _dedup_key(job):
+    """Normalised deduplication key: (title, company, location)."""
+    return (
+        job.get("title", "").lower().strip(),
+        job.get("company", "").lower().strip(),
+        job.get("location", "").lower().strip(),
+    )
+
+
+def get_unified_jobs(query=None, location=None, remote=None, limit=25):
+    """Merge internal dataset + external jobs, deduplicate, filter, return.
+
+    When duplicates exist (same title+company+location), the external
+    version is preferred because it typically has richer metadata
+    (posted_at, url, source_name).
+    """
+    # Fetch from both sources
+    internal = get_all_jobs()
+    try:
+        external = fetch_external_jobs(
+            query=query, location=location, remote=remote, limit=limit,
+        )
+    except Exception:
+        logger.exception("External job fetch failed; using internal only")
+        external = []
+
+    # Tag internal jobs with source if not already present
+    for j in internal:
+        j.setdefault("source", "internal")
+        j.setdefault("posted_at", None)
+        j.setdefault("url", None)
+
+    # Build deduplicated dict — external wins on collision
+    seen = {}
+    for j in internal:
+        seen[_dedup_key(j)] = j
+    for j in external:
+        seen[_dedup_key(j)] = j  # overwrites internal duplicate
+
+    merged = list(seen.values())
+
+    # Apply filters on the merged list
+    merged = _apply_filters(merged, query=query, location=location, remote=remote)
+
+    return merged[:limit]
+
+
+def fetch_jobs(query=None, location=None, remote=None, limit=25):
+    """Filter internal jobs only (legacy helper, still used by some callers)."""
+    jobs = get_all_jobs()
+    jobs = _apply_filters(jobs, query=query, location=location, remote=remote)
     return jobs[:limit]

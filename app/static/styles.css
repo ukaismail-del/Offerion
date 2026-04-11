@@ -1795,6 +1795,39 @@ textarea {
   border-radius: var(--radius-sm);
 }
 
+/* ── Source + Freshness badges (M84) ─────────────────────────── */
+.job-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.15rem 0;
+}
+.badge-source {
+  display: inline-block;
+  font-size: var(--font-xs);
+  font-weight: 600;
+  padding: 0.12rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+.badge-source-internal { background: #eef6ee; color: #27ae60; }
+.badge-source-external { background: #f0e8fd; color: #8e44ad; }
+.badge-fresh {
+  display: inline-block;
+  font-size: var(--font-xs);
+  font-weight: 600;
+  background: #e8f8f0;
+  color: #1abc9c;
+  padding: 0.12rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+.badge-fresh-mid { background: #fff8e1; color: #f39c12; }
+.badge-fresh-old { background: #fde8e8; color: #c0392b; }
+.badge-fresh-na  { background: var(--bg-section); color: var(--text-muted); }
+.job-link {
+  font-weight: 600;
+}
+
 @media (max-width: 640px) {
   .job-grid { grid-template-columns: 1fr; }
   .job-filters { flex-direction: column; }

@@ -97,7 +97,7 @@ from app.utils.tier_config import (
     TIER_ORDER,
 )
 from app.utils.job_data import find_job_by_id
-from app.utils.job_feed import fetch_jobs
+from app.utils.job_feed import get_unified_jobs
 from app.utils.job_matcher import match_jobs
 
 logger = logging.getLogger(__name__)
@@ -419,7 +419,7 @@ def dashboard():
     remote_flag = True if job_remote == "true" else (False if job_remote == "false" else None)
 
     if report_data:
-        filtered_jobs = fetch_jobs(
+        filtered_jobs = get_unified_jobs(
             query=job_query or None,
             location=job_location or None,
             remote=remote_flag,
@@ -1088,7 +1088,7 @@ def save_job_route():
     user_id = session.get("user_id")
     report_data = session.get("report_data")
 
-    # M73/M79: Use job_context from dataset if available
+    # M73/M79/M85: Use job_context from dataset/external if available
     job_ctx = report_data.get("job_context") if report_data else None
     if job_ctx:
         job = create_saved_job(
@@ -1099,10 +1099,14 @@ def save_job_route():
             session_data=session,
         )
         job["dataset_job_id"] = job_ctx.get("job_id")
-        job["source"] = "internal"
+        job["source"] = job_ctx.get("source", "internal")
+        job["source_name"] = job_ctx.get("source_name")
         job["skills"] = job_ctx.get("skills", [])
         job["matched_skills"] = job_ctx.get("matched_skills", job_ctx.get("skills", []))
         job["missing_skills"] = job_ctx.get("missing_skills", [])
+        job["url"] = job_ctx.get("url")
+        job["posted_at"] = job_ctx.get("posted_at")
+        job["freshness_score"] = job_ctx.get("freshness_score")
     else:
         job = create_saved_job(report_data=report_data, session_data=session)
     saved_jobs = session.get("saved_jobs", [])
@@ -1520,12 +1524,17 @@ def capture_email():
 
 @main_bp.route("/job-match/<job_id>")
 def job_match(job_id):
-    """Inject a dataset job into session context, then prepare application."""
+    """Inject a dataset/external job into session context, then prepare application."""
     blocked = _gate("prepare_application")
     if blocked:
         return blocked
 
+    # Try internal dataset first, then search unified feed for external jobs
     job = find_job_by_id(job_id)
+    if not job:
+        # Check unified feed (may be an external job)
+        unified = get_unified_jobs()
+        job = next((j for j in unified if j.get("id") == job_id), None)
     if not job:
         return redirect(url_for("main.dashboard"))
 
@@ -1538,10 +1547,11 @@ def job_match(job_id):
         report_data["match"] = {}
     report_data["match"]["target_role"] = job["title"]
 
-    # Compute match info for this specific job (M79)
+    # Compute match info for this specific job (M79/M85)
     match_result = match_jobs(report_data, jobs=[job], limit=1)
     matched_skills = match_result[0]["matched_skills"] if match_result else []
     missing_skills = match_result[0]["missing_skills"] if match_result else []
+    freshness_score = match_result[0].get("freshness_score") if match_result else None
 
     report_data["job_context"] = {
         "job_id": job["id"],
@@ -1552,6 +1562,11 @@ def job_match(job_id):
         "skills": job.get("skills", []),
         "matched_skills": matched_skills,
         "missing_skills": missing_skills,
+        "source": job.get("source", "internal"),
+        "source_name": job.get("source_name"),
+        "url": job.get("url"),
+        "posted_at": job.get("posted_at"),
+        "freshness_score": freshness_score,
     }
     session["report_data"] = report_data
 

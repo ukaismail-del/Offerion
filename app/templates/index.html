@@ -259,7 +259,7 @@
       <!-- /section-actions -->
 
       <!-- ═══════════════════════════════════════════
-     SECTION — RECOMMENDED JOBS (M71/M77/M80)
+     SECTION — RECOMMENDED JOBS (M71/M77/M80/M84)
      ═══════════════════════════════════════════ -->
       {% if recommended_jobs or report_data_exists %}
       <div class="section" id="section-jobs">
@@ -293,6 +293,24 @@
               {% if rj.location %}<span>&middot; {{ rj.location }}</span>{% endif %}
               {% if rj.remote %}<span class="badge-remote">Remote</span>{% endif %}
             </div>
+            <div class="job-meta-row">
+              {% if rj.source == 'external' %}
+              <span class="badge-source badge-source-external">External</span>
+              {% else %}
+              <span class="badge-source badge-source-internal">Internal</span>
+              {% endif %}
+              {% if rj.posted_at %}
+                {% if rj.freshness_score is defined and rj.freshness_score >= 0.7 %}
+                <span class="badge-fresh">Posted recently</span>
+                {% elif rj.freshness_score is defined and rj.freshness_score >= 0.3 %}
+                <span class="badge-fresh badge-fresh-mid">Posted 7+ days ago</span>
+                {% else %}
+                <span class="badge-fresh badge-fresh-old">Posted 14+ days ago</span>
+                {% endif %}
+              {% else %}
+              <span class="badge-fresh badge-fresh-na">Date unavailable</span>
+              {% endif %}
+            </div>
             <div class="job-skill-breakdown">
               {% for sk in rj.matched_skills %}
               <span class="tag tag-matched">{{ sk }}</span>
@@ -309,6 +327,9 @@
               {% endif %}
               {% if has_access('save_job') %}
               <a href="/job-match/{{ rj.id }}" class="btn btn-secondary btn-sm">Save Job</a>
+              {% endif %}
+              {% if rj.url %}
+              <a href="{{ rj.url }}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm job-link">View Listing &rarr;</a>
               {% endif %}
             </div>
           </div>
