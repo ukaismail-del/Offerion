@@ -20,6 +20,7 @@ from app.utils.resume_analyzer import analyze_resume
 from app.utils.resume_parser import extract_text, get_file_extension, preview_text
 from app.utils.job_compare import compare_resume_to_jd
 from app.utils.resume_feedback import generate_feedback
+from app.utils.rewrite_guidance import generate_rewrite_guidance
 from app.utils.role_suggester import suggest_roles
 from app.utils.storage import save_file, delete_file
 
@@ -42,6 +43,7 @@ def index():
     suggestions = None
     feedback = None
     jd_comparison = None
+    rewrite = None
 
     if request.method == "POST":
         if "resume" not in request.files:
@@ -104,6 +106,10 @@ def index():
                                 text, profile, match, jd_comparison
                             )
 
+                            rewrite = generate_rewrite_guidance(
+                                text, profile, match, jd_comparison
+                            )
+
                             session["report_data"] = {
                                 "result": result,
                                 "profile": profile,
@@ -111,6 +117,7 @@ def index():
                                 "suggestions": suggestions,
                                 "feedback": feedback,
                                 "jd_comparison": jd_comparison,
+                                "rewrite": rewrite,
                             }
                             logger.info("Analysis complete for: %s", filename)
                     except Exception as exc:
@@ -129,6 +136,7 @@ def index():
         suggestions=suggestions,
         feedback=feedback,
         jd_comparison=jd_comparison,
+        rewrite=rewrite,
     )
 
 
@@ -145,6 +153,7 @@ def download_report():
         suggestions=report_data.get("suggestions"),
         feedback=report_data.get("feedback"),
         jd_comparison=report_data.get("jd_comparison"),
+        rewrite=report_data.get("rewrite"),
     )
 
     return Response(

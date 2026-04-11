@@ -125,6 +125,27 @@ Paste a job description alongside your resume upload to get a tailored compariso
 
 All comparison logic is rule-based and local. No live job scraping, AI, or external APIs are used.
 
+## Module 13 — ATS Rewrite Guidance
+
+After analysis, Offerion generates structured rewrite guidance to help you tailor your resume for ATS (Applicant Tracking System) screening.
+
+**Guidance sections:**
+
+- **Summary Focus** — how to write or improve your professional summary for the target role
+- **Keyword Additions** — specific missing keywords to add to your resume (from target role and/or job description)
+- **Bullet Improvements** — tips for rewriting experience bullets with stronger action verbs and measurable outcomes
+- **Section Improvements** — structural suggestions (contact info, skills layout, education, formatting)
+- **ATS Notes** — overall ATS readiness assessment based on your scores and keyword overlap
+
+**Behavior:**
+
+- If a job description is pasted, guidance incorporates JD-specific keyword gaps
+- If a target role is entered, guidance references match score and missing terms
+- If neither is provided, general best-practice guidance is still generated
+- The downloadable report includes the ATS Rewrite Guidance section when available
+
+All guidance is rule-based and local. No AI-powered rewriting is performed yet — a future module may add that capability.
+
 ## Run Locally
 
 ```

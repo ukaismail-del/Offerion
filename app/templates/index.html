@@ -309,6 +309,60 @@
         font-family: Arial, sans-serif;
         resize: vertical;
       }
+      .rewrite-box {
+        text-align: left;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 1.2rem;
+        margin-top: 1.5rem;
+      }
+      .rewrite-box h2 {
+        font-size: 1.2rem;
+        margin: 0 0 0.8rem 0;
+      }
+      .rewrite-box h3 {
+        font-size: 1rem;
+        margin: 1rem 0 0.4rem 0;
+        color: #333;
+      }
+      .rw-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .rw-list li {
+        font-size: 0.9rem;
+        color: #555;
+        padding: 0.3rem 0 0.3rem 1.2rem;
+        position: relative;
+        line-height: 1.4;
+      }
+      .rw-list li::before {
+        position: absolute;
+        left: 0;
+      }
+      .rw-focus li::before {
+        content: "\25B8";
+        color: #7c3aed;
+      }
+      .rw-keyword li::before {
+        content: "+";
+        color: #16a34a;
+        font-weight: bold;
+      }
+      .rw-bullet li::before {
+        content: "\270E";
+        color: #ca8a04;
+      }
+      .rw-section li::before {
+        content: "\2692";
+        color: #2563eb;
+      }
+      .rw-ats li::before {
+        content: "\2139";
+        color: #6b7280;
+      }
     </style>
   </head>
   <body>
@@ -473,6 +527,45 @@
           {% if check.passed %}&#10003;{% else %}&#10007;{% endif %} {{ check.label }}
         </p>
         {% endfor %}
+      </div>
+      {% endif %} {% if rewrite %}
+      <div class="rewrite-box">
+        <h2>ATS Rewrite Guidance</h2>
+
+        <h3>Summary Focus</h3>
+        <ul class="rw-list rw-focus">
+          {% for item in rewrite.summary_focus %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <h3>Keyword Additions</h3>
+        <ul class="rw-list rw-keyword">
+          {% for item in rewrite.keyword_additions %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <h3>Bullet Improvements</h3>
+        <ul class="rw-list rw-bullet">
+          {% for item in rewrite.bullet_improvements %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <h3>Section Improvements</h3>
+        <ul class="rw-list rw-section">
+          {% for item in rewrite.section_improvements %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <h3>ATS Notes</h3>
+        <ul class="rw-list rw-ats">
+          {% for item in rewrite.ats_notes %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
       </div>
       {% endif %} {% if profile %}
       <div class="profile-box">

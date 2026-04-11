@@ -1,7 +1,7 @@
 from datetime import datetime
 
 
-def build_report(result, profile, match, suggestions, feedback, jd_comparison=None):
+def build_report(result, profile, match, suggestions, feedback, jd_comparison=None, rewrite=None):
     """Build a plain-text analysis report from Offerion results.
 
     Returns a formatted string ready for download.
@@ -181,6 +181,38 @@ def build_report(result, profile, match, suggestions, feedback, jd_comparison=No
     else:
         lines.append("No feedback data available.")
     lines.append("")
+
+    # --- ATS Rewrite Guidance ---
+    if rewrite:
+        lines.append(sub)
+        lines.append("ATS REWRITE GUIDANCE")
+        lines.append(sub)
+        lines.append("")
+
+        lines.append("Summary Focus:")
+        for item in rewrite.get("summary_focus", []):
+            lines.append(f"  > {item}")
+        lines.append("")
+
+        lines.append("Keyword Additions:")
+        for item in rewrite.get("keyword_additions", []):
+            lines.append(f"  + {item}")
+        lines.append("")
+
+        lines.append("Bullet Improvements:")
+        for item in rewrite.get("bullet_improvements", []):
+            lines.append(f"  * {item}")
+        lines.append("")
+
+        lines.append("Section Improvements:")
+        for item in rewrite.get("section_improvements", []):
+            lines.append(f"  # {item}")
+        lines.append("")
+
+        lines.append("ATS Notes:")
+        for item in rewrite.get("ats_notes", []):
+            lines.append(f"  i {item}")
+        lines.append("")
 
     lines.append(sep)
     lines.append("END OF REPORT")
