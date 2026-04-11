@@ -17,6 +17,11 @@ def create_app():
     app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB
     app.secret_key = os.environ.get("SECRET_KEY", "offerion-local-dev-key")
 
+    # M46: Database initialization
+    from app.db import init_db
+
+    init_db(app)
+
     from app.routes import main_bp
 
     app.register_blueprint(main_bp)

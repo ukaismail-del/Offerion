@@ -677,6 +677,7 @@ Suggests the most logical next step based on current session state.
 **Function:** `get_next_action(session)`
 
 **Logic chain (priority order):**
+
 1. No report_data → Analyze Resume
 2. No enhanced_resume → Enhance Resume
 3. No cover_letter_draft → Generate Cover Letter
@@ -697,6 +698,7 @@ Auto-fills labels and fields from session context to reduce friction.
 **Sources:** `report_data.match.target_role`, `tailored.target_title`, `session_memory`
 
 **Applied to:**
+
 - Resume version labels (`resume_versioning.py`)
 - Application package labels (`application_package.py`)
 - Saved job titles and companies (`job_tracker.py`)
@@ -722,6 +724,7 @@ Single action that prepares a complete application.
 **Route:** `GET /prepare-application`
 
 **Steps:**
+
 1. Ensure report_data exists
 2. Enhance resume if not done
 3. Generate cover letter if not done
@@ -729,6 +732,7 @@ Single action that prepares a complete application.
 5. Save application package
 
 **Integration:**
+
 - Updates session_memory with active package
 - Records "Application prepared for [role]" event
 - Redirects to `/resume-preview`
@@ -744,6 +748,91 @@ Single action that prepares a complete application.
 - Smart auto-fill uses session memory for intelligent labels
 - All automation actions update session memory and activity timeline
 - Existing M38-M41 flows remain fully intact
+
+---
+
+## Bundle G — Persistence Layer (M46-M49)
+
+### Module 46 — Database Foundation
+
+Adds a lean SQLAlchemy-backed database layer with SQLite for local development and `DATABASE_URL` compatibility for future Postgres deployment.
+
+**Files:** `app/db.py`, `app/models.py`
+
+**Models:**
+
+- `UserIdentity`
+- `SavedJob`
+- `ResumeVersion`
+- `ApplicationPackage`
+- `Alert`
+- `ActivityEvent`
+
+**Notes:**
+
+- Local DB file lives in `instance/offerion.db`
+- Startup falls back gracefully to session-only behavior if DB init fails
+
+---
+
+### Module 47 — Persistent Core Records
+
+Offerion now persists key user records while keeping existing session behavior intact.
+
+**Persisted records:**
+
+- Saved jobs
+- Resume versions
+- Application packages
+- Alerts
+- Activity timeline events
+
+**File:** `app/utils/persistence.py`
+
+**Approach:**
+
+- Session remains the active in-request state
+- DB mirrors writes when available
+- Dashboard and preview hydrate session state from DB on load
+- Nested V1 payloads are stored as JSON/text blobs
+
+---
+
+### Module 48 — Auth-Ready User Identity Layer
+
+Introduces an anonymous persistent user identity linked to all database records.
+
+**File:** `app/utils/identity.py`
+
+**Behavior:**
+
+- Creates a lightweight anonymous identity automatically
+- Stores the identity in the Flask session cookie
+- Marks the session permanent so records can survive browser restarts
+- Falls back to a local anonymous session id if the DB is unavailable
+
+---
+
+### Module 49 — Persistent Activity + Alerts
+
+Activity history and alerts now survive refreshes and session resets for the active identity.
+
+**Coverage:**
+
+- Alert creation, completion, deletion
+- Recent activity timeline events
+- Dashboard reload from persisted records
+- Graceful fallback to session-only behavior when DB access fails
+
+---
+
+**M46-M49 Integration:**
+
+- Existing M22-M45 flows continue using the same session shapes
+- DB writes happen on existing save/update/delete routes
+- Hydration happens automatically before each request
+- Package persistence avoids duplicate snapshots when content is unchanged
+- SQLite is the default local/dev store and the config is ready for future Postgres migration
 
 ## Run Locally
 

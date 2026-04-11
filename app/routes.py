@@ -62,10 +62,31 @@ from app.utils.alerts import (
     get_active_alerts,
 )
 from app.utils.followup_prompts import generate_followup_prompts
-from app.utils.session_memory import get_memory, update_memory, set_last_action, is_empty
+from app.utils.session_memory import (
+    get_memory,
+    update_memory,
+    set_last_action,
+    is_empty,
+)
 from app.utils.activity_timeline import record_event, get_timeline
 from app.utils.provenance import build_provenance, get_source_label
 from app.utils.next_best_action import get_next_action
+from app.utils.identity import get_or_create_user
+from app.utils.persistence import (
+    persist_job,
+    persist_job_status,
+    remove_job as db_remove_job,
+    persist_version,
+    remove_version as db_remove_version,
+    persist_package,
+    remove_package as db_remove_package,
+    persist_alert,
+    persist_alert_complete,
+    remove_alert as db_remove_alert,
+    remove_alerts_for_job,
+    persist_event,
+    hydrate_session_from_db,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -94,17 +115,68 @@ def _refresh_intelligence(report_data):
         match=match_data, tailored=tailored, rewrite=rewrite, profile=profile
     )
     session["priority_fixes"] = generate_priority_fixes(
-        match=match_data, profile=profile, tailored=tailored,
-        rewrite=rewrite, scorecard=scorecard
+        match=match_data,
+        profile=profile,
+        tailored=tailored,
+        rewrite=rewrite,
+        scorecard=scorecard,
     )
     session["role_fit_suggestions"] = suggest_role_fit(
-        match=match_data, profile=profile, tailored=tailored,
-        rewrite=rewrite, enhanced_resume=enhanced
+        match=match_data,
+        profile=profile,
+        tailored=tailored,
+        rewrite=rewrite,
+        enhanced_resume=enhanced,
     )
+
+
+def _ensure_user():
+    """Get or create user identity and hydrate session from DB."""
+    user_id = get_or_create_user(session)
+    if user_id:
+        hydrate_session_from_db(session, user_id)
+    return user_id
+
+
+def _db_record_event(user_id, event):
+    """Persist a timeline event to the database."""
+    if user_id and event:
+        persist_event(user_id, event)
+
+
+def _record_activity(user_id, event_type, label, meta=None):
+    """Record an activity event in session and persist it when DB is available."""
+    event = record_event(session, event_type, label, meta=meta)
+    _db_record_event(user_id, event)
+    return event
+
+
+def _same_package(existing_pkg, new_pkg):
+    """Return True when two package snapshots contain the same core payload."""
+    if not existing_pkg or not new_pkg:
+        return False
+    keys = (
+        "label",
+        "target_title",
+        "company",
+        "report_data",
+        "enhanced_resume",
+        "cover_letter_draft",
+        "enhanced_cover_letter",
+    )
+    return all(existing_pkg.get(key) == new_pkg.get(key) for key in keys)
+
+
+@main_bp.before_app_request
+def _bootstrap_persistence():
+    """Ensure anonymous identity exists and persisted records hydrate into session."""
+    session.permanent = True
+    _ensure_user()
 
 
 @main_bp.route("/", methods=["GET", "POST"])
 def index():
+    user_id = session.get("user_id")
     message = None
     error = None
     result = None
@@ -238,8 +310,11 @@ def index():
                                 last_action="Resume analyzed",
                                 active_target_title=target_role,
                             )
-                            record_event(session, "resume_analyzed",
-                                         "Analyzed resume: %s" % filename)
+                            _record_activity(
+                                user_id,
+                                "resume_analyzed",
+                                "Analyzed resume: %s" % filename,
+                            )
 
                             logger.info("Analysis complete for: %s", filename)
                     except Exception as exc:
@@ -520,6 +595,7 @@ def resume_preview():
 
 @main_bp.route("/enhance-resume")
 def enhance_resume_route():
+    user_id = session.get("user_id")
     report_data = session.get("report_data")
     if not report_data:
         return redirect(url_for("main.index"))
@@ -534,13 +610,14 @@ def enhance_resume_route():
     if enhanced:
         session["enhanced_resume"] = enhanced
         set_last_action(session, "Resume enhanced")
-        record_event(session, "resume_enhanced", "Enhanced resume")
+        _record_activity(user_id, "resume_enhanced", "Enhanced resume")
 
     return redirect(url_for("main.resume_preview"))
 
 
 @main_bp.route("/save-resume-version")
 def save_resume_version():
+    user_id = session.get("user_id")
     version = save_version(session)
     if not version:
         return redirect(url_for("main.index"))
@@ -548,16 +625,24 @@ def save_resume_version():
     versions = session.get("resume_versions", [])
     versions.append(version)
     session["resume_versions"] = versions
-    update_memory(session, last_action="Resume version saved",
-                  active_resume_version_id=version["id"])
-    record_event(session, "version_saved",
-                 "Saved resume version: %s" % version.get("label", ""))
+    persist_version(user_id, version)
+    update_memory(
+        session,
+        last_action="Resume version saved",
+        active_resume_version_id=version["id"],
+    )
+    _record_activity(
+        user_id,
+        "version_saved",
+        "Saved resume version: %s" % version.get("label", ""),
+    )
 
     return redirect(url_for("main.resume_preview"))
 
 
 @main_bp.route("/resume-version/<version_id>")
 def open_resume_version(version_id):
+    user_id = session.get("user_id")
     versions = session.get("resume_versions", [])
     version = find_version(versions, version_id)
     if not version:
@@ -567,10 +652,16 @@ def open_resume_version(version_id):
     session["report_data"] = report_data
     session["enhanced_resume"] = enhanced
     _refresh_intelligence(report_data)
-    update_memory(session, last_action="Opened resume version",
-                  active_resume_version_id=version_id)
-    record_event(session, "version_opened",
-                 "Opened resume version: %s" % version.get("label", ""))
+    update_memory(
+        session,
+        last_action="Opened resume version",
+        active_resume_version_id=version_id,
+    )
+    _record_activity(
+        user_id,
+        "version_opened",
+        "Opened resume version: %s" % version.get("label", ""),
+    )
 
     return redirect(url_for("main.resume_preview"))
 
@@ -611,10 +702,12 @@ def download_resume_version(version_id):
 
 @main_bp.route("/delete-resume-version/<version_id>")
 def delete_resume_version_route(version_id):
+    user_id = session.get("user_id")
     versions = session.get("resume_versions", [])
     session["resume_versions"] = delete_version(versions, version_id)
+    db_remove_version(user_id, version_id)
     set_last_action(session, "Resume version deleted")
-    record_event(session, "version_deleted", "Deleted a resume version")
+    _record_activity(user_id, "version_deleted", "Deleted a resume version")
     return redirect(url_for("main.index"))
 
 
@@ -622,8 +715,10 @@ def delete_resume_version_route(version_id):
 # M26 — Cover Letter Draft
 # ------------------------------------------------------------------
 
+
 @main_bp.route("/generate-cover-letter")
 def generate_cover_letter_route():
+    user_id = session.get("user_id")
     report_data = session.get("report_data")
     if not report_data:
         return redirect(url_for("main.index"))
@@ -641,7 +736,11 @@ def generate_cover_letter_route():
     if draft:
         session["cover_letter_draft"] = draft
         set_last_action(session, "Cover letter generated")
-        record_event(session, "cover_letter_generated", "Generated cover letter draft")
+        _record_activity(
+            user_id,
+            "cover_letter_generated",
+            "Generated cover letter draft",
+        )
 
     return redirect(url_for("main.resume_preview"))
 
@@ -650,8 +749,10 @@ def generate_cover_letter_route():
 # M27 — Cover Letter Enhancement
 # ------------------------------------------------------------------
 
+
 @main_bp.route("/enhance-cover-letter")
 def enhance_cover_letter_route():
+    user_id = session.get("user_id")
     draft = session.get("cover_letter_draft")
     if not draft:
         return redirect(url_for("main.resume_preview"))
@@ -662,7 +763,7 @@ def enhance_cover_letter_route():
     if enhanced_cl:
         session["enhanced_cover_letter"] = enhanced_cl
         set_last_action(session, "Cover letter enhanced")
-        record_event(session, "cover_letter_enhanced", "Enhanced cover letter")
+        _record_activity(user_id, "cover_letter_enhanced", "Enhanced cover letter")
 
     return redirect(url_for("main.resume_preview"))
 
@@ -670,6 +771,7 @@ def enhance_cover_letter_route():
 # ------------------------------------------------------------------
 # M28 — Application Package Download
 # ------------------------------------------------------------------
+
 
 @main_bp.route("/download-application-package")
 def download_application_package():
@@ -694,8 +796,9 @@ def download_application_package():
     )
 
 
-def _build_application_package_text(report_data, enhanced_resume,
-                                     cover_letter_draft, enhanced_cl):
+def _build_application_package_text(
+    report_data, enhanced_resume, cover_letter_draft, enhanced_cl
+):
     """Assemble combined resume + cover letter plain-text package."""
     sep = "=" * 60
     sub = "-" * 40
@@ -755,25 +858,39 @@ def _build_application_package_text(report_data, enhanced_resume,
 # M29 — Application Package Versioning
 # ------------------------------------------------------------------
 
+
 @main_bp.route("/save-application-package")
 def save_application_package_route():
+    user_id = session.get("user_id")
     pkg = save_package(session)
     if not pkg:
         return redirect(url_for("main.index"))
 
     packages = session.get("application_packages", [])
-    packages.append(pkg)
-    session["application_packages"] = packages
-    update_memory(session, last_action="Application package saved",
-                  active_application_package_id=pkg["id"])
-    record_event(session, "package_saved",
-                 "Saved application package: %s" % pkg.get("label", ""))
+    existing_pkg = next((item for item in packages if _same_package(item, pkg)), None)
+    if existing_pkg:
+        pkg = existing_pkg
+    else:
+        packages.append(pkg)
+        session["application_packages"] = packages
+        persist_package(user_id, pkg)
+    update_memory(
+        session,
+        last_action="Application package saved",
+        active_application_package_id=pkg["id"],
+    )
+    _record_activity(
+        user_id,
+        "package_saved",
+        "Saved application package: %s" % pkg.get("label", ""),
+    )
 
     return redirect(url_for("main.resume_preview"))
 
 
 @main_bp.route("/application-package/<package_id>")
 def open_application_package(package_id):
+    user_id = session.get("user_id")
     packages = session.get("application_packages", [])
     pkg = find_package(packages, package_id)
     if not pkg:
@@ -785,10 +902,16 @@ def open_application_package(package_id):
     session["cover_letter_draft"] = cl_draft
     session["enhanced_cover_letter"] = enhanced_cl
     _refresh_intelligence(report_data)
-    update_memory(session, last_action="Opened application package",
-                  active_application_package_id=package_id)
-    record_event(session, "package_opened",
-                 "Opened application package: %s" % pkg.get("label", ""))
+    update_memory(
+        session,
+        last_action="Opened application package",
+        active_application_package_id=package_id,
+    )
+    _record_activity(
+        user_id,
+        "package_opened",
+        "Opened application package: %s" % pkg.get("label", ""),
+    )
 
     return redirect(url_for("main.resume_preview"))
 
@@ -818,10 +941,12 @@ def download_application_package_version(package_id):
 
 @main_bp.route("/delete-application-package/<package_id>")
 def delete_application_package_route(package_id):
+    user_id = session.get("user_id")
     packages = session.get("application_packages", [])
     session["application_packages"] = delete_package(packages, package_id)
+    db_remove_package(user_id, package_id)
     set_last_action(session, "Application package deleted")
-    record_event(session, "package_deleted", "Deleted an application package")
+    _record_activity(user_id, "package_deleted", "Deleted an application package")
     return redirect(url_for("main.index"))
 
 
@@ -829,18 +954,24 @@ def delete_application_package_route(package_id):
 # M34 — Saved Jobs Tracker
 # ------------------------------------------------------------------
 
+
 @main_bp.route("/save-job")
 def save_job_route():
+    user_id = session.get("user_id")
     report_data = session.get("report_data")
     job = create_saved_job(report_data=report_data, session_data=session)
     saved_jobs = session.get("saved_jobs", [])
     saved_jobs.append(job)
     session["saved_jobs"] = saved_jobs
-    update_memory(session, last_action="Job saved",
-                  active_job_id=job["id"],
-                  active_target_title=job["title"],
-                  active_company=job.get("company", ""))
-    record_event(session, "job_saved", "Saved job: %s" % job["title"])
+    persist_job(user_id, job)
+    update_memory(
+        session,
+        last_action="Job saved",
+        active_job_id=job["id"],
+        active_target_title=job["title"],
+        active_company=job.get("company", ""),
+    )
+    _record_activity(user_id, "job_saved", "Saved job: %s" % job["title"])
     return redirect(url_for("main.index"))
 
 
@@ -864,13 +995,16 @@ def open_job(job_id):
 
 @main_bp.route("/delete-job/<job_id>")
 def delete_job_route(job_id):
+    user_id = session.get("user_id")
     saved_jobs = session.get("saved_jobs", [])
     session["saved_jobs"] = delete_job(saved_jobs, job_id)
     # Also clean up alerts tied to this job
     alerts = session.get("alerts", [])
     session["alerts"] = [a for a in alerts if a.get("job_id") != job_id]
+    db_remove_job(user_id, job_id)
+    remove_alerts_for_job(user_id, job_id)
     set_last_action(session, "Job deleted")
-    record_event(session, "job_deleted", "Deleted a saved job")
+    _record_activity(user_id, "job_deleted", "Deleted a saved job")
     return redirect(url_for("main.index"))
 
 
@@ -878,14 +1012,20 @@ def delete_job_route(job_id):
 # M35 — Application Status Tracker
 # ------------------------------------------------------------------
 
+
 @main_bp.route("/job/<job_id>/status/<new_status>")
 def update_job_status_route(job_id, new_status):
+    user_id = session.get("user_id")
     saved_jobs = session.get("saved_jobs", [])
     update_job_status(saved_jobs, job_id, new_status)
     session["saved_jobs"] = saved_jobs
+    persist_job_status(user_id, job_id, new_status)
     set_last_action(session, "Job status updated to %s" % new_status)
-    record_event(session, "job_status_changed",
-                 "Updated job status to %s" % new_status)
+    _record_activity(
+        user_id,
+        "job_status_changed",
+        "Updated job status to %s" % new_status,
+    )
     return redirect(url_for("main.open_job", job_id=job_id))
 
 
@@ -893,8 +1033,10 @@ def update_job_status_route(job_id, new_status):
 # M36 — Alerts Foundation
 # ------------------------------------------------------------------
 
+
 @main_bp.route("/create-followup-alert/<job_id>")
 def create_followup_alert(job_id):
+    user_id = session.get("user_id")
     saved_jobs = session.get("saved_jobs", [])
     job = find_job(saved_jobs, job_id)
     alert = create_alert(
@@ -905,27 +1047,32 @@ def create_followup_alert(job_id):
     alerts = session.get("alerts", [])
     alerts.append(alert)
     session["alerts"] = alerts
+    persist_alert(user_id, alert)
     set_last_action(session, "Follow-up alert created")
-    record_event(session, "alert_created", "Created follow-up alert")
+    _record_activity(user_id, "alert_created", "Created follow-up alert")
     return redirect(url_for("main.open_job", job_id=job_id))
 
 
 @main_bp.route("/complete-alert/<alert_id>")
 def complete_alert_route(alert_id):
+    user_id = session.get("user_id")
     alerts = session.get("alerts", [])
     complete_alert(alerts, alert_id)
     session["alerts"] = alerts
+    persist_alert_complete(user_id, alert_id)
     set_last_action(session, "Alert completed")
-    record_event(session, "alert_completed", "Completed an alert")
+    _record_activity(user_id, "alert_completed", "Completed an alert")
     return redirect(url_for("main.index"))
 
 
 @main_bp.route("/delete-alert/<alert_id>")
 def delete_alert_route(alert_id):
+    user_id = session.get("user_id")
     alerts = session.get("alerts", [])
     session["alerts"] = delete_alert(alerts, alert_id)
+    db_remove_alert(user_id, alert_id)
     set_last_action(session, "Alert deleted")
-    record_event(session, "alert_deleted", "Deleted an alert")
+    _record_activity(user_id, "alert_deleted", "Deleted an alert")
     return redirect(url_for("main.index"))
 
 
@@ -933,8 +1080,10 @@ def delete_alert_route(alert_id):
 # M45 — Guided Flow (One-Click Application Prep)
 # ------------------------------------------------------------------
 
+
 @main_bp.route("/prepare-application")
 def prepare_application():
+    user_id = session.get("user_id")
     report_data = session.get("report_data")
     if not report_data:
         return redirect(url_for("main.index"))
@@ -974,10 +1123,20 @@ def prepare_application():
     pkg = save_package(session)
     if pkg:
         packages = session.get("application_packages", [])
-        packages.append(pkg)
-        session["application_packages"] = packages
-        update_memory(session, last_action="Application prepared",
-                      active_application_package_id=pkg["id"])
+        existing_pkg = next(
+            (item for item in packages if _same_package(item, pkg)), None
+        )
+        if existing_pkg:
+            pkg = existing_pkg
+        else:
+            packages.append(pkg)
+            session["application_packages"] = packages
+            persist_package(user_id, pkg)
+        update_memory(
+            session,
+            last_action="Application prepared",
+            active_application_package_id=pkg["id"],
+        )
 
     # Determine target role for event label
     target_title = ""
@@ -988,8 +1147,11 @@ def prepare_application():
     if not target_title and tailored:
         target_title = tailored.get("target_title", "")
 
-    record_event(session, "application_prepared",
-                 "Application prepared for %s" % (target_title or "target role"))
+    _record_activity(
+        user_id,
+        "application_prepared",
+        "Application prepared for %s" % (target_title or "target role"),
+    )
 
     session["next_best_action"] = get_next_action(session)
 
