@@ -287,6 +287,28 @@
       .download-btn:hover {
         background-color: #047857;
       }
+      .jd-box {
+        text-align: left;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 1.2rem;
+        margin-top: 1.5rem;
+      }
+      .jd-box h2 {
+        font-size: 1.2rem;
+        margin: 0 0 0.8rem 0;
+      }
+      textarea {
+        width: 90%;
+        padding: 0.5rem;
+        font-size: 0.95rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-bottom: 0.6rem;
+        font-family: Arial, sans-serif;
+        resize: vertical;
+      }
     </style>
   </head>
   <body>
@@ -315,6 +337,15 @@
           name="target_keywords"
           placeholder="e.g. Python, SQL, REST API"
         />
+        <label class="form-label" for="job_description"
+          >Job Description (optional — paste to compare)</label
+        >
+        <textarea
+          id="job_description"
+          name="job_description"
+          rows="6"
+          placeholder="Paste the full job description here to get a tailored comparison..."
+        ></textarea>
         <div><button type="submit">Upload &amp; Analyze</button></div>
       </form>
 
@@ -357,6 +388,37 @@
           {% endif %}
         </div>
         <div class="explanation">{{ match.explanation }}</div>
+      </div>
+      {% endif %} {% if jd_comparison %}
+      <div class="jd-box">
+        <h2>Job Description Comparison</h2>
+        <p class="match-field"><strong>Overlap Score:</strong></p>
+        <p
+          class="score-display {% if jd_comparison.level == 'Strong' %}level-strong{% elif jd_comparison.level == 'Moderate' %}level-moderate{% else %}level-low{% endif %}"
+        >
+          {{ jd_comparison.score }} / 100 — {{ jd_comparison.level }}
+        </p>
+        <div class="match-field">
+          <strong>JD Keywords Found ({{ jd_comparison.jd_keywords|length }}):</strong><br />
+          {% for item in jd_comparison.jd_keywords %}<span class="skill-tag">{{ item }}</span>{% endfor %}
+        </div>
+        <div class="match-field" style="margin-top: 0.4rem">
+          <strong>Matched in Resume:</strong><br />
+          {% if jd_comparison.matched %}
+            {% for item in jd_comparison.matched %}<span class="matched-tag">{{ item }}</span>{% endfor %}
+          {% else %}
+            <span class="not-detected">None</span>
+          {% endif %}
+        </div>
+        <div class="match-field" style="margin-top: 0.4rem">
+          <strong>Missing from Resume:</strong><br />
+          {% if jd_comparison.missing %}
+            {% for item in jd_comparison.missing %}<span class="missing-tag">{{ item }}</span>{% endfor %}
+          {% else %}
+            <span class="not-detected">None</span>
+          {% endif %}
+        </div>
+        <div class="explanation">{{ jd_comparison.explanation }}</div>
       </div>
       {% endif %} {% if suggestions %}
       <div class="suggest-box">

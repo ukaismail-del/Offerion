@@ -1,7 +1,7 @@
 from datetime import datetime
 
 
-def build_report(result, profile, match, suggestions, feedback):
+def build_report(result, profile, match, suggestions, feedback, jd_comparison=None):
     """Build a plain-text analysis report from Offerion results.
 
     Returns a formatted string ready for download.
@@ -99,6 +99,42 @@ def build_report(result, profile, match, suggestions, feedback):
     else:
         lines.append("No target role was entered. Match analysis was skipped.")
     lines.append("")
+
+    # --- Job Description Comparison ---
+    if jd_comparison:
+        lines.append(sub)
+        lines.append("JOB DESCRIPTION COMPARISON")
+        lines.append(sub)
+        lines.append(f"Overlap Score : {jd_comparison.get('score', 0)} / 100")
+        lines.append(f"Fit Level     : {jd_comparison.get('level', 'N/A')}")
+        lines.append("")
+
+        jd_kws = jd_comparison.get("jd_keywords", [])
+        if jd_kws:
+            lines.append(f"JD Keywords ({len(jd_kws)}):")
+            for kw in jd_kws:
+                lines.append(f"  * {kw}")
+        lines.append("")
+
+        jd_matched = jd_comparison.get("matched", [])
+        if jd_matched:
+            lines.append("Matched in Resume:")
+            for item in jd_matched:
+                lines.append(f"  + {item}")
+        else:
+            lines.append("Matched in Resume: None")
+
+        jd_missing = jd_comparison.get("missing", [])
+        if jd_missing:
+            lines.append("Missing from Resume:")
+            for item in jd_missing:
+                lines.append(f"  - {item}")
+        else:
+            lines.append("Missing from Resume: None")
+
+        lines.append("")
+        lines.append(f"Explanation: {jd_comparison.get('explanation', '')}")
+        lines.append("")
 
     # --- Suggested Roles ---
     lines.append(sub)

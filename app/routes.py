@@ -18,6 +18,7 @@ from app.utils.match_scorer import score_match
 from app.utils.report_builder import build_report
 from app.utils.resume_analyzer import analyze_resume
 from app.utils.resume_parser import extract_text, get_file_extension, preview_text
+from app.utils.job_compare import compare_resume_to_jd
 from app.utils.resume_feedback import generate_feedback
 from app.utils.role_suggester import suggest_roles
 from app.utils.storage import save_file, delete_file
@@ -40,6 +41,7 @@ def index():
     match = None
     suggestions = None
     feedback = None
+    jd_comparison = None
 
     if request.method == "POST":
         if "resume" not in request.files:
@@ -82,11 +84,25 @@ def index():
                             suggestions = suggest_roles(text, profile)
 
                             target_role = request.form.get("target_role", "").strip()
-                            target_keywords = request.form.get("target_keywords", "").strip()
+                            target_keywords = request.form.get(
+                                "target_keywords", ""
+                            ).strip()
                             if target_role:
-                                match = score_match(text, profile, target_role, target_keywords)
+                                match = score_match(
+                                    text, profile, target_role, target_keywords
+                                )
 
-                            feedback = generate_feedback(text, profile, match)
+                            job_description = request.form.get(
+                                "job_description", ""
+                            ).strip()
+                            if job_description:
+                                jd_comparison = compare_resume_to_jd(
+                                    text, profile, job_description
+                                )
+
+                            feedback = generate_feedback(
+                                text, profile, match, jd_comparison
+                            )
 
                             session["report_data"] = {
                                 "result": result,
@@ -94,6 +110,7 @@ def index():
                                 "match": match,
                                 "suggestions": suggestions,
                                 "feedback": feedback,
+                                "jd_comparison": jd_comparison,
                             }
                             logger.info("Analysis complete for: %s", filename)
                     except Exception as exc:
@@ -111,6 +128,7 @@ def index():
         match=match,
         suggestions=suggestions,
         feedback=feedback,
+        jd_comparison=jd_comparison,
     )
 
 
@@ -126,6 +144,7 @@ def download_report():
         match=report_data.get("match"),
         suggestions=report_data.get("suggestions"),
         feedback=report_data.get("feedback"),
+        jd_comparison=report_data.get("jd_comparison"),
     )
 
     return Response(

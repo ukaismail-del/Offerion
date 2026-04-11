@@ -1,4 +1,4 @@
-def generate_feedback(resume_text, profile, match=None):
+def generate_feedback(resume_text, profile, match=None, jd_comparison=None):
     """Generate resume improvement feedback based on profile and optional match data.
 
     Returns a dict with strengths, gaps, recommendations, and completeness.
@@ -84,6 +84,22 @@ def generate_feedback(resume_text, profile, match=None):
             top_missing = ", ".join(missing[:5])
             gaps.append(f"Missing target keywords: {top_missing}.")
 
+    # --- JD comparison gaps ---
+    if jd_comparison:
+        jd_missing = jd_comparison.get("missing", [])
+        jd_score = jd_comparison.get("score", 0)
+        if jd_missing:
+            jd_top = ", ".join(jd_missing[:5])
+            gaps.append(f"Missing job description keywords: {jd_top}.")
+        if jd_score >= 70:
+            strengths.append(
+                f"Strong overlap with the pasted job description (score: {jd_score})."
+            )
+        elif jd_score >= 40:
+            strengths.append(
+                f"Moderate overlap with the pasted job description (score: {jd_score})."
+            )
+
     # --- Recommendations ---
     if not has_email or not has_phone:
         recommendations.append(
@@ -126,6 +142,26 @@ def generate_feedback(resume_text, profile, match=None):
                 f"Your match score for \"{match['target_role']}\" is low. "
                 f"Review the job requirements and tailor your resume to highlight "
                 f"relevant experience."
+            )
+
+    # --- JD comparison recommendations ---
+    if jd_comparison:
+        jd_missing = jd_comparison.get("missing", [])
+        # Avoid duplicating terms already covered by match missing
+        match_missing_set = set()
+        if match:
+            match_missing_set = {m.lower() for m in match.get("missing", [])}
+        unique_jd_missing = [k for k in jd_missing if k.lower() not in match_missing_set]
+        if unique_jd_missing:
+            jd_top = ", ".join(unique_jd_missing[:4])
+            recommendations.append(
+                f"The job description mentions: {jd_top} — "
+                f"consider highlighting these if you have relevant experience."
+            )
+        if jd_comparison.get("score", 0) < 40:
+            recommendations.append(
+                "Your resume has low overlap with the pasted job description. "
+                "Review the listing carefully and tailor your resume accordingly."
             )
 
     if text_length < 300:

@@ -98,6 +98,33 @@ Uploaded files are now handled through a **storage abstraction layer** (`app/uti
 
 **Current limitation:** Files are temporary and not persisted across deploys or restarts. A future module will integrate real persistent cloud storage (e.g., AWS S3).
 
+## Module 12 — Job Description Comparison Engine
+
+Paste a job description alongside your resume upload to get a tailored comparison analysis.
+
+**How it works:**
+
+1. Upload a resume and optionally enter a target role/keywords
+2. Paste a full job description into the new text area
+3. The app extracts keywords from the job description using a built-in keyword library
+4. It compares those keywords against your resume text and detected skills
+
+**Comparison output:**
+
+- **Overlap Score** (0–100) and **Fit Level** (Low / Moderate / Strong)
+- **JD Keywords** — all recognized keywords found in the job description
+- **Matched** — JD keywords found in your resume
+- **Missing** — JD keywords not found in your resume
+- **Explanation** — a readable summary of the comparison
+
+**Integration:**
+
+- Missing JD keywords are incorporated into Resume Improvement Guidance recommendations
+- The downloadable report includes a Job Description Comparison section when a JD is provided
+- If no job description is pasted, the section is hidden — existing behavior is unchanged
+
+All comparison logic is rule-based and local. No live job scraping, AI, or external APIs are used.
+
 ## Run Locally
 
 ```
@@ -114,18 +141,18 @@ Open http://127.0.0.1:5000 in your browser.
 
 ### Service Settings
 
-| Setting        | Value                          |
-|----------------|--------------------------------|
-| Service Type   | Web Service                    |
-| Build Command  | `pip install -r requirements.txt` |
-| Start Command  | `gunicorn app.main:app`        |
+| Setting       | Value                             |
+| ------------- | --------------------------------- |
+| Service Type  | Web Service                       |
+| Build Command | `pip install -r requirements.txt` |
+| Start Command | `gunicorn app.main:app`           |
 
 ### Environment Variables
 
-| Variable     | Value                              |
-|--------------|------------------------------------|
-| `SECRET_KEY` | A strong random string (required)  |
-| `PYTHON_VERSION` | `3.12.0` (optional)          |
+| Variable         | Value                             |
+| ---------------- | --------------------------------- |
+| `SECRET_KEY`     | A strong random string (required) |
+| `PYTHON_VERSION` | `3.12.0` (optional)               |
 
 Generate a secret key:
 
