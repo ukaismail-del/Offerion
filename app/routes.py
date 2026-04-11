@@ -62,6 +62,9 @@ from app.utils.alerts import (
     get_active_alerts,
 )
 from app.utils.followup_prompts import generate_followup_prompts
+from app.utils.session_memory import get_memory, update_memory, set_last_action, is_empty
+from app.utils.activity_timeline import record_event, get_timeline
+from app.utils.provenance import build_provenance, get_source_label
 
 logger = logging.getLogger(__name__)
 
@@ -227,6 +230,16 @@ def index():
 
                             _refresh_intelligence(session["report_data"])
 
+                            # M38/M39: session memory + timeline
+                            target_role = match.get("target_role", "") if match else ""
+                            update_memory(
+                                session,
+                                last_action="Resume analyzed",
+                                active_target_title=target_role,
+                            )
+                            record_event(session, "resume_analyzed",
+                                         "Analyzed resume: %s" % filename)
+
                             logger.info("Analysis complete for: %s", filename)
                     except Exception as exc:
                         logger.error("Error processing %s: %s", filename, exc)
@@ -243,6 +256,9 @@ def index():
     role_fit = session.get("role_fit_suggestions")
     saved_jobs = session.get("saved_jobs", [])
     alerts = get_active_alerts(session.get("alerts", []))
+    session_mem = get_memory(session)
+    timeline = get_timeline(session, limit=15)
+    provenance = build_provenance(session)
 
     return render_template(
         "index.html",
@@ -268,6 +284,11 @@ def index():
         saved_jobs=saved_jobs,
         alerts=alerts,
         allowed_statuses=ALLOWED_STATUSES,
+        session_memory=session_mem,
+        session_memory_empty=is_empty(session_mem),
+        activity_timeline=timeline,
+        provenance=provenance,
+        get_source_label=get_source_label,
     )
 
 
@@ -458,6 +479,9 @@ def resume_preview():
     if saved_jobs:
         followup = generate_followup_prompts(saved_jobs[0])
 
+    session_mem = get_memory(session)
+    provenance = build_provenance(session)
+
     return render_template(
         "resume_preview.html",
         profile=profile,
@@ -479,6 +503,10 @@ def resume_preview():
         alerts=alerts,
         followup=followup,
         allowed_statuses=ALLOWED_STATUSES,
+        session_memory=session_mem,
+        session_memory_empty=is_empty(session_mem),
+        provenance=provenance,
+        get_source_label=get_source_label,
     )
 
 
@@ -497,6 +525,8 @@ def enhance_resume_route():
 
     if enhanced:
         session["enhanced_resume"] = enhanced
+        set_last_action(session, "Resume enhanced")
+        record_event(session, "resume_enhanced", "Enhanced resume")
 
     return redirect(url_for("main.resume_preview"))
 
@@ -510,6 +540,10 @@ def save_resume_version():
     versions = session.get("resume_versions", [])
     versions.append(version)
     session["resume_versions"] = versions
+    update_memory(session, last_action="Resume version saved",
+                  active_resume_version_id=version["id"])
+    record_event(session, "version_saved",
+                 "Saved resume version: %s" % version.get("label", ""))
 
     return redirect(url_for("main.resume_preview"))
 
@@ -525,6 +559,10 @@ def open_resume_version(version_id):
     session["report_data"] = report_data
     session["enhanced_resume"] = enhanced
     _refresh_intelligence(report_data)
+    update_memory(session, last_action="Opened resume version",
+                  active_resume_version_id=version_id)
+    record_event(session, "version_opened",
+                 "Opened resume version: %s" % version.get("label", ""))
 
     return redirect(url_for("main.resume_preview"))
 
@@ -567,6 +605,8 @@ def download_resume_version(version_id):
 def delete_resume_version_route(version_id):
     versions = session.get("resume_versions", [])
     session["resume_versions"] = delete_version(versions, version_id)
+    set_last_action(session, "Resume version deleted")
+    record_event(session, "version_deleted", "Deleted a resume version")
     return redirect(url_for("main.index"))
 
 
@@ -592,6 +632,8 @@ def generate_cover_letter_route():
 
     if draft:
         session["cover_letter_draft"] = draft
+        set_last_action(session, "Cover letter generated")
+        record_event(session, "cover_letter_generated", "Generated cover letter draft")
 
     return redirect(url_for("main.resume_preview"))
 
@@ -611,6 +653,8 @@ def enhance_cover_letter_route():
 
     if enhanced_cl:
         session["enhanced_cover_letter"] = enhanced_cl
+        set_last_action(session, "Cover letter enhanced")
+        record_event(session, "cover_letter_enhanced", "Enhanced cover letter")
 
     return redirect(url_for("main.resume_preview"))
 
@@ -712,6 +756,10 @@ def save_application_package_route():
     packages = session.get("application_packages", [])
     packages.append(pkg)
     session["application_packages"] = packages
+    update_memory(session, last_action="Application package saved",
+                  active_application_package_id=pkg["id"])
+    record_event(session, "package_saved",
+                 "Saved application package: %s" % pkg.get("label", ""))
 
     return redirect(url_for("main.resume_preview"))
 
@@ -729,6 +777,10 @@ def open_application_package(package_id):
     session["cover_letter_draft"] = cl_draft
     session["enhanced_cover_letter"] = enhanced_cl
     _refresh_intelligence(report_data)
+    update_memory(session, last_action="Opened application package",
+                  active_application_package_id=package_id)
+    record_event(session, "package_opened",
+                 "Opened application package: %s" % pkg.get("label", ""))
 
     return redirect(url_for("main.resume_preview"))
 
@@ -760,6 +812,8 @@ def download_application_package_version(package_id):
 def delete_application_package_route(package_id):
     packages = session.get("application_packages", [])
     session["application_packages"] = delete_package(packages, package_id)
+    set_last_action(session, "Application package deleted")
+    record_event(session, "package_deleted", "Deleted an application package")
     return redirect(url_for("main.index"))
 
 
@@ -774,6 +828,11 @@ def save_job_route():
     saved_jobs = session.get("saved_jobs", [])
     saved_jobs.append(job)
     session["saved_jobs"] = saved_jobs
+    update_memory(session, last_action="Job saved",
+                  active_job_id=job["id"],
+                  active_target_title=job["title"],
+                  active_company=job.get("company", ""))
+    record_event(session, "job_saved", "Saved job: %s" % job["title"])
     return redirect(url_for("main.index"))
 
 
@@ -802,6 +861,8 @@ def delete_job_route(job_id):
     # Also clean up alerts tied to this job
     alerts = session.get("alerts", [])
     session["alerts"] = [a for a in alerts if a.get("job_id") != job_id]
+    set_last_action(session, "Job deleted")
+    record_event(session, "job_deleted", "Deleted a saved job")
     return redirect(url_for("main.index"))
 
 
@@ -814,6 +875,9 @@ def update_job_status_route(job_id, new_status):
     saved_jobs = session.get("saved_jobs", [])
     update_job_status(saved_jobs, job_id, new_status)
     session["saved_jobs"] = saved_jobs
+    set_last_action(session, "Job status updated to %s" % new_status)
+    record_event(session, "job_status_changed",
+                 "Updated job status to %s" % new_status)
     return redirect(url_for("main.open_job", job_id=job_id))
 
 
@@ -833,6 +897,8 @@ def create_followup_alert(job_id):
     alerts = session.get("alerts", [])
     alerts.append(alert)
     session["alerts"] = alerts
+    set_last_action(session, "Follow-up alert created")
+    record_event(session, "alert_created", "Created follow-up alert")
     return redirect(url_for("main.open_job", job_id=job_id))
 
 
@@ -841,6 +907,8 @@ def complete_alert_route(alert_id):
     alerts = session.get("alerts", [])
     complete_alert(alerts, alert_id)
     session["alerts"] = alerts
+    set_last_action(session, "Alert completed")
+    record_event(session, "alert_completed", "Completed an alert")
     return redirect(url_for("main.index"))
 
 
@@ -848,6 +916,8 @@ def complete_alert_route(alert_id):
 def delete_alert_route(alert_id):
     alerts = session.get("alerts", [])
     session["alerts"] = delete_alert(alerts, alert_id)
+    set_last_action(session, "Alert deleted")
+    record_event(session, "alert_deleted", "Deleted an alert")
     return redirect(url_for("main.index"))
 
 

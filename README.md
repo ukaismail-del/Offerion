@@ -607,6 +607,63 @@ Status-based recommended actions, message templates, and next steps.
 - Session-based only — no database, no external integrations
 - Existing resume/application flow remains fully intact
 
+---
+
+### Module 38 — Job Search Session Memory
+
+Tracks the user's current workflow state within the session.
+
+**File:** `app/utils/session_memory.py`
+
+**Functions:** `get_memory()`, `update_memory()`, `set_last_action()`, `is_empty()`
+
+**Tracks:** active job, resume version, application package, last action, target title, company
+
+---
+
+### Module 39 — Activity Timeline / Audit Trail
+
+Lightweight history of user actions during the session.
+
+**File:** `app/utils/activity_timeline.py`
+
+**Functions:** `record_event()`, `get_timeline()`, `clear_timeline()`
+
+**Tracks:** resume analyzed, enhanced, version saved/opened/deleted, cover letter generated/enhanced, package saved/opened/deleted, job saved/deleted, status changed, alert created/completed/deleted
+
+---
+
+### Module 40 — Confidence + Data Provenance Layer
+
+Clarifies where outputs came from and how certain they are.
+
+**File:** `app/utils/provenance.py`
+
+**Functions:** `build_provenance()`, `get_source_label()`
+
+**Returns:** resume source, cover letter source, intelligence source, confidence labels (Low/Moderate/Strong), notes
+
+---
+
+### Module 41 — Empty States + UX Polish Pass
+
+Improved usability for missing, partial, or not-yet-generated data.
+
+- Alerts panel always visible with helpful empty state
+- Session Context panel hidden cleanly when empty
+- Consistent panel spacing and badge styling
+- No dead-end routes or broken action buttons
+
+---
+
+**M38-M41 Integration:**
+
+- Session context updates on every major action
+- Activity timeline records all user actions (latest 30 kept)
+- Confidence panel auto-generates from current session state
+- All panels hidden gracefully when data is absent
+- Existing M22-M37 flows remain fully intact
+
 ## Run Locally
 
 ```

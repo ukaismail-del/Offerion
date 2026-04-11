@@ -356,6 +356,19 @@
       .followup-action::before { content: "→ "; color: #3b82f6; font-weight: 600; }
       .followup-next { background: #f0fdf4; border: 1.5px solid #bbf7d0; padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.88rem; color: #166534; margin-top: 0.6rem; }
 
+      /* --- Session context & provenance (M38/M40) --- */
+      .ctx-grid-sm { display: grid; grid-template-columns: auto 1fr; gap: 0.2rem 0.8rem; font-size: 0.85rem; }
+      .ctx-label-sm { color: #64748b; font-weight: 500; }
+      .ctx-val-sm { color: #1e293b; font-weight: 600; }
+      .prov-compact { font-size: 0.85rem; }
+      .prov-compact .prov-key { color: #64748b; font-weight: 500; }
+      .prov-compact .prov-val { color: #1e293b; font-weight: 600; }
+      .conf-tag-sm { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; margin: 0.15rem 0.2rem; }
+      .conf-Low { background: #fef2f2; color: #dc2626; }
+      .conf-Moderate { background: #fffbeb; color: #ca8a04; }
+      .conf-Strong { background: #f0fdf4; color: #16a34a; }
+      .prov-note-sm { font-size: 0.78rem; color: #94a3b8; font-style: italic; margin-top: 0.3rem; }
+
       @media (max-width: 640px) {
         .resume-page {
           padding: 1.5rem 1.2rem;
@@ -680,6 +693,48 @@
         {% endfor %}
         {% if followup.next_step %}
         <div class="followup-next"><strong>Next Step:</strong> {{ followup.next_step }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Current Session Context (M38) -->
+      {% if not session_memory_empty %}
+      <div class="job-panel">
+        <h2 class="section-title" style="margin-top: 0">Session Context</h2>
+        <div class="ctx-grid-sm">
+          {% if session_memory.active_target_title %}
+          <span class="ctx-label-sm">Role:</span>
+          <span class="ctx-val-sm">{{ session_memory.active_target_title }}</span>
+          {% endif %}
+          {% if session_memory.active_company %}
+          <span class="ctx-label-sm">Company:</span>
+          <span class="ctx-val-sm">{{ session_memory.active_company }}</span>
+          {% endif %}
+          {% if session_memory.last_action %}
+          <span class="ctx-label-sm">Last:</span>
+          <span class="ctx-val-sm">{{ session_memory.last_action }}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Confidence & Sources (M40) -->
+      {% if provenance and provenance.resume_source != 'none' %}
+      <div class="job-panel">
+        <h2 class="section-title" style="margin-top: 0">Confidence &amp; Sources</h2>
+        <div class="prov-compact">
+          <span class="prov-key">Resume:</span> <span class="prov-val">{{ get_source_label(provenance.resume_source) }}</span> ·
+          <span class="prov-key">Cover Letter:</span> <span class="prov-val">{{ get_source_label(provenance.cover_letter_source) }}</span>
+        </div>
+        {% if provenance.confidence_labels %}
+        <div style="margin-top: 0.3rem">
+          {% for key, lvl in provenance.confidence_labels.items() %}
+          <span class="conf-tag-sm conf-{{ lvl }}">{{ key.replace('_', ' ').title() }}: {{ lvl }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if provenance.notes %}
+        <div class="prov-note-sm">{{ provenance.notes[-1] }}</div>
         {% endif %}
       </div>
       {% endif %}

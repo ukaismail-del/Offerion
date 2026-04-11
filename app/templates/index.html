@@ -309,6 +309,25 @@
       .save-job-btn { display: inline-block; background: #2563eb; color: #fff; padding: 0.45rem 1rem; border-radius: 8px; font-size: 0.88rem; font-weight: 600; text-decoration: none; margin-top: 0.6rem; }
       .save-job-btn:hover { background: #1d4ed8; }
 
+      /* --- Session context, timeline, provenance (M38-M40) --- */
+      .ctx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem 1.2rem; font-size: 0.88rem; }
+      .ctx-label { color: #64748b; font-weight: 500; }
+      .ctx-value { color: #1e293b; font-weight: 600; }
+      .timeline-list { list-style: none; padding: 0; margin: 0.3rem 0 0; }
+      .timeline-item { padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.88rem; display: flex; justify-content: space-between; }
+      .timeline-item:last-child { border-bottom: none; }
+      .timeline-label { color: #334155; }
+      .timeline-time { color: #94a3b8; font-size: 0.8rem; }
+      .prov-row { font-size: 0.88rem; margin-bottom: 0.3rem; }
+      .prov-key { color: #64748b; font-weight: 500; }
+      .prov-val { color: #1e293b; font-weight: 600; }
+      .confidence-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0; }
+      .conf-tag { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 600; }
+      .conf-Low { background: #fef2f2; color: #dc2626; }
+      .conf-Moderate { background: #fffbeb; color: #ca8a04; }
+      .conf-Strong { background: #f0fdf4; color: #16a34a; }
+      .prov-notes { font-size: 0.82rem; color: #94a3b8; font-style: italic; margin-top: 0.5rem; }
+
       .status-bar {
         text-align: center;
       }
@@ -1099,6 +1118,73 @@
       </div>
       {% endif %}
 
+      <!-- Current Session Context (M38) -->
+      {% if not session_memory_empty %}
+      <div class="card">
+        <h2 class="card-title">Current Session Context</h2>
+        <hr class="card-divider" />
+        <div class="ctx-grid">
+          {% if session_memory.active_target_title %}
+          <span class="ctx-label">Target Role:</span>
+          <span class="ctx-value">{{ session_memory.active_target_title }}</span>
+          {% endif %}
+          {% if session_memory.active_company %}
+          <span class="ctx-label">Company:</span>
+          <span class="ctx-value">{{ session_memory.active_company }}</span>
+          {% endif %}
+          {% if session_memory.last_action %}
+          <span class="ctx-label">Last Action:</span>
+          <span class="ctx-value">{{ session_memory.last_action }}</span>
+          {% endif %}
+          {% if session_memory.last_updated_at %}
+          <span class="ctx-label">Updated:</span>
+          <span class="ctx-value">{{ session_memory.last_updated_at }}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Recent Activity (M39) -->
+      {% if activity_timeline %}
+      <div class="card">
+        <h2 class="card-title">Recent Activity</h2>
+        <hr class="card-divider" />
+        <ul class="timeline-list">
+          {% for evt in activity_timeline %}
+          <li class="timeline-item">
+            <span class="timeline-label">{{ evt.label }}</span>
+            <span class="timeline-time">{{ evt.created_at }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- Confidence & Sources (M40) -->
+      {% if provenance and provenance.resume_source != 'none' %}
+      <div class="card">
+        <h2 class="card-title">Confidence &amp; Sources</h2>
+        <hr class="card-divider" />
+        <div class="prov-row"><span class="prov-key">Resume:</span> <span class="prov-val">{{ get_source_label(provenance.resume_source) }}</span></div>
+        <div class="prov-row"><span class="prov-key">Cover Letter:</span> <span class="prov-val">{{ get_source_label(provenance.cover_letter_source) }}</span></div>
+        <div class="prov-row"><span class="prov-key">Intelligence:</span> <span class="prov-val">{{ get_source_label(provenance.match_intelligence_source) }}</span></div>
+        {% if provenance.confidence_labels %}
+        <div class="confidence-grid">
+          {% for key, lvl in provenance.confidence_labels.items() %}
+          <span class="conf-tag conf-{{ lvl }}" title="{{ key }}">{{ key.replace('_', ' ').title() }}: {{ lvl }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if provenance.notes %}
+        <div class="prov-notes">
+          {% for note in provenance.notes %}
+          <p style="margin: 0.2rem 0">{{ note }}</p>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
       <!-- Saved Jobs (M34) -->
       <div class="card">
         <h2 class="card-title">Saved Jobs</h2>
@@ -1130,10 +1216,10 @@
       </div>
 
       <!-- Upcoming Alerts (M36) -->
-      {% if alerts %}
       <div class="card">
         <h2 class="card-title">Upcoming Alerts</h2>
         <hr class="card-divider" />
+        {% if alerts %}
         {% for a in alerts %}
         <div class="alert-row">
           <div>
@@ -1146,8 +1232,10 @@
           </div>
         </div>
         {% endfor %}
+        {% else %}
+        <p class="empty-state">No alerts yet. Create a follow-up reminder from a saved job.</p>
+        {% endif %}
       </div>
-      {% endif %}
 
       <!-- Match Analysis -->
       {% if match %}
