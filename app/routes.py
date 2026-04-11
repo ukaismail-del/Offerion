@@ -26,6 +26,7 @@ from app.utils.role_suggester import suggest_roles
 from app.utils.scorecard import generate_scorecard
 from app.utils.tailored_resume import generate_tailored_resume
 from app.utils.storage import save_file, delete_file
+from app.utils.tailored_brief import build_tailored_brief
 
 logger = logging.getLogger(__name__)
 
@@ -141,11 +142,15 @@ def index():
                             }
 
                             history = session.get("history", [])
-                            history.append({
-                                "filename": result.get("filename"),
-                                "score": match.get("score") if match else None,
-                                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                            })
+                            history.append(
+                                {
+                                    "filename": result.get("filename"),
+                                    "score": match.get("score") if match else None,
+                                    "timestamp": datetime.now().strftime(
+                                        "%Y-%m-%d %H:%M:%S"
+                                    ),
+                                }
+                            )
                             session["history"] = history[-5:]
 
                             logger.info("Analysis complete for: %s", filename)
@@ -196,6 +201,21 @@ def download_report():
         report_text,
         mimetype="text/plain",
         headers={"Content-Disposition": "attachment; filename=offerion_report.txt"},
+    )
+
+
+@main_bp.route("/download-tailored-brief")
+def download_tailored_brief():
+    report_data = session.get("report_data")
+    if not report_data or not report_data.get("tailored"):
+        return "No tailored data available. Please upload a resume with a target role or job description first.", 400
+
+    brief_text = build_tailored_brief(report_data["tailored"])
+
+    return Response(
+        brief_text,
+        mimetype="text/plain",
+        headers={"Content-Disposition": "attachment; filename=offerion_tailored_brief.txt"},
     )
 
 

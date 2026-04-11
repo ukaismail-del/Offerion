@@ -6,9 +6,13 @@
     <title>Offerion</title>
     <style>
       /* --- Reset & Base --- */
-      *, *::before, *::after { box-sizing: border-box; }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
       body {
-        font-family: 'Segoe UI', Arial, sans-serif;
+        font-family: "Segoe UI", Arial, sans-serif;
         min-height: 100vh;
         margin: 0;
         padding: 0;
@@ -54,7 +58,9 @@
         border-radius: 12px;
         padding: 1.5rem 1.8rem;
         margin-bottom: 1.5rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+        box-shadow:
+          0 1px 3px rgba(0, 0, 0, 0.06),
+          0 1px 2px rgba(0, 0, 0, 0.04);
       }
       .card-title {
         font-size: 1.25rem;
@@ -108,13 +114,15 @@
         background: #f8fafc;
         color: #334155;
         font-family: inherit;
-        transition: border-color 0.2s, box-shadow 0.2s;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
       }
       input[type="text"]:focus,
       textarea:focus {
         outline: none;
         border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         background: #fff;
       }
       textarea {
@@ -132,7 +140,9 @@
         border-radius: 8px;
         cursor: pointer;
         margin-top: 1.2rem;
-        transition: background-color 0.2s, transform 0.1s;
+        transition:
+          background-color 0.2s,
+          transform 0.1s;
       }
       .btn-primary:hover {
         background-color: #1d4ed8;
@@ -174,6 +184,13 @@
       .download-btn:hover {
         background-color: #047857;
       }
+      .download-btn-alt {
+        background-color: #7c3aed;
+        margin-left: 0.6rem;
+      }
+      .download-btn-alt:hover {
+        background-color: #6d28d9;
+      }
       .status-bar {
         text-align: center;
       }
@@ -195,9 +212,15 @@
         font-weight: 700;
         margin: 0.3rem 0 0.5rem 0;
       }
-      .level-strong { color: #16a34a; }
-      .level-moderate { color: #ca8a04; }
-      .level-low { color: #dc2626; }
+      .level-strong {
+        color: #16a34a;
+      }
+      .level-moderate {
+        color: #ca8a04;
+      }
+      .level-low {
+        color: #dc2626;
+      }
 
       /* --- Tags --- */
       .tag {
@@ -289,15 +312,28 @@
         left: 0;
         font-size: 0.9rem;
       }
-      .fb-strength li::before { content: "\2713"; color: #16a34a; }
-      .fb-gap li::before { content: "\26A0"; color: #ca8a04; }
-      .fb-rec li::before { content: "\27A4"; color: #2563eb; }
+      .fb-strength li::before {
+        content: "\2713";
+        color: #16a34a;
+      }
+      .fb-gap li::before {
+        content: "\26A0";
+        color: #ca8a04;
+      }
+      .fb-rec li::before {
+        content: "\27A4";
+        color: #2563eb;
+      }
       .fb-check {
         font-size: 0.9rem;
         padding: 0.25rem 0 0.25rem 0.3rem;
       }
-      .fb-check-pass { color: #16a34a; }
-      .fb-check-fail { color: #dc2626; }
+      .fb-check-pass {
+        color: #16a34a;
+      }
+      .fb-check-fail {
+        color: #dc2626;
+      }
 
       /* --- Rewrite lists --- */
       .rw-list {
@@ -316,11 +352,27 @@
         position: absolute;
         left: 0;
       }
-      .rw-focus li::before { content: "\25B8"; color: #7c3aed; }
-      .rw-keyword li::before { content: "+"; color: #16a34a; font-weight: bold; }
-      .rw-bullet li::before { content: "\270E"; color: #ca8a04; }
-      .rw-section li::before { content: "\2692"; color: #2563eb; }
-      .rw-ats li::before { content: "\2139"; color: #6b7280; }
+      .rw-focus li::before {
+        content: "\25B8";
+        color: #7c3aed;
+      }
+      .rw-keyword li::before {
+        content: "+";
+        color: #16a34a;
+        font-weight: bold;
+      }
+      .rw-bullet li::before {
+        content: "\270E";
+        color: #ca8a04;
+      }
+      .rw-section li::before {
+        content: "\2692";
+        color: #2563eb;
+      }
+      .rw-ats li::before {
+        content: "\2139";
+        color: #6b7280;
+      }
 
       /* --- Scorecard --- */
       .sc-row {
@@ -348,10 +400,18 @@
         border-radius: 6px;
         transition: width 0.3s;
       }
-      .sc-bar-strong { background: #16a34a; }
-      .sc-bar-good { background: #2563eb; }
-      .sc-bar-fair { background: #ca8a04; }
-      .sc-bar-weak { background: #dc2626; }
+      .sc-bar-strong {
+        background: #16a34a;
+      }
+      .sc-bar-good {
+        background: #2563eb;
+      }
+      .sc-bar-fair {
+        background: #ca8a04;
+      }
+      .sc-bar-weak {
+        background: #dc2626;
+      }
       .sc-value {
         width: 110px;
         text-align: right;
@@ -400,10 +460,22 @@
         position: absolute;
         left: 0;
       }
-      .tl-summary li::before { content: "\25B8"; color: #7c3aed; }
-      .tl-exp li::before { content: "\270E"; color: #ca8a04; }
-      .tl-section li::before { content: "\2692"; color: #2563eb; }
-      .tl-notes li::before { content: "\2139"; color: #6b7280; }
+      .tl-summary li::before {
+        content: "\25B8";
+        color: #7c3aed;
+      }
+      .tl-exp li::before {
+        content: "\270E";
+        color: #ca8a04;
+      }
+      .tl-section li::before {
+        content: "\2692";
+        color: #2563eb;
+      }
+      .tl-notes li::before {
+        content: "\2139";
+        color: #6b7280;
+      }
 
       /* --- Tailored keyword table --- */
       .tl-kw-table {
@@ -425,9 +497,18 @@
         border-bottom: 1px solid #f1f5f9;
         color: #555;
       }
-      .tl-status-matched { color: #16a34a; font-weight: 700; }
-      .tl-status-missing { color: #dc2626; font-weight: 700; }
-      .tl-status-present { color: #2563eb; font-weight: 700; }
+      .tl-status-matched {
+        color: #16a34a;
+        font-weight: 700;
+      }
+      .tl-status-missing {
+        color: #dc2626;
+        font-weight: 700;
+      }
+      .tl-status-present {
+        color: #2563eb;
+        font-weight: 700;
+      }
 
       /* --- Tailored skill tags --- */
       .tl-skill-high {
@@ -569,12 +650,13 @@
   </head>
   <body>
     <div class="container">
-
       <!-- Header -->
       <div class="header">
         <h1>Offerion</h1>
         <p class="subtitle">Resume-to-offer engine</p>
-        <p class="description">Upload your resume and enter a target role to see your match score.</p>
+        <p class="description">
+          Upload your resume and enter a target role to see your match score.
+        </p>
       </div>
 
       <!-- Recent Analyses -->
@@ -587,14 +669,18 @@
           <li>
             <span class="history-file">{{ entry.filename }}</span>
             <span class="history-meta">
-              {% if entry.score is not none %}<span class="history-score {% if entry.score >= 70 %}level-strong{% elif entry.score >= 40 %}level-moderate{% else %}level-low{% endif %}">{{ entry.score }}/100</span>{% endif %}
-              {{ entry.timestamp }}
+              {% if entry.score is not none %}<span
+                class="history-score {% if entry.score >= 70 %}level-strong{% elif entry.score >= 40 %}level-moderate{% else %}level-low{% endif %}"
+                >{{ entry.score }}/100</span
+              >{% endif %} {{ entry.timestamp }}
             </span>
           </li>
           {% endfor %}
         </ul>
         {% else %}
-        <p class="history-empty">No analyses yet &mdash; upload your first resume</p>
+        <p class="history-empty">
+          No analyses yet &mdash; upload your first resume
+        </p>
         {% endif %}
       </div>
 
@@ -604,19 +690,45 @@
         <hr class="card-divider" />
         <form method="POST" enctype="multipart/form-data">
           <label class="form-label" for="resume">Resume File</label>
-          <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx" />
+          <input
+            type="file"
+            id="resume"
+            name="resume"
+            accept=".pdf,.doc,.docx"
+          />
 
           <label class="form-label" for="target_role">Target Job Title</label>
-          <input type="text" id="target_role" name="target_role" placeholder="e.g. Software Engineer" />
+          <input
+            type="text"
+            id="target_role"
+            name="target_role"
+            placeholder="e.g. Software Engineer"
+          />
 
-          <label class="form-label" for="target_keywords">Keywords (optional, comma-separated)</label>
-          <input type="text" id="target_keywords" name="target_keywords" placeholder="e.g. Python, SQL, REST API" />
+          <label class="form-label" for="target_keywords"
+            >Keywords (optional, comma-separated)</label
+          >
+          <input
+            type="text"
+            id="target_keywords"
+            name="target_keywords"
+            placeholder="e.g. Python, SQL, REST API"
+          />
 
-          <label class="form-label" for="job_description">Job Description (optional &mdash; paste to compare)</label>
-          <textarea id="job_description" name="job_description" rows="5" placeholder="Paste the full job description here to get a tailored comparison..."></textarea>
+          <label class="form-label" for="job_description"
+            >Job Description (optional &mdash; paste to compare)</label
+          >
+          <textarea
+            id="job_description"
+            name="job_description"
+            rows="5"
+            placeholder="Paste the full job description here to get a tailored comparison..."
+          ></textarea>
 
           <div class="form-actions">
-            <button type="submit" class="btn-primary">Upload &amp; Analyze</button>
+            <button type="submit" class="btn-primary">
+              Upload &amp; Analyze
+            </button>
           </div>
         </form>
       </div>
@@ -626,10 +738,11 @@
       <div class="card status-bar">
         <p class="msg-success">{{ message }}</p>
         <a href="/download-report" class="download-btn">Download Report</a>
+        {% if tailored %}
+        <a href="/download-tailored-brief" class="download-btn download-btn-alt">Download Tailored Brief</a>
+        {% endif %}
       </div>
-      {% endif %}
-
-      {% if error %}
+      {% endif %} {% if error %}
       <div class="card status-bar">
         <p class="msg-error">{{ error }}</p>
       </div>
@@ -640,26 +753,34 @@
       <div class="card">
         <h2 class="card-title">Match Analysis</h2>
         <hr class="card-divider" />
-        <p class="field"><strong>Target Role:</strong> {{ match.target_role }}</p>
-        <p class="field"><strong>Keywords Entered:</strong> {{ match.keywords_entered }}</p>
+        <p class="field">
+          <strong>Target Role:</strong> {{ match.target_role }}
+        </p>
+        <p class="field">
+          <strong>Keywords Entered:</strong> {{ match.keywords_entered }}
+        </p>
         <p class="field"><strong>Match Score:</strong></p>
-        <p class="score-display {% if match.level == 'Strong' %}level-strong{% elif match.level == 'Moderate' %}level-moderate{% else %}level-low{% endif %}">
+        <p
+          class="score-display {% if match.level == 'Strong' %}level-strong{% elif match.level == 'Moderate' %}level-moderate{% else %}level-low{% endif %}"
+        >
           {{ match.score }} / 100 &mdash; {{ match.level }}
         </p>
         <div class="field">
           <strong>Matched:</strong><br />
-          {% if match.matched %}
-            {% for item in match.matched %}<span class="tag tag-matched">{{ item }}</span>{% endfor %}
-          {% else %}
-            <span class="not-detected">None</span>
+          {% if match.matched %} {% for item in match.matched %}<span
+            class="tag tag-matched"
+            >{{ item }}</span
+          >{% endfor %} {% else %}
+          <span class="not-detected">None</span>
           {% endif %}
         </div>
         <div class="field" style="margin-top: 0.5rem">
           <strong>Missing:</strong><br />
-          {% if match.missing %}
-            {% for item in match.missing %}<span class="tag tag-missing">{{ item }}</span>{% endfor %}
-          {% else %}
-            <span class="not-detected">None</span>
+          {% if match.missing %} {% for item in match.missing %}<span
+            class="tag tag-missing"
+            >{{ item }}</span
+          >{% endfor %} {% else %}
+          <span class="not-detected">None</span>
           {% endif %}
         </div>
         <div class="explanation">{{ match.explanation }}</div>
@@ -672,27 +793,33 @@
         <h2 class="card-title">Job Description Comparison</h2>
         <hr class="card-divider" />
         <p class="field"><strong>Overlap Score:</strong></p>
-        <p class="score-display {% if jd_comparison.level == 'Strong' %}level-strong{% elif jd_comparison.level == 'Moderate' %}level-moderate{% else %}level-low{% endif %}">
+        <p
+          class="score-display {% if jd_comparison.level == 'Strong' %}level-strong{% elif jd_comparison.level == 'Moderate' %}level-moderate{% else %}level-low{% endif %}"
+        >
           {{ jd_comparison.score }} / 100 &mdash; {{ jd_comparison.level }}
         </p>
         <div class="field">
-          <strong>JD Keywords Found ({{ jd_comparison.jd_keywords|length }}):</strong><br />
-          {% for item in jd_comparison.jd_keywords %}<span class="tag tag-skill">{{ item }}</span>{% endfor %}
+          <strong
+            >JD Keywords Found ({{ jd_comparison.jd_keywords|length }}):</strong
+          ><br />
+          {% for item in jd_comparison.jd_keywords %}<span class="tag tag-skill"
+            >{{ item }}</span
+          >{% endfor %}
         </div>
         <div class="field" style="margin-top: 0.5rem">
           <strong>Matched in Resume:</strong><br />
-          {% if jd_comparison.matched %}
-            {% for item in jd_comparison.matched %}<span class="tag tag-matched">{{ item }}</span>{% endfor %}
-          {% else %}
-            <span class="not-detected">None</span>
+          {% if jd_comparison.matched %} {% for item in jd_comparison.matched
+          %}<span class="tag tag-matched">{{ item }}</span>{% endfor %} {% else
+          %}
+          <span class="not-detected">None</span>
           {% endif %}
         </div>
         <div class="field" style="margin-top: 0.5rem">
           <strong>Missing from Resume:</strong><br />
-          {% if jd_comparison.missing %}
-            {% for item in jd_comparison.missing %}<span class="tag tag-missing">{{ item }}</span>{% endfor %}
-          {% else %}
-            <span class="not-detected">None</span>
+          {% if jd_comparison.missing %} {% for item in jd_comparison.missing
+          %}<span class="tag tag-missing">{{ item }}</span>{% endfor %} {% else
+          %}
+          <span class="not-detected">None</span>
           {% endif %}
         </div>
         <div class="explanation">{{ jd_comparison.explanation }}</div>
@@ -709,12 +836,16 @@
           <p class="suggest-role">{{ s.role }}</p>
           <p class="suggest-score">
             Score:
-            <strong class="{% if s.level == 'Strong' %}level-strong{% elif s.level == 'Moderate' %}level-moderate{% else %}level-low{% endif %}">
+            <strong
+              class="{% if s.level == 'Strong' %}level-strong{% elif s.level == 'Moderate' %}level-moderate{% else %}level-low{% endif %}"
+            >
               {{ s.score }} / 100 &mdash; {{ s.level }}
             </strong>
           </p>
           <div class="suggest-matched">
-            {% for item in s.matched %}<span class="tag tag-matched">{{ item }}</span>{% endfor %}
+            {% for item in s.matched %}<span class="tag tag-matched"
+              >{{ item }}</span
+            >{% endfor %}
           </div>
           <p class="suggest-reason">{{ s.reason }}</p>
         </div>
@@ -727,20 +858,22 @@
       <div class="card">
         <h2 class="card-title">Resume Strength Scorecard</h2>
         <hr class="card-divider" />
-        {% set categories = [
-          ('contact_info', 'Contact Info'),
-          ('skills_coverage', 'Skills Coverage'),
-          ('experience_strength', 'Experience Strength'),
-          ('education_completeness', 'Education Completeness'),
-          ('ats_alignment', 'ATS Alignment')
-        ] %}
-        {% for key, display in categories %}
+        {% set categories = [ ('contact_info', 'Contact Info'),
+        ('skills_coverage', 'Skills Coverage'), ('experience_strength',
+        'Experience Strength'), ('education_completeness', 'Education
+        Completeness'), ('ats_alignment', 'ATS Alignment') ] %} {% for key,
+        display in categories %}
         <div class="sc-row">
           <span class="sc-label">{{ display }}</span>
           <div class="sc-bar-bg">
-            <div class="sc-bar sc-bar-{{ scorecard.labels[key]|lower }}" style="width: {{ scorecard.scores[key] }}%"></div>
+            <div
+              class="sc-bar sc-bar-{{ scorecard.labels[key]|lower }}"
+              style="width: {{ scorecard.scores[key] }}%"
+            ></div>
           </div>
-          <span class="sc-value {% if scorecard.labels[key] == 'Strong' %}level-strong{% elif scorecard.labels[key] == 'Good' %}level-moderate{% elif scorecard.labels[key] == 'Fair' %}level-moderate{% else %}level-low{% endif %}">
+          <span
+            class="sc-value {% if scorecard.labels[key] == 'Strong' %}level-strong{% elif scorecard.labels[key] == 'Good' %}level-moderate{% elif scorecard.labels[key] == 'Fair' %}level-moderate{% else %}level-low{% endif %}"
+          >
             {{ scorecard.scores[key] }} &mdash; {{ scorecard.labels[key] }}
           </span>
         </div>
@@ -748,10 +881,18 @@
         <div class="sc-row sc-overall">
           <span class="sc-label"><strong>Overall</strong></span>
           <div class="sc-bar-bg">
-            <div class="sc-bar sc-bar-{{ scorecard.labels.overall|lower }}" style="width: {{ scorecard.scores.overall }}%"></div>
+            <div
+              class="sc-bar sc-bar-{{ scorecard.labels.overall|lower }}"
+              style="width: {{ scorecard.scores.overall }}%"
+            ></div>
           </div>
-          <span class="sc-value {% if scorecard.labels.overall == 'Strong' %}level-strong{% elif scorecard.labels.overall == 'Good' %}level-moderate{% elif scorecard.labels.overall == 'Fair' %}level-moderate{% else %}level-low{% endif %}">
-            <strong>{{ scorecard.scores.overall }} &mdash; {{ scorecard.labels.overall }}</strong>
+          <span
+            class="sc-value {% if scorecard.labels.overall == 'Strong' %}level-strong{% elif scorecard.labels.overall == 'Good' %}level-moderate{% elif scorecard.labels.overall == 'Fair' %}level-moderate{% else %}level-low{% endif %}"
+          >
+            <strong
+              >{{ scorecard.scores.overall }} &mdash; {{
+              scorecard.labels.overall }}</strong
+            >
           </span>
         </div>
         {% if scorecard.highlights %}
@@ -793,8 +934,11 @@
 
         <h3>Completeness</h3>
         {% for check in feedback.completeness %}
-        <p class="fb-check {% if check.passed %}fb-check-pass{% else %}fb-check-fail{% endif %}">
-          {% if check.passed %}&#10003;{% else %}&#10007;{% endif %} {{ check.label }}
+        <p
+          class="fb-check {% if check.passed %}fb-check-pass{% else %}fb-check-fail{% endif %}"
+        >
+          {% if check.passed %}&#10003;{% else %}&#10007;{% endif %} {{
+          check.label }}
         </p>
         {% endfor %}
       </div>
@@ -848,7 +992,9 @@
       <div class="card">
         <h2 class="card-title">Tailored Resume Version Builder</h2>
         <hr class="card-divider" />
-        <p class="field"><strong>Target Title:</strong> {{ tailored.target_title }}</p>
+        <p class="field">
+          <strong>Target Title:</strong> {{ tailored.target_title }}
+        </p>
 
         <h3>Professional Summary Guidance</h3>
         <ul class="tl-list tl-summary">
@@ -861,7 +1007,11 @@
         <h3>Priority Keywords</h3>
         <table class="tl-kw-table">
           <thead>
-            <tr><th>Keyword</th><th>Status</th><th>Action</th></tr>
+            <tr>
+              <th>Keyword</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
           </thead>
           <tbody>
             {% for kw in tailored.priority_keywords %}
@@ -886,7 +1036,9 @@
         <h3>Skills to Feature</h3>
         <div>
           {% for sf in tailored.skills_to_feature %}
-          <span class="tl-skill-{{ sf.priority }}" title="{{ sf.reason }}">{{ sf.skill }}</span>
+          <span class="tl-skill-{{ sf.priority }}" title="{{ sf.reason }}"
+            >{{ sf.skill }}</span
+          >
           {% endfor %}
         </div>
         {% endif %}
@@ -914,41 +1066,45 @@
         <hr class="card-divider" />
         <p class="field">
           <strong>Name:</strong>
-          {% if profile.name == "Not detected" %}<span class="not-detected">{{ profile.name }}</span>{% else %}{{ profile.name }}{% endif %}
+          {% if profile.name == "Not detected" %}<span class="not-detected"
+            >{{ profile.name }}</span
+          >{% else %}{{ profile.name }}{% endif %}
         </p>
         <p class="field">
           <strong>Email:</strong>
-          {% if profile.email == "Not detected" %}<span class="not-detected">{{ profile.email }}</span>{% else %}{{ profile.email }}{% endif %}
+          {% if profile.email == "Not detected" %}<span class="not-detected"
+            >{{ profile.email }}</span
+          >{% else %}{{ profile.email }}{% endif %}
         </p>
         <p class="field">
           <strong>Phone:</strong>
-          {% if profile.phone == "Not detected" %}<span class="not-detected">{{ profile.phone }}</span>{% else %}{{ profile.phone }}{% endif %}
+          {% if profile.phone == "Not detected" %}<span class="not-detected"
+            >{{ profile.phone }}</span
+          >{% else %}{{ profile.phone }}{% endif %}
         </p>
         <div class="field">
           <strong>Skills:</strong><br />
-          {% for skill in profile.skills %}
-            {% if skill == "Not detected" %}<span class="not-detected">{{ skill }}</span>{% else %}<span class="tag tag-skill">{{ skill }}</span>{% endif %}
-          {% endfor %}
+          {% for skill in profile.skills %} {% if skill == "Not detected"
+          %}<span class="not-detected">{{ skill }}</span>{% else %}<span
+            class="tag tag-skill"
+            >{{ skill }}</span
+          >{% endif %} {% endfor %}
         </div>
         <div class="field" style="margin-top: 0.6rem">
           <strong>Education Indicators:</strong>
-          {% for item in profile.education %}
-            {% if item == "Not detected" %}
-            <p class="not-detected" style="margin: 0.3rem 0">{{ item }}</p>
-            {% else %}
-            <div class="hint-item">{{ item }}</div>
-            {% endif %}
-          {% endfor %}
+          {% for item in profile.education %} {% if item == "Not detected" %}
+          <p class="not-detected" style="margin: 0.3rem 0">{{ item }}</p>
+          {% else %}
+          <div class="hint-item">{{ item }}</div>
+          {% endif %} {% endfor %}
         </div>
         <div class="field" style="margin-top: 0.6rem">
           <strong>Experience Indicators:</strong>
-          {% for item in profile.experience %}
-            {% if item == "Not detected" %}
-            <p class="not-detected" style="margin: 0.3rem 0">{{ item }}</p>
-            {% else %}
-            <div class="hint-item">{{ item }}</div>
-            {% endif %}
-          {% endfor %}
+          {% for item in profile.experience %} {% if item == "Not detected" %}
+          <p class="not-detected" style="margin: 0.3rem 0">{{ item }}</p>
+          {% else %}
+          <div class="hint-item">{{ item }}</div>
+          {% endif %} {% endfor %}
         </div>
       </div>
       {% endif %}
@@ -966,7 +1122,6 @@
         {% endif %}
       </div>
       {% endif %}
-
     </div>
   </body>
 </html>

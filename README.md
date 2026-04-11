@@ -195,6 +195,31 @@ After analysis, Offerion generates a structured tailored resume draft outline ba
 
 All logic is rule-based and local. No AI or external APIs are used.
 
+## Module 18 — Downloadable Tailored Resume Brief
+
+After analysis, if tailored resume data was generated, a **Download Tailored Brief** button appears alongside the existing Download Report button.
+
+**What it includes:**
+
+A focused plain-text export containing only the tailored resume guidance:
+
+- **Target Title** — the role being tailored for
+- **Professional Summary Guidance** — how to write a targeted summary
+- **Priority Keywords** — keywords to feature or add, with status and action
+- **Experience Focus Points** — how to reorder and rewrite experience bullets
+- **Skills to Feature** — prioritized skill list with reasoning
+- **Section Focus** — which resume sections to strengthen
+- **Tailoring Notes** — overall strategy notes
+
+**Behavior:**
+
+- The button only appears when tailored data exists (requires a target role or JD)
+- Downloads as `offerion_tailored_brief.txt`
+- Does not affect or replace the full analysis report download
+- Uses the same session data — no duplicate processing
+
+All logic is rule-based and local. No AI or external APIs are used.
+
 ## Run Locally
 
 ```
