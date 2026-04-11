@@ -363,6 +363,75 @@
         content: "\2139";
         color: #6b7280;
       }
+      .scorecard-box {
+        text-align: left;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 1.2rem;
+        margin-top: 1.5rem;
+      }
+      .scorecard-box h2 {
+        font-size: 1.2rem;
+        margin: 0 0 0.8rem 0;
+      }
+      .sc-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+      }
+      .sc-label {
+        width: 180px;
+        color: #555;
+        flex-shrink: 0;
+      }
+      .sc-bar-bg {
+        flex: 1;
+        background: #e5e7eb;
+        border-radius: 4px;
+        height: 14px;
+        margin: 0 0.6rem;
+        overflow: hidden;
+      }
+      .sc-bar {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s;
+      }
+      .sc-bar-strong { background: #16a34a; }
+      .sc-bar-good { background: #2563eb; }
+      .sc-bar-fair { background: #ca8a04; }
+      .sc-bar-weak { background: #dc2626; }
+      .sc-value {
+        width: 100px;
+        text-align: right;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+      .sc-overall {
+        border-top: 2px solid #e5e7eb;
+        padding-top: 0.6rem;
+        margin-top: 0.4rem;
+      }
+      .sc-highlights {
+        margin-top: 0.8rem;
+        padding: 0;
+        list-style: none;
+      }
+      .sc-highlights li {
+        font-size: 0.88rem;
+        color: #555;
+        padding: 0.25rem 0 0.25rem 1.2rem;
+        position: relative;
+        line-height: 1.4;
+      }
+      .sc-highlights li::before {
+        content: "\2605";
+        position: absolute;
+        left: 0;
+        color: #ca8a04;
+      }
     </style>
   </head>
   <body>
@@ -453,23 +522,25 @@
           {{ jd_comparison.score }} / 100 — {{ jd_comparison.level }}
         </p>
         <div class="match-field">
-          <strong>JD Keywords Found ({{ jd_comparison.jd_keywords|length }}):</strong><br />
-          {% for item in jd_comparison.jd_keywords %}<span class="skill-tag">{{ item }}</span>{% endfor %}
+          <strong
+            >JD Keywords Found ({{ jd_comparison.jd_keywords|length }}):</strong
+          ><br />
+          {% for item in jd_comparison.jd_keywords %}<span class="skill-tag"
+            >{{ item }}</span
+          >{% endfor %}
         </div>
         <div class="match-field" style="margin-top: 0.4rem">
           <strong>Matched in Resume:</strong><br />
-          {% if jd_comparison.matched %}
-            {% for item in jd_comparison.matched %}<span class="matched-tag">{{ item }}</span>{% endfor %}
-          {% else %}
-            <span class="not-detected">None</span>
+          {% if jd_comparison.matched %} {% for item in jd_comparison.matched
+          %}<span class="matched-tag">{{ item }}</span>{% endfor %} {% else %}
+          <span class="not-detected">None</span>
           {% endif %}
         </div>
         <div class="match-field" style="margin-top: 0.4rem">
           <strong>Missing from Resume:</strong><br />
-          {% if jd_comparison.missing %}
-            {% for item in jd_comparison.missing %}<span class="missing-tag">{{ item }}</span>{% endfor %}
-          {% else %}
-            <span class="not-detected">None</span>
+          {% if jd_comparison.missing %} {% for item in jd_comparison.missing
+          %}<span class="missing-tag">{{ item }}</span>{% endfor %} {% else %}
+          <span class="not-detected">None</span>
           {% endif %}
         </div>
         <div class="explanation">{{ jd_comparison.explanation }}</div>
@@ -495,6 +566,44 @@
           <p class="suggest-reason">{{ s.reason }}</p>
         </div>
         {% endfor %}
+      </div>
+      {% endif %} {% if scorecard %}
+      <div class="scorecard-box">
+        <h2>Resume Strength Scorecard</h2>
+        {% set categories = [
+          ('contact_info', 'Contact Info'),
+          ('skills_coverage', 'Skills Coverage'),
+          ('experience_strength', 'Experience Strength'),
+          ('education_completeness', 'Education Completeness'),
+          ('ats_alignment', 'ATS Alignment')
+        ] %}
+        {% for key, display in categories %}
+        <div class="sc-row">
+          <span class="sc-label">{{ display }}</span>
+          <div class="sc-bar-bg">
+            <div class="sc-bar sc-bar-{{ scorecard.labels[key]|lower }}" style="width: {{ scorecard.scores[key] }}%"></div>
+          </div>
+          <span class="sc-value {% if scorecard.labels[key] == 'Strong' %}level-strong{% elif scorecard.labels[key] == 'Good' %}level-moderate{% elif scorecard.labels[key] == 'Fair' %}level-moderate{% else %}level-low{% endif %}">
+            {{ scorecard.scores[key] }} — {{ scorecard.labels[key] }}
+          </span>
+        </div>
+        {% endfor %}
+        <div class="sc-row sc-overall">
+          <span class="sc-label"><strong>Overall</strong></span>
+          <div class="sc-bar-bg">
+            <div class="sc-bar sc-bar-{{ scorecard.labels.overall|lower }}" style="width: {{ scorecard.scores.overall }}%"></div>
+          </div>
+          <span class="sc-value {% if scorecard.labels.overall == 'Strong' %}level-strong{% elif scorecard.labels.overall == 'Good' %}level-moderate{% elif scorecard.labels.overall == 'Fair' %}level-moderate{% else %}level-low{% endif %}">
+            <strong>{{ scorecard.scores.overall }} — {{ scorecard.labels.overall }}</strong>
+          </span>
+        </div>
+        {% if scorecard.highlights %}
+        <ul class="sc-highlights">
+          {% for item in scorecard.highlights %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
       </div>
       {% endif %} {% if feedback %}
       <div class="feedback-box">
@@ -523,8 +632,11 @@
 
         <h3>Completeness</h3>
         {% for check in feedback.completeness %}
-        <p class="fb-check {% if check.passed %}fb-check-pass{% else %}fb-check-fail{% endif %}">
-          {% if check.passed %}&#10003;{% else %}&#10007;{% endif %} {{ check.label }}
+        <p
+          class="fb-check {% if check.passed %}fb-check-pass{% else %}fb-check-fail{% endif %}"
+        >
+          {% if check.passed %}&#10003;{% else %}&#10007;{% endif %} {{
+          check.label }}
         </p>
         {% endfor %}
       </div>

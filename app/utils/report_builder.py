@@ -1,7 +1,16 @@
 from datetime import datetime
 
 
-def build_report(result, profile, match, suggestions, feedback, jd_comparison=None, rewrite=None):
+def build_report(
+    result,
+    profile,
+    match,
+    suggestions,
+    feedback,
+    jd_comparison=None,
+    rewrite=None,
+    scorecard=None,
+):
     """Build a plain-text analysis report from Offerion results.
 
     Returns a formatted string ready for download.
@@ -136,6 +145,38 @@ def build_report(result, profile, match, suggestions, feedback, jd_comparison=No
         lines.append(f"Explanation: {jd_comparison.get('explanation', '')}")
         lines.append("")
 
+    # --- Resume Strength Scorecard ---
+    if scorecard:
+        lines.append(sub)
+        lines.append("RESUME STRENGTH SCORECARD")
+        lines.append(sub)
+        category_names = {
+            "contact_info": "Contact Info",
+            "skills_coverage": "Skills Coverage",
+            "experience_strength": "Experience Strength",
+            "education_completeness": "Education Completeness",
+            "ats_alignment": "ATS Alignment",
+            "overall": "Overall Resume Strength",
+        }
+        scores = scorecard.get("scores", {})
+        labels = scorecard.get("labels", {})
+        for key in ["contact_info", "skills_coverage", "experience_strength",
+                    "education_completeness", "ats_alignment"]:
+            name = category_names.get(key, key)
+            lines.append(f"  {name:.<30} {scores.get(key, 0):>3} / 100  [{labels.get(key, '')}]")
+        lines.append("")
+        lines.append(
+            f"  {'Overall':.<30} {scores.get('overall', 0):>3} / 100  [{labels.get('overall', '')}]"
+        )
+        lines.append("")
+
+        highlights = scorecard.get("highlights", [])
+        if highlights:
+            lines.append("Highlights:")
+            for item in highlights:
+                lines.append(f"  * {item}")
+            lines.append("")
+
     # --- Suggested Roles ---
     lines.append(sub)
     lines.append("SUGGESTED ROLES")
@@ -143,7 +184,9 @@ def build_report(result, profile, match, suggestions, feedback, jd_comparison=No
     if suggestions:
         for i, s in enumerate(suggestions, 1):
             lines.append(f"{i}. {s.get('role', 'N/A')}")
-            lines.append(f"   Score : {s.get('score', 0)} / 100 — {s.get('level', 'N/A')}")
+            lines.append(
+                f"   Score : {s.get('score', 0)} / 100 — {s.get('level', 'N/A')}"
+            )
             matched_items = s.get("matched", [])
             if matched_items:
                 lines.append(f"   Matched: {', '.join(matched_items)}")

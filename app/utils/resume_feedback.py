@@ -76,7 +76,9 @@ def generate_feedback(resume_text, profile, match=None, jd_comparison=None):
     if len(exp_items) == 0:
         gaps.append("No experience indicators found.")
     if text_length < 200:
-        gaps.append("Resume text is very short — it may be incomplete or poorly formatted.")
+        gaps.append(
+            "Resume text is very short — it may be incomplete or poorly formatted."
+        )
 
     if match:
         missing = match.get("missing", [])
@@ -151,7 +153,9 @@ def generate_feedback(resume_text, profile, match=None, jd_comparison=None):
         match_missing_set = set()
         if match:
             match_missing_set = {m.lower() for m in match.get("missing", [])}
-        unique_jd_missing = [k for k in jd_missing if k.lower() not in match_missing_set]
+        unique_jd_missing = [
+            k for k in jd_missing if k.lower() not in match_missing_set
+        ]
         if unique_jd_missing:
             jd_top = ", ".join(unique_jd_missing[:4])
             recommendations.append(

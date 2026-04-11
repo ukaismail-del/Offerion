@@ -53,7 +53,7 @@ def _build_summary_focus(target_role, skills, match_score, jd_score, has_jd):
     items = []
     if target_role:
         items.append(
-            f'Lead with a summary statement that positions you as a '
+            f"Lead with a summary statement that positions you as a "
             f'strong candidate for "{target_role}".'
         )
     else:
@@ -64,9 +64,7 @@ def _build_summary_focus(target_role, skills, match_score, jd_score, has_jd):
 
     if skills:
         top_skills = ", ".join(skills[:5])
-        items.append(
-            f"Emphasize your top skills early in the summary: {top_skills}."
-        )
+        items.append(f"Emphasize your top skills early in the summary: {top_skills}.")
 
     if has_jd and jd_score < 40:
         items.append(
@@ -86,9 +84,7 @@ def _build_summary_focus(target_role, skills, match_score, jd_score, has_jd):
         )
 
     if not items:
-        items.append(
-            "Consider opening with a clear, targeted summary statement."
-        )
+        items.append("Consider opening with a clear, targeted summary statement.")
 
     return items
 

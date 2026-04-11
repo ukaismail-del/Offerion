@@ -146,6 +146,31 @@ After analysis, Offerion generates structured rewrite guidance to help you tailo
 
 All guidance is rule-based and local. No AI-powered rewriting is performed yet — a future module may add that capability.
 
+## Module 14 — Resume Strength Scorecard
+
+After analysis, Offerion displays a visual scorecard breaking down your resume quality across key categories.
+
+**Scored categories (0–100):**
+
+- **Contact Info** — based on whether name, email, and phone are detected
+- **Skills Coverage** — based on the number of recognized skills
+- **Experience Strength** — based on experience indicators and resume text richness
+- **Education Completeness** — based on education indicators found
+- **ATS Alignment** — based on target-role match score and/or JD comparison overlap
+- **Overall Resume Strength** — weighted average of all categories
+
+**Labels:** Each score maps to a label — Weak (0–39), Fair (40–59), Good (60–79), Strong (80–100).
+
+**Highlights:** A short list of score-based takeaways identifying your strongest and weakest areas.
+
+**Behavior:**
+
+- Scorecard appears whenever a resume is analyzed (no target role or JD required)
+- If target role and/or JD are provided, the ATS Alignment score incorporates them
+- The downloadable report includes the scorecard section
+
+All scoring is rule-based and local. No AI or external APIs are used.
+
 ## Run Locally
 
 ```

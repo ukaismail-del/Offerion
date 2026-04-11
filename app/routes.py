@@ -22,6 +22,7 @@ from app.utils.job_compare import compare_resume_to_jd
 from app.utils.resume_feedback import generate_feedback
 from app.utils.rewrite_guidance import generate_rewrite_guidance
 from app.utils.role_suggester import suggest_roles
+from app.utils.scorecard import generate_scorecard
 from app.utils.storage import save_file, delete_file
 
 logger = logging.getLogger(__name__)
@@ -44,6 +45,7 @@ def index():
     feedback = None
     jd_comparison = None
     rewrite = None
+    scorecard = None
 
     if request.method == "POST":
         if "resume" not in request.files:
@@ -110,6 +112,10 @@ def index():
                                 text, profile, match, jd_comparison
                             )
 
+                            scorecard = generate_scorecard(
+                                text, profile, match, jd_comparison
+                            )
+
                             session["report_data"] = {
                                 "result": result,
                                 "profile": profile,
@@ -118,6 +124,7 @@ def index():
                                 "feedback": feedback,
                                 "jd_comparison": jd_comparison,
                                 "rewrite": rewrite,
+                                "scorecard": scorecard,
                             }
                             logger.info("Analysis complete for: %s", filename)
                     except Exception as exc:
@@ -137,6 +144,7 @@ def index():
         feedback=feedback,
         jd_comparison=jd_comparison,
         rewrite=rewrite,
+        scorecard=scorecard,
     )
 
 
@@ -154,6 +162,7 @@ def download_report():
         feedback=report_data.get("feedback"),
         jd_comparison=report_data.get("jd_comparison"),
         rewrite=report_data.get("rewrite"),
+        scorecard=report_data.get("scorecard"),
     )
 
     return Response(
