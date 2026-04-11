@@ -125,9 +125,7 @@ class TestPackageReopenReliability(unittest.TestCase):
         with self.client.session_transaction() as s:
             self.assertIsNotNone(s.get("selected_job_intelligence"))
             self.assertIsNotNone(s.get("selected_job_gap"))
-            self.assertEqual(
-                s["selected_job_intelligence"]["domain_hint"], "Backend"
-            )
+            self.assertEqual(s["selected_job_intelligence"]["domain_hint"], "Backend")
 
     def test_reopen_missing_gap_regenerates(self):
         """Package with intel but no gap triggers regeneration."""
@@ -499,9 +497,7 @@ class TestTemplateRenderingSafety(unittest.TestCase):
             s["tier_usage"] = {}
 
         # Open package first
-        self.client.get(
-            f"/application-package/{pkg['id']}", follow_redirects=True
-        )
+        self.client.get(f"/application-package/{pkg['id']}", follow_redirects=True)
 
         # Then go to dashboard
         resp = self.client.get("/dashboard")

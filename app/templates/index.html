@@ -36,6 +36,26 @@
     </nav>
 
     <div class="container">
+      <!-- Trial Banner (M-Bundle Pricing) -->
+      {% if is_trial and trial_days_left is not none %}
+      <div class="trial-banner">
+        <span class="trial-icon">🚀</span>
+        <span>You're in your <strong>7-day free trial</strong> — all features unlocked.</span>
+        {% if trial_days_left <= 2 %}
+        <span class="trial-urgent">Only {{ trial_days_left }} day{{ 's' if trial_days_left != 1 else '' }} left!</span>
+        {% else %}
+        <span>{{ trial_days_left }} days remaining.</span>
+        {% endif %}
+        <a href="/pricing" class="btn btn-primary btn-sm" style="margin-left:auto">View Plans</a>
+      </div>
+      {% endif %}
+
+      <!-- Package Recovery Message (M113) -->
+      {% if package_recovery_message %}
+      <div class="card" style="border-left:4px solid var(--color-warning);margin-bottom:var(--space-md)">
+        <p class="msg-warning" style="margin:0">{{ package_recovery_message }}</p>
+      </div>
+      {% endif %}
       <!-- ═══════════════════════════════════════════
      SECTION 1 — HERO + PRIMARY ACTIONS (M50)
      ═══════════════════════════════════════════ -->
@@ -56,6 +76,9 @@
 
         <!-- How It Works (show only when no analysis exists) -->
         {% if not report_data_exists %}
+        <div class="guidance-banner" id="first-run-guidance">
+          <p class="guidance-text">Upload your resume below to get started. You'll receive a match score, tailored guidance, and a ready-to-use application package.</p>
+        </div>
         <div class="how-strip">
           <div class="how-step">
             <div class="how-num">1</div>
@@ -132,11 +155,11 @@
             You're one step away from a full job-ready application
           </p>
           {% if show_enhance_cta and has_access('enhance_resume') %}
-          <a href="/enhance-resume" class="btn btn-purple btn-sm"
+          <a href="/enhance-resume" class="btn btn-purple btn-sm btn-loading-trigger"
             >Enhance Resume First</a
           >
           {% elif has_access('prepare_application') %}
-          <a href="/prepare-application" class="btn btn-primary"
+          <a href="/prepare-application" class="btn btn-primary btn-loading-trigger"
             >Prepare Full Application</a
           >
           {% else %}
@@ -151,14 +174,14 @@
         {% if next_best_action %}
         <div class="nba-card">
           <p class="nba-label">Suggested Next Step</p>
-          <a href="{{ next_best_action.route }}" class="nba-btn"
+          <a href="{{ next_best_action.route }}" class="nba-btn {% if next_best_action.route in ['/enhance-resume', '/generate-cover-letter', '/enhance-cover-letter', '/prepare-application'] %}btn-loading-trigger{% endif %}"
             >{{ next_best_action.label }}</a
           >
           <p class="nba-reason">{{ next_best_action.reason }}</p>
           {% if report_data_exists %}
           <div class="nba-secondary">
             {% if has_access('prepare_application') %}
-            <a href="/prepare-application">Prepare Full Application</a>
+            <a href="/prepare-application" class="btn-loading-trigger">Prepare Full Application</a>
             {% else %}
             <span class="btn-locked" style="font-size: var(--font-sm)"
               >Prepare Full Application</span
@@ -220,7 +243,7 @@
             ></textarea>
 
             <div class="form-actions">
-              <button type="submit" class="btn btn-primary btn-lg">
+              <button type="submit" class="btn btn-primary btn-lg btn-action" onclick="offerionLoading(this,'Analyzing…')">
                 Upload &amp; Analyze
               </button>
             </div>
@@ -347,7 +370,7 @@
             </div>
             <div class="job-action-row">
               {% if has_access('prepare_application') %}
-              <a href="/job-match/{{ rj.id }}" class="btn btn-primary btn-sm"
+              <a href="/job-match/{{ rj.id }}" class="btn btn-primary btn-sm btn-loading-trigger"
                 >Prepare Application</a
               >
               {% else %}
@@ -774,8 +797,8 @@
               >Save Current Job</span
             >
             <span class="locked-hint"
-              >Unlock in Operator &mdash;
-              <a href="/pricing">upgrade to continue</a></span
+              >Operator tier includes job tracking, matching, and saved jobs &mdash;
+              <a href="/pricing">see plans</a></span
             >
             {% endif %}
           </div>
@@ -1398,6 +1421,18 @@
     <!-- /container -->
 
     <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('a.btn-loading-trigger').forEach(function (link) {
+          link.addEventListener('click', function (event) {
+            if (link.classList.contains('is-loading')) {
+              event.preventDefault();
+              return;
+            }
+            offerionLoading(link, link.dataset.loadingLabel || 'Processing\u2026');
+          });
+        });
+      });
+
       function copyText(elementId, btn) {
         var el = document.getElementById(elementId);
         if (!el) return;
@@ -1410,6 +1445,15 @@
             btn.classList.remove("copied");
           }, 2000);
         });
+      }
+
+      /* M112: Loading feedback for action buttons */
+      function offerionLoading(el, label) {
+        if (el.classList.contains('btn-loading')) return false;
+        el.classList.add('btn-loading');
+        el.setAttribute('aria-busy', 'true');
+        el.dataset.origLabel = el.textContent;
+        el.textContent = label || 'Processing\u2026';
       }
     </script>
   </body>

@@ -10,6 +10,7 @@ import uuid
 
 from app.db import db
 from app.models import UserIdentity
+from app.utils.tier_config import start_trial, check_trial_expiry, trial_days_remaining
 
 logger = logging.getLogger(__name__)
 
@@ -29,24 +30,33 @@ def get_or_create_user(session_obj):
         try:
             exists = UserIdentity.query.filter_by(id=user_id).first()
             if exists:
-                # Sync tier from DB to session
-                if exists.tier:
-                    session_obj.setdefault("user_tier", exists.tier)
+                # Check trial expiry and sync tier
+                current_tier = check_trial_expiry(exists)
+                if exists.tier != current_tier:
+                    exists.tier = current_tier
+                    db.session.commit()
+                session_obj["user_tier"] = exists.tier or "free"
+                # Inject trial info
+                days_left = trial_days_remaining(exists)
+                if days_left is not None:
+                    session_obj["trial_days_left"] = days_left
                 else:
-                    session_obj.setdefault("user_tier", "free")
+                    session_obj.pop("trial_days_left", None)
                 return user_id
         except Exception as exc:
             logger.warning("get_or_create_user lookup failed: %s", exc)
             session_obj.setdefault("user_tier", "free")
             return user_id  # still return the session value as fallback
 
-    # Create new identity
+    # Create new identity with trial
     try:
         identity = UserIdentity()
+        start_trial(identity)
         db.session.add(identity)
         db.session.commit()
         session_obj["user_id"] = identity.id
-        session_obj["user_tier"] = "free"
+        session_obj["user_tier"] = "trial"
+        session_obj["trial_days_left"] = 7
         return identity.id
     except Exception as exc:
         db.session.rollback()

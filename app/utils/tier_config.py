@@ -4,11 +4,13 @@ Defines the five-tier access hierarchy and provides the ``has_access``
 helper used by routes and templates to gate features.
 
 Tiers (lowest → highest):
-  free → comet → operator → professional → elite
+  free → comet → operator → professional → elite → trial
 """
 
+from datetime import datetime, timedelta
+
 # Ordered from lowest to highest privilege
-TIER_ORDER = ["free", "comet", "operator", "professional", "elite"]
+TIER_ORDER = ["free", "comet", "operator", "professional", "elite", "trial"]
 
 # Minimum tier required for each feature key
 FEATURE_TIERS = {
@@ -93,6 +95,16 @@ TIER_CONFIG = {
             "Early access to new features",
         ],
     },
+    "trial": {
+        "label": "Trial",
+        "price": "Free for 7 days",
+        "tagline": "Full access — all features unlocked",
+        "features": [
+            "Everything in Elite",
+            "All features unlocked for 7 days",
+            "No credit card required",
+        ],
+    },
 }
 
 # Version limits per tier (0 = unlimited)
@@ -102,6 +114,7 @@ TIER_LIMITS = {
     "operator": {"resume_versions": 15, "packages": 10, "saved_jobs": 10},
     "professional": {"resume_versions": 0, "packages": 0, "saved_jobs": 0},
     "elite": {"resume_versions": 0, "packages": 0, "saved_jobs": 0},
+    "trial": {"resume_versions": 0, "packages": 0, "saved_jobs": 0},
 }
 
 
@@ -139,3 +152,58 @@ def check_limit(user_tier, limit_key, current_count):
     if cap == 0:
         return True  # unlimited
     return current_count < cap
+
+
+# ------------------------------------------------------------------
+# Trial helpers
+# ------------------------------------------------------------------
+
+TRIAL_DURATION_DAYS = 7
+
+
+def start_trial(user):
+    """Activate a 7-day trial on a UserIdentity instance."""
+    user.tier = "trial"
+    user.trial_start = datetime.utcnow()
+    user.trial_end = datetime.utcnow() + timedelta(days=TRIAL_DURATION_DAYS)
+    user.daily_matches_used = 0
+    user.last_usage_reset = user.trial_start
+
+
+def check_trial_expiry(user):
+    """If trial has expired, downgrade to free. Returns current tier."""
+    if user.tier == "trial" and user.trial_end:
+        if datetime.utcnow() > user.trial_end:
+            user.tier = "free"
+    return user.tier
+
+
+def trial_days_remaining(user):
+    """Return days left in trial, or None if not on trial."""
+    if user.tier != "trial" or not user.trial_end:
+        return None
+    delta = (user.trial_end - datetime.utcnow()).days
+    return max(delta, 0)
+
+
+def reset_daily_usage(user):
+    """Reset daily usage counter if a new day has started."""
+    if not user.last_usage_reset:
+        user.daily_matches_used = 0
+        user.last_usage_reset = datetime.utcnow()
+        return
+    if (datetime.utcnow() - user.last_usage_reset).days >= 1:
+        user.daily_matches_used = 0
+        user.last_usage_reset = datetime.utcnow()
+
+
+def can_use_job_match(user):
+    """Check if the user can perform a job match (free users limited to 5/day)."""
+    tier = check_trial_expiry(user)
+    if tier in ("operator", "professional", "elite", "trial"):
+        return True
+    reset_daily_usage(user)
+    if user.daily_matches_used >= 5:
+        return False
+    user.daily_matches_used += 1
+    return True

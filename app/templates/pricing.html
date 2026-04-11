@@ -36,6 +36,21 @@
       </div>
       {% endif %}
 
+      <!-- Trial Banner -->
+      {% if is_trial and trial_days_left is not none %}
+      <div class="trial-banner">
+        <span class="trial-icon">🚀</span>
+        <span
+          >You're in your <strong>7-day free trial</strong> — all features
+          unlocked.</span
+        >
+        <span
+          >{{ trial_days_left }} day{{ 's' if trial_days_left != 1 else '' }}
+          remaining.</span
+        >
+      </div>
+      {% endif %}
+
       <!-- Pricing Header -->
       <div style="text-align: center; margin-bottom: var(--space-2xl)">
         <h1
@@ -67,6 +82,9 @@
         <div
           class="pricing-card {% if tier_key == user_tier %}pricing-card-active{% endif %} {% if tier_key == 'operator' %}pricing-card-featured{% endif %}"
         >
+          {% if is_trial and tier_key in ('operator', 'professional', 'elite') %}
+          <span class="badge badge-trial-unlock">Unlocked in Trial</span>
+          {% endif %}
           {% if tier_key == 'operator' %}
           <div class="pricing-featured-badge">Most Popular</div>
           {% endif %}
@@ -89,8 +107,13 @@
             href="/upgrade/{{ tier_key }}"
             class="btn {% if tier_key == 'operator' %}btn-primary{% else %}btn-outline{% endif %} pricing-btn"
           >
-            {% if tier_order.index(tier_key) > tier_order.index(user_tier)
-            %}Upgrade{% else %}Switch{% endif %} to {{ tier.label }}
+            {% if is_trial %}
+            Choose {{ tier.label }}
+            {% elif tier_order.index(tier_key) > tier_order.index(user_tier) %}
+            Upgrade to {{ tier.label }}
+            {% else %}
+            Switch to {{ tier.label }}
+            {% endif %}
           </a>
           {% endif %}
         </div>
@@ -107,6 +130,11 @@
       >
         This is a demo environment. No real payments are processed.
       </p>
+
+      <!-- M114: Value clarity -->
+      <div style="text-align:center;margin-top:var(--space-md);color:var(--text-muted);font-size:var(--font-sm);max-width:520px;margin-left:auto;margin-right:auto">
+        <p style="margin:0 0 0.5rem"><strong>Why upgrade?</strong> Free gets you started. Comet unlocks AI enhancement. Operator adds full application prep and job tracking. Professional automates follow-ups so you never miss an opportunity.</p>
+      </div>
     </div>
   </body>
 </html>

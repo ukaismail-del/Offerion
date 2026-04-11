@@ -24,8 +24,16 @@ class UserIdentity(db.Model):
     __tablename__ = "user_identity"
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: uuid.uuid4().hex)
-    tier = db.Column(db.String(20), default="free")
+    tier = db.Column(db.String(20), default="trial")
     created_at = db.Column(db.DateTime, default=_now)
+
+    # Trial tracking
+    trial_start = db.Column(db.DateTime, nullable=True)
+    trial_end = db.Column(db.DateTime, nullable=True)
+
+    # Usage tracking
+    daily_matches_used = db.Column(db.Integer, default=0)
+    last_usage_reset = db.Column(db.DateTime, nullable=True)
 
     # relationships
     saved_jobs = db.relationship("SavedJob", backref="user", lazy=True)

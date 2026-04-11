@@ -1918,3 +1918,179 @@ textarea {
   .job-filters { flex-direction: column; }
   .filter-input, .filter-select { max-width: 100%; }
 }
+
+/* ── Bundle S — Trial + User Readiness ───────────────────────── */
+
+/* Trial Banner */
+.trial-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%);
+  border: 1px solid #93c5fd;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+.trial-banner-compact {
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-xs);
+}
+.trial-icon { font-size: 1.2rem; }
+.trial-urgent { color: var(--color-danger); font-weight: 600; }
+
+/* Trial badge on pricing cards */
+.badge-trial-unlock {
+  display: inline-block;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: var(--font-xs);
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-xs);
+}
+
+/* Tier badge for trial */
+.tier-badge-trial {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #fff;
+}
+
+/* M111: First-run guidance */
+.guidance-banner {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-default);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+.guidance-banner.guidance-warning {
+  border-left-color: var(--color-warning);
+}
+.guidance-text {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  line-height: 1.5;
+}
+
+/* M112: Loading states */
+.btn.is-loading,
+a.btn.is-loading {
+  opacity: 0.65;
+  pointer-events: none;
+  cursor: wait;
+  position: relative;
+}
+.btn.is-loading::after {
+  content: '';
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-left: 0.4em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: offerion-spin 0.6s linear infinite;
+  vertical-align: middle;
+}
+@keyframes offerion-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* M113: Warning messages */
+.msg-warning {
+  color: #92400e;
+  font-size: var(--font-sm);
+  line-height: 1.5;
+}
+
+/* M115: Confidence checklist */
+.confidence-checklist {
+  border-left: 4px solid var(--color-success);
+}
+.checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.checklist li {
+  padding: 0.3rem 0 0.3rem 1.6rem;
+  position: relative;
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+.checklist li::before {
+  position: absolute;
+  left: 0;
+  font-size: 1rem;
+}
+.checklist-pass::before { content: '✓'; color: var(--color-success); font-weight: 700; }
+.checklist-neutral::before { content: '○'; color: var(--text-muted); }
+.checklist-review::before { content: '⚠'; color: var(--color-warning); }
+
+/* ==========================================================================
+   Bundle S (M111-M116) — User Readiness + Release Flow
+   ========================================================================== */
+
+/* ── M111: First-run guidance banner ─────────────────────────── */
+.guidance-banner {
+  background: var(--color-primary-subtle, #eff6ff);
+  border: 1px solid var(--color-primary-light, #e0e7ff);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
+}
+.guidance-banner.guidance-warning {
+  background: var(--color-warning-light, #fffbeb);
+  border-color: var(--color-warning, #f59e0b);
+}
+.guidance-text {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.guidance-text a {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* ── M112: Loading / processing feedback ─────────────────────── */
+.btn-loading {
+  opacity: 0.65;
+  pointer-events: none;
+  cursor: wait;
+}
+.btn-action {
+  transition: opacity 0.15s ease;
+}
+
+/* ── M115: Confidence checklist ──────────────────────────────── */
+.confidence-checklist .checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.confidence-checklist .checklist li {
+  font-size: var(--font-sm);
+  padding: 0.35rem 0;
+  padding-left: 1.75rem;
+  position: relative;
+  line-height: 1.4;
+}
+.confidence-checklist .checklist li::before {
+  position: absolute;
+  left: 0;
+  font-weight: 700;
+  font-size: var(--font-md);
+}
+.checklist-pass::before  { content: "\2713"; color: var(--color-success); }
+.checklist-neutral::before { content: "\2014"; color: var(--text-muted); }
+.checklist-review::before { content: "\270E"; color: var(--color-warning); }

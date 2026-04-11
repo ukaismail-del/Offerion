@@ -49,6 +49,10 @@ def _migrate_add_columns(app):
     """Add columns introduced after initial schema (safe for SQLite + Postgres)."""
     migrations = [
         ("user_identity", "tier", "VARCHAR(20) DEFAULT 'free'"),
+        ("user_identity", "trial_start", "DATETIME"),
+        ("user_identity", "trial_end", "DATETIME"),
+        ("user_identity", "daily_matches_used", "INTEGER DEFAULT 0"),
+        ("user_identity", "last_usage_reset", "DATETIME"),
     ]
     for table, column, col_type in migrations:
         try:

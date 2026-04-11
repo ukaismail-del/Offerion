@@ -239,12 +239,15 @@ def _gate(feature_key):
 def _tier_ctx():
     """Return dict of tier-related template variables."""
     ut = _user_tier()
+    trial_days = session.get("trial_days_left")
     return {
         "user_tier": ut,
         "tier_label": tier_label(ut),
         "has_access": lambda feat: has_access(ut, feat),
         "required_tier_for": required_tier_for,
         "check_limit": lambda key, count: check_limit(ut, key, count),
+        "trial_days_left": trial_days,
+        "is_trial": ut == "trial",
     }
 
 
@@ -265,6 +268,12 @@ def _increment_usage(key):
 def _upgrade_nudge():
     """Return an upgrade nudge message if warranted (M60), else None."""
     ut = _user_tier()
+    trial_days = session.get("trial_days_left")
+    if ut == "trial" and trial_days is not None and trial_days <= 2:
+        return (
+            "Your trial ends soon — choose a plan to keep job-targeted prep, "
+            "tracking, and follow-up tools active."
+        )
     if ut != "free":
         return None
     usage = session.get("usage", {})
@@ -515,6 +524,7 @@ def dashboard():
         and not session.get("application_packages"),
         show_enhance_cta=bool(session.get("report_data"))
         and not session.get("enhanced_resume"),
+        package_recovery_message=session.pop("package_recovery_message", None),
         **_tier_ctx(),
         **_onboarding_ctx(),
     )
@@ -667,7 +677,40 @@ def _build_enhanced_draft(enhanced):
 def resume_preview():
     report_data = session.get("report_data")
     if not report_data:
-        return redirect(url_for("main.dashboard"))
+        # M113: Render a safe empty state instead of hard redirect
+        return render_template(
+            "resume_preview.html",
+            profile=None,
+            tailored=None,
+            rewrite=None,
+            target_title=None,
+            skills_list=[],
+            education_list=[],
+            enhanced=None,
+            resume_versions=session.get("resume_versions", []),
+            cover_letter_draft=None,
+            enhanced_cover_letter=None,
+            application_packages=session.get("application_packages", []),
+            match_explanation=None,
+            keyword_gaps=None,
+            priority_fixes=None,
+            role_fit=None,
+            saved_jobs=session.get("saved_jobs", []),
+            alerts=get_active_alerts(session.get("alerts", [])),
+            followup=None,
+            allowed_statuses=ALLOWED_STATUSES,
+            session_memory=get_memory(session),
+            session_memory_empty=is_empty(get_memory(session)),
+            provenance=build_provenance(session),
+            get_source_label=get_source_label,
+            next_best_action=get_next_action(session),
+            upgrade_nudge_message=None,
+            selected_job_intel=None,
+            selected_job_gap=None,
+            selected_job_context=None,
+            no_report=True,
+            **_tier_ctx(),
+        )
 
     profile = report_data.get("profile")
     tailored = report_data.get("tailored")
@@ -742,6 +785,7 @@ def resume_preview():
         selected_job_intel=_selected_job_state()[0],
         selected_job_gap=_selected_job_state()[1],
         selected_job_context=_selected_job_state()[2],
+        no_report=False,
         **_tier_ctx(),
     )
 
@@ -1083,6 +1127,11 @@ def open_application_package(package_id):
         report_data, enhanced_resume, cl_draft, enhanced_cl = load_package(pkg)
     except Exception:
         logger.warning("Package %s failed to load; redirecting.", package_id)
+        session["package_recovery_message"] = (
+            "This application package could not be fully loaded. "
+            "It may have been saved in an older format. "
+            "Try preparing a new application from the dashboard."
+        )
         return redirect(url_for("main.dashboard"))
 
     # M105: ensure report_data is at least a dict so downstream never crashes
@@ -1476,10 +1525,12 @@ def prepare_application():
 def pricing():
     _log_event("upgrade_clicked")
     gate_message = session.pop("gate_message", None)
+    # Don't show trial as a purchasable plan
+    display_order = [t for t in TIER_ORDER if t != "trial"]
     return render_template(
         "pricing.html",
         tiers=TIER_CONFIG,
-        tier_order=TIER_ORDER,
+        tier_order=display_order,
         gate_message=gate_message,
         **_tier_ctx(),
     )
@@ -1487,7 +1538,12 @@ def pricing():
 
 @main_bp.route("/upgrade/<tier_name>")
 def upgrade(tier_name):
-    if tier_name not in TIER_ORDER:
+    if tier_name not in TIER_ORDER or tier_name == "trial":
+        if tier_name == "trial":
+            session["gate_message"] = (
+                "Your 7-day trial starts automatically on first use. "
+                "Choose a paid plan to keep premium workflows after it ends."
+            )
         return redirect(url_for("main.pricing"))
     user_id = session.get("user_id")
     session["user_tier"] = tier_name

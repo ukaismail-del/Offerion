@@ -31,6 +31,17 @@
     <div class="container">
       <a href="/dashboard" class="back-link">&larr; Back to Dashboard</a>
 
+      <!-- Trial Countdown -->
+      {% if is_trial and trial_days_left is not none and trial_days_left <= 2 %}
+      <div class="trial-banner trial-banner-compact">
+        <span
+          >⏳ {{ trial_days_left }} day{{ 's' if trial_days_left != 1 else '' }}
+          left in your trial.</span
+        >
+        <a href="/pricing" class="btn btn-primary btn-sm">Choose a plan</a>
+      </div>
+      {% endif %}
+
       <!-- Job Header -->
       <div style="text-align: center; margin-bottom: var(--space-xl)">
         <h1
@@ -271,8 +282,8 @@
           >Create Follow-Up Alert</span
         >
         <span class="locked-hint"
-          >Unlock in Professional &mdash;
-          <a href="/pricing">upgrade to continue</a></span
+          >Professional tier includes alerts, automation, and advanced tracking
+          &mdash; <a href="/pricing">see plans</a></span
         >
         {% endif %}
         <div style="flex: 1"></div>
