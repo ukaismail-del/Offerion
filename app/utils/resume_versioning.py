@@ -64,8 +64,10 @@ def _get_target_title(report_data, enhanced):
 
 def _build_label(report_data, enhanced, session_data):
     title = _get_target_title(report_data, enhanced)
+    if not title:
+        # M43: Try session memory
+        mem = session_data.get("session_memory", {})
+        title = mem.get("active_target_title", "")
     if title:
         return title
-    # Fallback: numbered version
-    existing = session_data.get("resume_versions", [])
-    return f"Resume Version {len(existing) + 1}"
+    return "Untitled Role"

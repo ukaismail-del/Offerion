@@ -664,6 +664,87 @@ Improved usability for missing, partial, or not-yet-generated data.
 - All panels hidden gracefully when data is absent
 - Existing M22-M37 flows remain fully intact
 
+---
+
+## Bundle F — Automation Layer (M42-M45)
+
+### Module 42 — Next Best Action Engine
+
+Suggests the most logical next step based on current session state.
+
+**File:** `app/utils/next_best_action.py`
+
+**Function:** `get_next_action(session)`
+
+**Logic chain (priority order):**
+1. No report_data → Analyze Resume
+2. No enhanced_resume → Enhance Resume
+3. No cover_letter_draft → Generate Cover Letter
+4. No enhanced_cover_letter → Enhance Cover Letter
+5. No application_packages → Save Application Package
+6. No saved_jobs → Save Job
+7. Latest job status = Saved → Update Status to Applied
+8. Default → Review & Apply
+
+**UI:** Primary CTA card at top of dashboard with label, button, and reason.
+
+---
+
+### Module 43 — Smart Auto-Fill
+
+Auto-fills labels and fields from session context to reduce friction.
+
+**Sources:** `report_data.match.target_role`, `tailored.target_title`, `session_memory`
+
+**Applied to:**
+- Resume version labels (`resume_versioning.py`)
+- Application package labels (`application_package.py`)
+- Saved job titles and companies (`job_tracker.py`)
+
+**Fallbacks:** Title → "Untitled Role", Company → "Unknown Company"
+
+---
+
+### Module 44 — Auto-Trigger Enhancements
+
+After key actions, the next best action is automatically recalculated. The NBA engine runs on every page render so the suggestion is always current.
+
+- After resume analysis → NBA suggests "Enhance Resume"
+- After cover letter generation → NBA suggests "Enhance Cover Letter"
+- Existing enhanced data is never overwritten
+
+---
+
+### Module 45 — Guided Flow (One-Click Application Prep)
+
+Single action that prepares a complete application.
+
+**Route:** `GET /prepare-application`
+
+**Steps:**
+1. Ensure report_data exists
+2. Enhance resume if not done
+3. Generate cover letter if not done
+4. Enhance cover letter if not done
+5. Save application package
+
+**Integration:**
+- Updates session_memory with active package
+- Records "Application prepared for [role]" event
+- Redirects to `/resume-preview`
+
+**UI:** "Prepare Full Application" button on dashboard and preview page.
+
+---
+
+**M42-M45 Integration:**
+
+- NBA recalculates on every dashboard and preview render
+- Prepare Application runs the full chain without overwriting existing data
+- Smart auto-fill uses session memory for intelligent labels
+- All automation actions update session memory and activity timeline
+- Existing M38-M41 flows remain fully intact
+
 ## Run Locally
 
 ```

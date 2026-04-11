@@ -65,6 +65,7 @@ from app.utils.followup_prompts import generate_followup_prompts
 from app.utils.session_memory import get_memory, update_memory, set_last_action, is_empty
 from app.utils.activity_timeline import record_event, get_timeline
 from app.utils.provenance import build_provenance, get_source_label
+from app.utils.next_best_action import get_next_action
 
 logger = logging.getLogger(__name__)
 
@@ -259,6 +260,8 @@ def index():
     session_mem = get_memory(session)
     timeline = get_timeline(session, limit=15)
     provenance = build_provenance(session)
+    next_action = get_next_action(session)
+    session["next_best_action"] = next_action
 
     return render_template(
         "index.html",
@@ -289,6 +292,8 @@ def index():
         activity_timeline=timeline,
         provenance=provenance,
         get_source_label=get_source_label,
+        next_best_action=next_action,
+        report_data_exists=bool(session.get("report_data")),
     )
 
 
@@ -481,6 +486,8 @@ def resume_preview():
 
     session_mem = get_memory(session)
     provenance = build_provenance(session)
+    next_action = get_next_action(session)
+    session["next_best_action"] = next_action
 
     return render_template(
         "resume_preview.html",
@@ -507,6 +514,7 @@ def resume_preview():
         session_memory_empty=is_empty(session_mem),
         provenance=provenance,
         get_source_label=get_source_label,
+        next_best_action=next_action,
     )
 
 
@@ -824,7 +832,7 @@ def delete_application_package_route(package_id):
 @main_bp.route("/save-job")
 def save_job_route():
     report_data = session.get("report_data")
-    job = create_saved_job(report_data=report_data)
+    job = create_saved_job(report_data=report_data, session_data=session)
     saved_jobs = session.get("saved_jobs", [])
     saved_jobs.append(job)
     session["saved_jobs"] = saved_jobs
@@ -919,6 +927,73 @@ def delete_alert_route(alert_id):
     set_last_action(session, "Alert deleted")
     record_event(session, "alert_deleted", "Deleted an alert")
     return redirect(url_for("main.index"))
+
+
+# ------------------------------------------------------------------
+# M45 — Guided Flow (One-Click Application Prep)
+# ------------------------------------------------------------------
+
+@main_bp.route("/prepare-application")
+def prepare_application():
+    report_data = session.get("report_data")
+    if not report_data:
+        return redirect(url_for("main.index"))
+
+    # Step 2: Enhance resume if not done
+    if not session.get("enhanced_resume"):
+        enhanced = enhance_resume(
+            profile=report_data.get("profile"),
+            tailored=report_data.get("tailored"),
+            rewrite=report_data.get("rewrite"),
+            match=report_data.get("match"),
+        )
+        if enhanced:
+            session["enhanced_resume"] = enhanced
+
+    # Step 3: Generate cover letter if not done
+    if not session.get("cover_letter_draft"):
+        draft = build_cover_letter(
+            profile=report_data.get("profile"),
+            tailored=report_data.get("tailored"),
+            rewrite=report_data.get("rewrite"),
+            match=report_data.get("match"),
+            enhanced_resume=session.get("enhanced_resume"),
+        )
+        if draft:
+            session["cover_letter_draft"] = draft
+
+    # Step 4: Enhance cover letter if not done
+    if not session.get("enhanced_cover_letter"):
+        cl_draft = session.get("cover_letter_draft")
+        if cl_draft:
+            enhanced_cl = enhance_cover_letter(cl_draft, session.get("enhanced_resume"))
+            if enhanced_cl:
+                session["enhanced_cover_letter"] = enhanced_cl
+
+    # Step 5: Save application package
+    pkg = save_package(session)
+    if pkg:
+        packages = session.get("application_packages", [])
+        packages.append(pkg)
+        session["application_packages"] = packages
+        update_memory(session, last_action="Application prepared",
+                      active_application_package_id=pkg["id"])
+
+    # Determine target role for event label
+    target_title = ""
+    match_data = report_data.get("match")
+    tailored = report_data.get("tailored")
+    if match_data:
+        target_title = match_data.get("target_role", "")
+    if not target_title and tailored:
+        target_title = tailored.get("target_title", "")
+
+    record_event(session, "application_prepared",
+                 "Application prepared for %s" % (target_title or "target role"))
+
+    session["next_best_action"] = get_next_action(session)
+
+    return redirect(url_for("main.resume_preview"))
 
 
 @main_bp.route("/<path:path>")

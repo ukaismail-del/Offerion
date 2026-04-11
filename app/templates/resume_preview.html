@@ -369,6 +369,13 @@
       .conf-Strong { background: #f0fdf4; color: #16a34a; }
       .prov-note-sm { font-size: 0.78rem; color: #94a3b8; font-style: italic; margin-top: 0.3rem; }
 
+      /* --- Next Best Action (M42/M45) --- */
+      .nba-bar { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #fff; border-radius: 12px; padding: 1rem 1.5rem; margin-top: 1.5rem; text-align: center; }
+      .nba-bar a { display: inline-block; background: #fff; color: #2563eb; padding: 0.55rem 1.6rem; font-size: 0.95rem; font-weight: 700; border-radius: 8px; text-decoration: none; margin: 0 0.3rem; transition: all 0.2s; }
+      .nba-bar a:hover { background: #f8fafc; transform: scale(1.02); }
+      .nba-bar .nba-secondary-sm { display: inline-block; background: rgba(255,255,255,0.15); color: #fff; padding: 0.55rem 1.4rem; font-size: 0.9rem; font-weight: 600; border-radius: 8px; text-decoration: none; margin: 0 0.3rem; transition: background 0.2s; }
+      .nba-bar .nba-secondary-sm:hover { background: rgba(255,255,255,0.25); }
+
       @media (max-width: 640px) {
         .resume-page {
           padding: 1.5rem 1.2rem;
@@ -736,6 +743,16 @@
         {% if provenance.notes %}
         <div class="prov-note-sm">{{ provenance.notes[-1] }}</div>
         {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Next Best Action + Prepare Application (M42/M45) -->
+      {% if next_best_action %}
+      <div class="nba-bar">
+        {% if next_best_action.label != 'Analyze Resume' %}
+        <a href="{{ next_best_action.route }}">{{ next_best_action.label }}</a>
+        {% endif %}
+        <a href="/prepare-application" class="nba-secondary-sm">Prepare Full Application</a>
       </div>
       {% endif %}
 

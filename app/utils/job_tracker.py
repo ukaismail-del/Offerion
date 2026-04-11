@@ -5,7 +5,8 @@ from datetime import datetime
 
 
 def create_saved_job(report_data=None, title=None, company=None,
-                     location=None, job_url=None, notes=None, source=None):
+                     location=None, job_url=None, notes=None, source=None,
+                     session_data=None):
     """Create a saved job entry from explicit fields or report_data context."""
     job_title = title or ""
     job_company = company or ""
@@ -18,10 +19,18 @@ def create_saved_job(report_data=None, title=None, company=None,
         if not job_title and tailored:
             job_title = tailored.get("target_title", "")
 
+    # M43: Try session memory as fallback
+    if not job_title and session_data:
+        mem = session_data.get("session_memory", {})
+        job_title = mem.get("active_target_title", "")
+    if not job_company and session_data:
+        mem = session_data.get("session_memory", {})
+        job_company = mem.get("active_company", "")
+
     if not job_title:
-        job_title = "Untitled Job"
+        job_title = "Untitled Role"
     if not job_company:
-        job_company = ""
+        job_company = "Unknown Company"
 
     return {
         "id": uuid.uuid4().hex[:12],

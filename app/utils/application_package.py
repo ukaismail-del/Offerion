@@ -23,7 +23,7 @@ def save_package(session_data):
 
     label = _build_label(report_data, enhanced_resume, session_data)
     company = _resolve_company(report_data, cover_letter_draft,
-                               enhanced_cover_letter)
+                               enhanced_cover_letter, session_data)
 
     package = {
         "id": uuid.uuid4().hex[:12],
@@ -77,7 +77,8 @@ def _get_target_title(report_data, enhanced_resume):
     return None
 
 
-def _resolve_company(report_data, cover_letter_draft, enhanced_cover_letter):
+def _resolve_company(report_data, cover_letter_draft, enhanced_cover_letter,
+                     session_data=None):
     if enhanced_cover_letter and enhanced_cover_letter.get("company"):
         c = enhanced_cover_letter["company"]
         if c != "your organization":
@@ -86,12 +87,21 @@ def _resolve_company(report_data, cover_letter_draft, enhanced_cover_letter):
         c = cover_letter_draft["company"]
         if c != "your organization":
             return c
-    return None
+    # M43: Try session memory
+    if session_data:
+        mem = session_data.get("session_memory", {})
+        company = mem.get("active_company", "")
+        if company:
+            return company
+    return "Unknown Company"
 
 
 def _build_label(report_data, enhanced_resume, session_data):
     title = _get_target_title(report_data, enhanced_resume)
+    if not title:
+        # M43: Try session memory
+        mem = session_data.get("session_memory", {})
+        title = mem.get("active_target_title", "")
     if title:
         return title
-    existing = session_data.get("application_packages", [])
-    return f"Application Package {len(existing) + 1}"
+    return "Untitled Role"

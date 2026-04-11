@@ -328,6 +328,16 @@
       .conf-Strong { background: #f0fdf4; color: #16a34a; }
       .prov-notes { font-size: 0.82rem; color: #94a3b8; font-style: italic; margin-top: 0.5rem; }
 
+      /* --- Next Best Action (M42) --- */
+      .nba-card { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #fff; border-radius: 12px; padding: 1.5rem 1.8rem; margin-bottom: 1.5rem; text-align: center; }
+      .nba-label { font-size: 0.92rem; color: rgba(255,255,255,0.85); margin: 0 0 0.8rem; }
+      .nba-btn { display: inline-block; background: #fff; color: #2563eb; padding: 0.75rem 2.2rem; font-size: 1.05rem; font-weight: 700; border-radius: 8px; text-decoration: none; transition: all 0.2s; }
+      .nba-btn:hover { background: #f8fafc; transform: scale(1.02); }
+      .nba-reason { font-size: 0.88rem; color: rgba(255,255,255,0.8); margin: 0.6rem 0 0; }
+      .nba-secondary { margin-top: 0.8rem; }
+      .nba-secondary a { display: inline-block; background: rgba(255,255,255,0.15); color: #fff; padding: 0.5rem 1.4rem; font-size: 0.9rem; font-weight: 600; border-radius: 8px; text-decoration: none; transition: background 0.2s; }
+      .nba-secondary a:hover { background: rgba(255,255,255,0.25); }
+
       .status-bar {
         text-align: center;
       }
@@ -957,6 +967,20 @@
           <p>Score, action plan, and downloadable tailored brief</p>
         </div>
       </div>
+
+      <!-- Next Best Action (M42) -->
+      {% if next_best_action %}
+      <div class="nba-card">
+        <p class="nba-label">Suggested Next Step</p>
+        <a href="{{ next_best_action.route }}" class="nba-btn">{{ next_best_action.label }}</a>
+        <p class="nba-reason">{{ next_best_action.reason }}</p>
+        {% if report_data_exists %}
+        <div class="nba-secondary">
+          <a href="/prepare-application">Prepare Full Application</a>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
 
       <!-- Recent Analyses -->
       <div class="card">
