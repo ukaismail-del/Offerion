@@ -99,24 +99,34 @@ def _build_summary(profile, tailored, rewrite, target_title, job_context=None):
     elif rewrite and rewrite.get("summary_focus"):
         fragments.extend(rewrite["summary_focus"])
 
-    # M96: incorporate job-specific focus when available
+    # M96/M101: incorporate job-specific focus when available
     focus_areas_from_job = []
-    if job_context and job_context.get("gap"):
-        focus_areas_from_job = job_context["gap"].get("recommended_focus", [])
+    domain_hint = None
+    if job_context:
+        gap = job_context.get("gap") or {}
+        intel = job_context.get("intelligence") or {}
+        focus_areas_from_job = gap.get("recommended_focus", [])
+        domain_hint = intel.get("domain_hint")
 
     if not fragments:
         skills = profile.get("skills", []) if profile else []
-        # M96: prefer matched skills from job context
+        # M101: prefer matched skills, then required skills, then profile skills
         if job_context and job_context.get("matched_skills"):
             top = ", ".join(job_context["matched_skills"][:4])
+        elif job_context and (job_context.get("intelligence") or {}).get(
+            "required_skills"
+        ):
+            top = ", ".join(job_context["intelligence"]["required_skills"][:4])
         elif skills:
             top = ", ".join(skills[:4])
         else:
             top = "core competencies"
         if target_title and top:
+            # M101: incorporate domain hint for stronger positioning
+            domain_phrase = f" in the {domain_hint} space" if domain_hint else ""
             summary = (
                 f"Results-driven professional with expertise in {top}, "
-                f"seeking to leverage proven capabilities in a {target_title} role. "
+                f"seeking to leverage proven capabilities in a {target_title} role{domain_phrase}. "
                 "Committed to delivering measurable outcomes and continuous improvement."
             )
             if focus_areas_from_job:
@@ -129,7 +139,11 @@ def _build_summary(profile, tailored, rewrite, target_title, job_context=None):
 
     # Convert guidance fragments into polished prose
     skills = profile.get("skills", []) if profile else []
-    top_skills = ", ".join(skills[:3]) if skills else "core competencies"
+    # M101: prefer matched/required skills for the top-skills mention
+    if job_context and job_context.get("matched_skills"):
+        top_skills = ", ".join(job_context["matched_skills"][:3])
+    else:
+        top_skills = ", ".join(skills[:3]) if skills else "core competencies"
 
     opening = (
         f"Results-driven {target_title} professional"
@@ -163,9 +177,17 @@ def _build_skills(profile, tailored, job_context=None):
     skills = []
     seen = set()
 
-    # M96: job-targeted required skills first
+    # M101: matched skills first (candidate already has these — highest relevance)
+    if job_context and job_context.get("matched_skills"):
+        for s in job_context["matched_skills"]:
+            s = s.strip()
+            if s and s.lower() not in seen:
+                skills.append(s)
+                seen.add(s.lower())
+
+    # M96/M101: job-targeted required skills next
     if job_context and job_context.get("intelligence"):
-        for s in job_context["intelligence"].get("required_skills", []):
+        for s in job_context["intelligence"].get("required_skills") or []:
             s = s.strip()
             if s and s.lower() not in seen:
                 skills.append(s)

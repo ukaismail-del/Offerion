@@ -97,7 +97,7 @@ def _build_opening(name, target_title, company):
 def _build_body(profile, tailored, rewrite, match, enhanced_resume, job_context=None):
     points = []
 
-    # M96: job-targeted skills alignment
+    # M96/M102: job-targeted skills alignment
     if job_context and job_context.get("matched_skills"):
         top = job_context["matched_skills"][:6]
         points.append(
@@ -114,9 +114,25 @@ def _build_body(profile, tailored, rewrite, match, enhanced_resume, job_context=
                 f"support the key requirements of this role."
             )
 
-    # M96: job-targeted focus areas
+    # M102: domain and seniority alignment when available
+    if job_context:
+        intel = job_context.get("intelligence") or {}
+        domain = intel.get("domain_hint")
+        seniority = intel.get("seniority_hint")
+        if domain and seniority:
+            points.append(
+                f"With experience at the {seniority} level in {domain}, "
+                f"I bring the depth and perspective this position demands."
+            )
+        elif domain:
+            points.append(
+                f"My background in {domain} has equipped me with the "
+                f"technical depth and practical insight this role requires."
+            )
+
+    # M96/M102: job-targeted focus areas
     if job_context and job_context.get("gap"):
-        focus = job_context["gap"].get("recommended_focus", [])
+        focus = job_context["gap"].get("recommended_focus") or []
         if focus:
             points.append(
                 "My experience is particularly strong in areas such as "

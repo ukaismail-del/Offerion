@@ -1896,6 +1896,22 @@ textarea {
   padding: 0.2rem 0.6rem;
   border-radius: var(--radius-sm, 0.25rem);
 }
+.empty-hint {
+  color: var(--text-muted, #9ca3af);
+  font-size: var(--font-sm, 0.85rem);
+  font-style: italic;
+  margin: 0.25rem 0;
+}
+.tag-preferred {
+  display: inline-block;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: var(--font-xs, 0.75rem);
+  font-weight: 500;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm, 0.25rem);
+  margin: 0.125rem;
+}
 
 @media (max-width: 640px) {
   .job-grid { grid-template-columns: 1fr; }

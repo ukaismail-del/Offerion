@@ -13,12 +13,15 @@ _POWER_PHRASES = [
 ]
 
 
-def enhance_cover_letter(cover_letter_draft, enhanced_resume=None):
+def enhance_cover_letter(cover_letter_draft, enhanced_resume=None, job_context=None):
     """Enhance a cover letter draft into polished prose.
 
     Returns a dict with recipient, company, target_title,
     enhanced_opening, enhanced_body, enhanced_closing, and full_text.
     Returns None if no draft is provided.
+
+    When *job_context* is provided (M102), the opening and body are
+    strengthened with domain/seniority specifics.
     """
     if not cover_letter_draft:
         return None
@@ -28,7 +31,7 @@ def enhance_cover_letter(cover_letter_draft, enhanced_resume=None):
     recipient = cover_letter_draft.get("recipient", "Hiring Team")
     name = _resolve_name(cover_letter_draft, enhanced_resume)
 
-    enhanced_opening = _enhance_opening(target_title, company)
+    enhanced_opening = _enhance_opening(target_title, company, job_context)
     enhanced_body = _enhance_body(
         cover_letter_draft.get("body_points", []), target_title
     )
@@ -60,10 +63,18 @@ def _resolve_name(draft, enhanced_resume):
     return "[Your Name]"
 
 
-def _enhance_opening(target_title, company):
+def _enhance_opening(target_title, company, job_context=None):
+    # M102: incorporate domain/seniority when available
+    domain_phrase = ""
+    if job_context:
+        intel = job_context.get("intelligence") or {}
+        domain = intel.get("domain_hint")
+        if domain:
+            domain_phrase = f" in {domain}"
+
     return (
         f"I am excited to apply for the {target_title} position at {company}. "
-        f"My professional background and proven skill set make me a strong "
+        f"My professional background{domain_phrase} and proven skill set make me a strong "
         f"candidate for this role, and I am eager to bring my expertise to "
         f"your team."
     )

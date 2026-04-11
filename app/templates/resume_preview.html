@@ -164,7 +164,18 @@
       <div class="card" id="fit-analysis">
         <h2 class="card-title">
           Targeting: {{ selected_job_context.title }} at {{
-          selected_job_context.company }}
+          selected_job_context.company }} {% if selected_job_intel and
+          selected_job_intel.seniority_hint %}
+          <span
+            style="
+              font-size: var(--font-sm);
+              color: var(--text-muted);
+              font-weight: 400;
+            "
+          >
+            · {{ selected_job_intel.seniority_hint }}-level</span
+          >
+          {% endif %}
         </h2>
         <hr class="card-divider" />
         <div class="fit-grid">
@@ -179,19 +190,27 @@
           </div>
           <div class="fit-panel">
             <h3>Why You Fit</h3>
+            {% if selected_job_gap.matched_skills %}
             <div class="fit-list">
               {% for sk in selected_job_gap.matched_skills %}
               <span class="tag tag-matched">{{ sk }}</span>
               {% endfor %}
             </div>
+            {% else %}
+            <p class="empty-hint">No matched skills detected.</p>
+            {% endif %}
           </div>
           <div class="fit-panel">
             <h3>What To Improve</h3>
+            {% if selected_job_gap.missing_skills %}
             <div class="fit-list">
               {% for sk in selected_job_gap.missing_skills %}
               <span class="tag tag-missing">{{ sk }}</span>
               {% endfor %}
             </div>
+            {% else %}
+            <p class="empty-hint">No gaps identified — great fit!</p>
+            {% endif %}
           </div>
           {% if selected_job_gap.recommended_focus %}
           <div class="fit-panel">

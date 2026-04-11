@@ -400,8 +400,10 @@
           Job Fit Analysis — {{ selected_job_context.title }}
         </h2>
         <p style="color: var(--text-muted); margin-bottom: var(--space-md)">
-          {{ selected_job_context.company }} {% if selected_job_context.location
-          %} &middot; {{ selected_job_context.location }}{% endif %}
+          {{ selected_job_context.company }}
+          {% if selected_job_context.location %} &middot; {{ selected_job_context.location }}{% endif %}
+          {% if selected_job_intel and selected_job_intel.seniority_hint %} &middot; {{ selected_job_intel.seniority_hint }}-level{% endif %}
+          {% if selected_job_intel and selected_job_intel.domain_hint %} &middot; {{ selected_job_intel.domain_hint }}{% endif %}
         </p>
 
         <div class="fit-grid">
@@ -412,8 +414,7 @@
               class="score-display {% if selected_job_gap.fit_level == 'Strong' %}level-strong{% elif selected_job_gap.fit_level == 'Moderate' %}level-moderate{% else %}level-low{% endif %}"
               style="font-size: var(--font-2xl)"
             >
-              {{ (selected_job_gap.fit_score * 100)|int }}% — {{
-              selected_job_gap.fit_level }}
+              {{ (selected_job_gap.fit_score * 100)|int }}% — {{ selected_job_gap.fit_level }}
             </span>
           </div>
 
@@ -426,12 +427,15 @@
               <span class="tag tag-matched">{{ sk }}</span>
               {% endfor %}
             </div>
-            {% endif %} {% if selected_job_gap.resume_strengths %}
+            {% endif %}
+            {% if selected_job_gap.resume_strengths %}
             <ul class="gap-list">
               {% for s in selected_job_gap.resume_strengths %}
               <li>{{ s }}</li>
               {% endfor %}
             </ul>
+            {% else %}
+            <p class="empty-hint">Upload a resume with more detail to see strengths.</p>
             {% endif %}
           </div>
 
@@ -444,26 +448,31 @@
               <span class="tag tag-missing">{{ sk }}</span>
               {% endfor %}
             </div>
-            {% endif %} {% if selected_job_gap.resume_gaps %}
+            {% endif %}
+            {% if selected_job_gap.resume_gaps %}
             <ul class="gap-list">
               {% for g in selected_job_gap.resume_gaps %}
               <li>{{ g }}</li>
               {% endfor %}
             </ul>
+            {% elif not selected_job_gap.missing_skills %}
+            <p class="empty-hint">No gaps identified — great fit!</p>
             {% endif %}
           </div>
 
           <!-- Recommended Focus -->
-          {% if selected_job_gap.recommended_focus %}
           <div class="fit-panel">
             <h3 class="card-title">Recommended Focus</h3>
+            {% if selected_job_gap.recommended_focus %}
             <div class="fit-list">
               {% for f in selected_job_gap.recommended_focus %}
               <span class="focus-chip">{{ f }}</span>
               {% endfor %}
             </div>
+            {% else %}
+            <p class="empty-hint">Select a job with a description for targeted focus areas.</p>
+            {% endif %}
           </div>
-          {% endif %}
 
           <!-- Intelligence Hints -->
           {% if selected_job_intel %}
@@ -471,14 +480,31 @@
             <h3 class="card-title">Job Insights</h3>
             {% if selected_job_intel.seniority_hint %}
             <p class="field">
-              <strong>Seniority:</strong> {{ selected_job_intel.seniority_hint
-              }}
+              <strong>Seniority:</strong> {{ selected_job_intel.seniority_hint }}
             </p>
-            {% endif %} {% if selected_job_intel.domain_hint %}
+            {% endif %}
+            {% if selected_job_intel.domain_hint %}
             <p class="field">
               <strong>Domain:</strong> {{ selected_job_intel.domain_hint }}
             </p>
-            {% endif %} {% if selected_job_intel.responsibility_signals %}
+            {% endif %}
+            {% if selected_job_intel.required_skills %}
+            <p class="field"><strong>Required Skills:</strong></p>
+            <div class="fit-list">
+              {% for sk in selected_job_intel.required_skills %}
+              <span class="tag tag-matched">{{ sk }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+            {% if selected_job_intel.preferred_skills %}
+            <p class="field"><strong>Preferred Skills:</strong></p>
+            <div class="fit-list">
+              {% for sk in selected_job_intel.preferred_skills %}
+              <span class="tag tag-preferred">{{ sk }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+            {% if selected_job_intel.responsibility_signals %}
             <p class="field">
               <strong>Key Responsibilities:</strong>
               {{ selected_job_intel.responsibility_signals|join(', ') }}

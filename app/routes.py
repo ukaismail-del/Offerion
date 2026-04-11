@@ -111,6 +111,43 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+# ------------------------------------------------------------------
+# M99 — Selected-job session state helper
+# ------------------------------------------------------------------
+
+
+def _selected_job_state():
+    """Return a consistent (intel, gap, context) triplet from session.
+
+    Each value is either a well-formed dict or ``None``.  Templates can
+    rely on the keys existing when the value is not ``None``.
+    """
+    report_data = session.get("report_data")
+    context = (report_data or {}).get("job_context") if report_data else None
+    intel = session.get("selected_job_intelligence")
+    gap = session.get("selected_job_gap")
+
+    # Normalise: if context exists but intel/gap are missing, regenerate
+    if context and (not intel or not gap):
+        try:
+            job_payload = {
+                "title": context.get("title", ""),
+                "description": context.get("description", ""),
+                "skills": context.get("skills", []),
+                "company": context.get("company", ""),
+            }
+            if not intel:
+                intel = extract_job_intelligence(job_payload)
+                session["selected_job_intelligence"] = intel
+            if not gap and report_data:
+                gap = analyze_job_gap(report_data, job_payload)
+                session["selected_job_gap"] = gap
+        except Exception:
+            logger.debug("_selected_job_state: regeneration failed", exc_info=True)
+
+    return intel, gap, context
+
+
 def _refresh_intelligence(report_data):
     """Generate M30-M33 intelligence data from report_data and store in session."""
     if not report_data:
@@ -471,9 +508,9 @@ def dashboard():
         job_location=job_location,
         job_remote=job_remote,
         job_source=job_source,
-        selected_job_intel=session.get("selected_job_intelligence"),
-        selected_job_gap=session.get("selected_job_gap"),
-        selected_job_context=report_data.get("job_context") if report_data else None,
+        selected_job_intel=_selected_job_state()[0],
+        selected_job_gap=_selected_job_state()[1],
+        selected_job_context=_selected_job_state()[2],
         show_quick_start=bool(session.get("report_data"))
         and not session.get("application_packages"),
         show_enhance_cta=bool(session.get("report_data"))
@@ -702,9 +739,9 @@ def resume_preview():
         get_source_label=get_source_label,
         next_best_action=next_action,
         upgrade_nudge_message=_upgrade_nudge(),
-        selected_job_intel=session.get("selected_job_intelligence"),
-        selected_job_gap=session.get("selected_job_gap"),
-        selected_job_context=report_data.get("job_context") if report_data else None,
+        selected_job_intel=_selected_job_state()[0],
+        selected_job_gap=_selected_job_state()[1],
+        selected_job_context=_selected_job_state()[2],
         **_tier_ctx(),
     )
 
@@ -724,6 +761,7 @@ def enhance_resume_route():
         tailored=report_data.get("tailored"),
         rewrite=report_data.get("rewrite"),
         match=report_data.get("match"),
+        job_context=report_data.get("job_context"),
     )
 
     if enhanced:
@@ -1040,6 +1078,23 @@ def open_application_package(package_id):
     session["cover_letter_draft"] = cl_draft
     session["enhanced_cover_letter"] = enhanced_cl
     _refresh_intelligence(report_data)
+
+    # M100: rehydrate selected-job intelligence from package context
+    job_ctx = (report_data or {}).get("job_context")
+    if job_ctx:
+        intel = job_ctx.get("intelligence") or pkg.get("selected_job_intelligence")
+        gap = job_ctx.get("gap") or pkg.get("selected_job_gap")
+        if intel:
+            session["selected_job_intelligence"] = intel
+        if gap:
+            session["selected_job_gap"] = gap
+        # If not embedded, regenerate on the fly
+        if not intel or not gap:
+            _selected_job_state()  # will regenerate and cache
+    else:
+        session.pop("selected_job_intelligence", None)
+        session.pop("selected_job_gap", None)
+
     update_memory(
         session,
         last_action="Opened application package",
@@ -1330,7 +1385,11 @@ def prepare_application():
     if not session.get("enhanced_cover_letter"):
         cl_draft = session.get("cover_letter_draft")
         if cl_draft:
-            enhanced_cl = enhance_cover_letter(cl_draft, session.get("enhanced_resume"))
+            enhanced_cl = enhance_cover_letter(
+                cl_draft,
+                session.get("enhanced_resume"),
+                job_context=report_data.get("job_context"),
+            )
             if enhanced_cl:
                 session["enhanced_cover_letter"] = enhanced_cl
 

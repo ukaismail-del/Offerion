@@ -40,13 +40,22 @@ def save_package(session_data):
         "enhanced_cover_letter": (
             copy.deepcopy(enhanced_cover_letter) if enhanced_cover_letter else None
         ),
+        # M100: persist selected-job intelligence alongside package
+        "selected_job_intelligence": copy.deepcopy(
+            session_data.get("selected_job_intelligence")
+        ),
+        "selected_job_gap": copy.deepcopy(session_data.get("selected_job_gap")),
     }
 
     return package
 
 
 def load_package(package):
-    """Return (report_data, enhanced_resume, cover_letter_draft, enhanced_cover_letter)."""
+    """Return (report_data, enhanced_resume, cover_letter_draft, enhanced_cover_letter).
+
+    Also stores M100 intelligence/gap data in the package dict for
+    callers that need it, but maintains backward-compatible 4-tuple.
+    """
     return (
         copy.deepcopy(package.get("report_data", {})),
         copy.deepcopy(package.get("enhanced_resume")),
