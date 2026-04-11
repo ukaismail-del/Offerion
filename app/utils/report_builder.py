@@ -161,10 +161,17 @@ def build_report(
         }
         scores = scorecard.get("scores", {})
         labels = scorecard.get("labels", {})
-        for key in ["contact_info", "skills_coverage", "experience_strength",
-                    "education_completeness", "ats_alignment"]:
+        for key in [
+            "contact_info",
+            "skills_coverage",
+            "experience_strength",
+            "education_completeness",
+            "ats_alignment",
+        ]:
             name = category_names.get(key, key)
-            lines.append(f"  {name:.<30} {scores.get(key, 0):>3} / 100  [{labels.get(key, '')}]")
+            lines.append(
+                f"  {name:.<30} {scores.get(key, 0):>3} / 100  [{labels.get(key, '')}]"
+            )
         lines.append("")
         lines.append(
             f"  {'Overall':.<30} {scores.get('overall', 0):>3} / 100  [{labels.get('overall', '')}]"

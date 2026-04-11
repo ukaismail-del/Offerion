@@ -5,6 +5,915 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Offerion</title>
     <style>
+      /* --- Reset & Base --- */
+      *, *::before, *::after { box-sizing: border-box; }
+      body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f2f5;
+        color: #333;
+        line-height: 1.6;
+      }
+
+      /* --- Container --- */
+      .container {
+        max-width: 900px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 3rem;
+      }
+
+      /* --- Header --- */
+      .header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+      .header h1 {
+        font-size: 2.6rem;
+        font-weight: 700;
+        margin: 0 0 0.2rem 0;
+        color: #1e293b;
+        letter-spacing: -0.5px;
+      }
+      .header .subtitle {
+        font-size: 1.1rem;
+        color: #64748b;
+        margin: 0 0 0.4rem 0;
+      }
+      .header .description {
+        font-size: 0.95rem;
+        color: #94a3b8;
+        margin: 0;
+      }
+
+      /* --- Card --- */
+      .card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.5rem 1.8rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      }
+      .card-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 0.6rem 0;
+      }
+      .card-divider {
+        border: none;
+        border-top: 2px solid #e2e8f0;
+        margin: 0 0 1.2rem 0;
+      }
+      .card h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 1.2rem 0 0.5rem 0;
+        color: #334155;
+      }
+
+      /* --- Form Card --- */
+      .form-card {
+        text-align: left;
+      }
+      .form-card form {
+        margin: 0;
+      }
+      .form-label {
+        display: block;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 0.3rem;
+        margin-top: 1rem;
+      }
+      .form-label:first-child {
+        margin-top: 0;
+      }
+      input[type="file"] {
+        display: block;
+        margin-bottom: 0.4rem;
+        font-size: 0.95rem;
+        color: #475569;
+      }
+      input[type="text"],
+      textarea {
+        width: 100%;
+        padding: 0.65rem 0.8rem;
+        font-size: 0.95rem;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        background: #f8fafc;
+        color: #334155;
+        font-family: inherit;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      input[type="text"]:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        background: #fff;
+      }
+      textarea {
+        resize: vertical;
+        min-height: 100px;
+      }
+      .btn-primary {
+        display: inline-block;
+        background-color: #2563eb;
+        color: #fff;
+        border: none;
+        padding: 0.75rem 2.2rem;
+        font-size: 1.05rem;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-top: 1.2rem;
+        transition: background-color 0.2s, transform 0.1s;
+      }
+      .btn-primary:hover {
+        background-color: #1d4ed8;
+      }
+      .btn-primary:active {
+        transform: scale(0.98);
+      }
+      .form-actions {
+        text-align: center;
+        margin-top: 0.5rem;
+      }
+
+      /* --- Messages --- */
+      .msg-success {
+        color: #15803d;
+        font-weight: 600;
+        font-size: 1rem;
+        margin: 0 0 0.6rem 0;
+      }
+      .msg-error {
+        color: #dc2626;
+        font-weight: 600;
+        font-size: 1rem;
+        margin: 0 0 0.6rem 0;
+      }
+      .download-btn {
+        display: inline-block;
+        background-color: #059669;
+        color: #fff;
+        border: none;
+        padding: 0.7rem 2rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background-color 0.2s;
+      }
+      .download-btn:hover {
+        background-color: #047857;
+      }
+      .status-bar {
+        text-align: center;
+      }
+
+      /* --- Field labels --- */
+      .field {
+        font-size: 0.92rem;
+        color: #555;
+        margin-bottom: 0.5rem;
+        line-height: 1.5;
+      }
+      .field strong {
+        color: #1e293b;
+      }
+
+      /* --- Score --- */
+      .score-display {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0.3rem 0 0.5rem 0;
+      }
+      .level-strong { color: #16a34a; }
+      .level-moderate { color: #ca8a04; }
+      .level-low { color: #dc2626; }
+
+      /* --- Tags --- */
+      .tag {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        margin: 0.2rem 0.15rem;
+        line-height: 1.4;
+      }
+      .tag-matched {
+        background: #16a34a;
+        color: #fff;
+      }
+      .tag-missing {
+        background: #dc2626;
+        color: #fff;
+      }
+      .tag-skill {
+        background: #e0e7ff;
+        color: #3730a3;
+      }
+      .tag-neutral {
+        background: #f1f5f9;
+        color: #475569;
+      }
+      .not-detected {
+        color: #94a3b8;
+        font-style: italic;
+      }
+
+      /* --- Explanation block --- */
+      .explanation {
+        background: #f0f9ff;
+        border-left: 3px solid #3b82f6;
+        padding: 0.7rem 1rem;
+        margin-top: 0.8rem;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        color: #334155;
+        border-radius: 0 6px 6px 0;
+      }
+
+      /* --- Suggestion cards --- */
+      .suggest-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem 1.2rem;
+        margin-bottom: 0.8rem;
+        background: #fafbfc;
+      }
+      .suggest-role {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 0.3rem 0;
+      }
+      .suggest-score {
+        font-size: 0.92rem;
+        margin: 0 0 0.3rem 0;
+        color: #555;
+      }
+      .suggest-reason {
+        font-size: 0.88rem;
+        color: #64748b;
+        line-height: 1.5;
+        margin: 0.4rem 0 0;
+      }
+      .suggest-matched {
+        margin-top: 0.4rem;
+      }
+
+      /* --- Feedback lists --- */
+      .fb-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .fb-list li {
+        font-size: 0.92rem;
+        color: #555;
+        padding: 0.35rem 0 0.35rem 1.4rem;
+        position: relative;
+        line-height: 1.5;
+      }
+      .fb-list li::before {
+        position: absolute;
+        left: 0;
+        font-size: 0.9rem;
+      }
+      .fb-strength li::before { content: "\2713"; color: #16a34a; }
+      .fb-gap li::before { content: "\26A0"; color: #ca8a04; }
+      .fb-rec li::before { content: "\27A4"; color: #2563eb; }
+      .fb-check {
+        font-size: 0.9rem;
+        padding: 0.25rem 0 0.25rem 0.3rem;
+      }
+      .fb-check-pass { color: #16a34a; }
+      .fb-check-fail { color: #dc2626; }
+
+      /* --- Rewrite lists --- */
+      .rw-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .rw-list li {
+        font-size: 0.92rem;
+        color: #555;
+        padding: 0.35rem 0 0.35rem 1.4rem;
+        position: relative;
+        line-height: 1.5;
+      }
+      .rw-list li::before {
+        position: absolute;
+        left: 0;
+      }
+      .rw-focus li::before { content: "\25B8"; color: #7c3aed; }
+      .rw-keyword li::before { content: "+"; color: #16a34a; font-weight: bold; }
+      .rw-bullet li::before { content: "\270E"; color: #ca8a04; }
+      .rw-section li::before { content: "\2692"; color: #2563eb; }
+      .rw-ats li::before { content: "\2139"; color: #6b7280; }
+
+      /* --- Scorecard --- */
+      .sc-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.65rem;
+        font-size: 0.92rem;
+      }
+      .sc-label {
+        width: 190px;
+        color: #475569;
+        flex-shrink: 0;
+        font-weight: 500;
+      }
+      .sc-bar-bg {
+        flex: 1;
+        background: #e5e7eb;
+        border-radius: 6px;
+        height: 16px;
+        margin: 0 0.8rem;
+        overflow: hidden;
+      }
+      .sc-bar {
+        height: 100%;
+        border-radius: 6px;
+        transition: width 0.3s;
+      }
+      .sc-bar-strong { background: #16a34a; }
+      .sc-bar-good { background: #2563eb; }
+      .sc-bar-fair { background: #ca8a04; }
+      .sc-bar-weak { background: #dc2626; }
+      .sc-value {
+        width: 110px;
+        text-align: right;
+        font-weight: 700;
+        flex-shrink: 0;
+        font-size: 0.88rem;
+      }
+      .sc-overall {
+        border-top: 2px solid #e2e8f0;
+        padding-top: 0.8rem;
+        margin-top: 0.5rem;
+      }
+      .sc-highlights {
+        margin-top: 1rem;
+        padding: 0;
+        list-style: none;
+      }
+      .sc-highlights li {
+        font-size: 0.9rem;
+        color: #555;
+        padding: 0.3rem 0 0.3rem 1.4rem;
+        position: relative;
+        line-height: 1.5;
+      }
+      .sc-highlights li::before {
+        content: "\2605";
+        position: absolute;
+        left: 0;
+        color: #ca8a04;
+      }
+
+      /* --- Tailored lists --- */
+      .tl-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .tl-list li {
+        font-size: 0.92rem;
+        color: #555;
+        padding: 0.35rem 0 0.35rem 1.4rem;
+        position: relative;
+        line-height: 1.5;
+      }
+      .tl-list li::before {
+        position: absolute;
+        left: 0;
+      }
+      .tl-summary li::before { content: "\25B8"; color: #7c3aed; }
+      .tl-exp li::before { content: "\270E"; color: #ca8a04; }
+      .tl-section li::before { content: "\2692"; color: #2563eb; }
+      .tl-notes li::before { content: "\2139"; color: #6b7280; }
+
+      /* --- Tailored keyword table --- */
+      .tl-kw-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.4rem;
+        font-size: 0.9rem;
+      }
+      .tl-kw-table th {
+        text-align: left;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 0.4rem 0.6rem;
+        color: #334155;
+        font-size: 0.88rem;
+        font-weight: 600;
+      }
+      .tl-kw-table td {
+        padding: 0.35rem 0.6rem;
+        border-bottom: 1px solid #f1f5f9;
+        color: #555;
+      }
+      .tl-status-matched { color: #16a34a; font-weight: 700; }
+      .tl-status-missing { color: #dc2626; font-weight: 700; }
+      .tl-status-present { color: #2563eb; font-weight: 700; }
+
+      /* --- Tailored skill tags --- */
+      .tl-skill-high {
+        display: inline-block;
+        background: #16a34a;
+        color: #fff;
+        padding: 0.25rem 0.7rem;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        margin: 0.15rem;
+      }
+      .tl-skill-medium {
+        display: inline-block;
+        background: #e0e7ff;
+        color: #3730a3;
+        padding: 0.25rem 0.7rem;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        margin: 0.15rem;
+      }
+      .tl-skill-add {
+        display: inline-block;
+        background: #fef3c7;
+        color: #92400e;
+        padding: 0.25rem 0.7rem;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        margin: 0.15rem;
+      }
+
+      /* --- Preview / hint --- */
+      .preview {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 0.8rem;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-size: 0.88rem;
+        line-height: 1.6;
+        max-height: 300px;
+        overflow-y: auto;
+        color: #475569;
+      }
+      .hint-item {
+        background: #f8fafc;
+        border-left: 3px solid #cbd5e1;
+        padding: 0.5rem 0.8rem;
+        margin: 0.3rem 0;
+        font-size: 0.88rem;
+        line-height: 1.5;
+        border-radius: 0 6px 6px 0;
+        color: #555;
+      }
+
+      /* --- Responsive --- */
+      @media (max-width: 640px) {
+        .container {
+          padding: 1rem;
+        }
+        .card {
+          padding: 1.2rem 1rem;
+        }
+        .header h1 {
+          font-size: 2rem;
+        }
+        .sc-label {
+          width: 120px;
+          font-size: 0.82rem;
+        }
+        .sc-value {
+          width: 90px;
+          font-size: 0.8rem;
+        }
+        .sc-bar-bg {
+          margin: 0 0.4rem;
+        }
+        input[type="text"],
+        textarea {
+          font-size: 0.9rem;
+        }
+        .btn-primary {
+          width: 100%;
+          padding: 0.75rem;
+        }
+        .tl-kw-table th,
+        .tl-kw-table td {
+          padding: 0.3rem 0.35rem;
+          font-size: 0.82rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+
+      <!-- Header -->
+      <div class="header">
+        <h1>Offerion</h1>
+        <p class="subtitle">Resume-to-offer engine</p>
+        <p class="description">Upload your resume and enter a target role to see your match score.</p>
+      </div>
+
+      <!-- Upload Form -->
+      <div class="card form-card">
+        <h2 class="card-title">Upload &amp; Analyze</h2>
+        <hr class="card-divider" />
+        <form method="POST" enctype="multipart/form-data">
+          <label class="form-label" for="resume">Resume File</label>
+          <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx" />
+
+          <label class="form-label" for="target_role">Target Job Title</label>
+          <input type="text" id="target_role" name="target_role" placeholder="e.g. Software Engineer" />
+
+          <label class="form-label" for="target_keywords">Keywords (optional, comma-separated)</label>
+          <input type="text" id="target_keywords" name="target_keywords" placeholder="e.g. Python, SQL, REST API" />
+
+          <label class="form-label" for="job_description">Job Description (optional &mdash; paste to compare)</label>
+          <textarea id="job_description" name="job_description" rows="5" placeholder="Paste the full job description here to get a tailored comparison..."></textarea>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Upload &amp; Analyze</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Status messages -->
+      {% if message %}
+      <div class="card status-bar">
+        <p class="msg-success">{{ message }}</p>
+        <a href="/download-report" class="download-btn">Download Report</a>
+      </div>
+      {% endif %}
+
+      {% if error %}
+      <div class="card status-bar">
+        <p class="msg-error">{{ error }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Match Analysis -->
+      {% if match %}
+      <div class="card">
+        <h2 class="card-title">Match Analysis</h2>
+        <hr class="card-divider" />
+        <p class="field"><strong>Target Role:</strong> {{ match.target_role }}</p>
+        <p class="field"><strong>Keywords Entered:</strong> {{ match.keywords_entered }}</p>
+        <p class="field"><strong>Match Score:</strong></p>
+        <p class="score-display {% if match.level == 'Strong' %}level-strong{% elif match.level == 'Moderate' %}level-moderate{% else %}level-low{% endif %}">
+          {{ match.score }} / 100 &mdash; {{ match.level }}
+        </p>
+        <div class="field">
+          <strong>Matched:</strong><br />
+          {% if match.matched %}
+            {% for item in match.matched %}<span class="tag tag-matched">{{ item }}</span>{% endfor %}
+          {% else %}
+            <span class="not-detected">None</span>
+          {% endif %}
+        </div>
+        <div class="field" style="margin-top: 0.5rem">
+          <strong>Missing:</strong><br />
+          {% if match.missing %}
+            {% for item in match.missing %}<span class="tag tag-missing">{{ item }}</span>{% endfor %}
+          {% else %}
+            <span class="not-detected">None</span>
+          {% endif %}
+        </div>
+        <div class="explanation">{{ match.explanation }}</div>
+      </div>
+      {% endif %}
+
+      <!-- JD Comparison -->
+      {% if jd_comparison %}
+      <div class="card">
+        <h2 class="card-title">Job Description Comparison</h2>
+        <hr class="card-divider" />
+        <p class="field"><strong>Overlap Score:</strong></p>
+        <p class="score-display {% if jd_comparison.level == 'Strong' %}level-strong{% elif jd_comparison.level == 'Moderate' %}level-moderate{% else %}level-low{% endif %}">
+          {{ jd_comparison.score }} / 100 &mdash; {{ jd_comparison.level }}
+        </p>
+        <div class="field">
+          <strong>JD Keywords Found ({{ jd_comparison.jd_keywords|length }}):</strong><br />
+          {% for item in jd_comparison.jd_keywords %}<span class="tag tag-skill">{{ item }}</span>{% endfor %}
+        </div>
+        <div class="field" style="margin-top: 0.5rem">
+          <strong>Matched in Resume:</strong><br />
+          {% if jd_comparison.matched %}
+            {% for item in jd_comparison.matched %}<span class="tag tag-matched">{{ item }}</span>{% endfor %}
+          {% else %}
+            <span class="not-detected">None</span>
+          {% endif %}
+        </div>
+        <div class="field" style="margin-top: 0.5rem">
+          <strong>Missing from Resume:</strong><br />
+          {% if jd_comparison.missing %}
+            {% for item in jd_comparison.missing %}<span class="tag tag-missing">{{ item }}</span>{% endfor %}
+          {% else %}
+            <span class="not-detected">None</span>
+          {% endif %}
+        </div>
+        <div class="explanation">{{ jd_comparison.explanation }}</div>
+      </div>
+      {% endif %}
+
+      <!-- Suggested Roles -->
+      {% if suggestions %}
+      <div class="card">
+        <h2 class="card-title">Suggested Roles</h2>
+        <hr class="card-divider" />
+        {% for s in suggestions %}
+        <div class="suggest-card">
+          <p class="suggest-role">{{ s.role }}</p>
+          <p class="suggest-score">
+            Score:
+            <strong class="{% if s.level == 'Strong' %}level-strong{% elif s.level == 'Moderate' %}level-moderate{% else %}level-low{% endif %}">
+              {{ s.score }} / 100 &mdash; {{ s.level }}
+            </strong>
+          </p>
+          <div class="suggest-matched">
+            {% for item in s.matched %}<span class="tag tag-matched">{{ item }}</span>{% endfor %}
+          </div>
+          <p class="suggest-reason">{{ s.reason }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Resume Strength Scorecard -->
+      {% if scorecard %}
+      <div class="card">
+        <h2 class="card-title">Resume Strength Scorecard</h2>
+        <hr class="card-divider" />
+        {% set categories = [
+          ('contact_info', 'Contact Info'),
+          ('skills_coverage', 'Skills Coverage'),
+          ('experience_strength', 'Experience Strength'),
+          ('education_completeness', 'Education Completeness'),
+          ('ats_alignment', 'ATS Alignment')
+        ] %}
+        {% for key, display in categories %}
+        <div class="sc-row">
+          <span class="sc-label">{{ display }}</span>
+          <div class="sc-bar-bg">
+            <div class="sc-bar sc-bar-{{ scorecard.labels[key]|lower }}" style="width: {{ scorecard.scores[key] }}%"></div>
+          </div>
+          <span class="sc-value {% if scorecard.labels[key] == 'Strong' %}level-strong{% elif scorecard.labels[key] == 'Good' %}level-moderate{% elif scorecard.labels[key] == 'Fair' %}level-moderate{% else %}level-low{% endif %}">
+            {{ scorecard.scores[key] }} &mdash; {{ scorecard.labels[key] }}
+          </span>
+        </div>
+        {% endfor %}
+        <div class="sc-row sc-overall">
+          <span class="sc-label"><strong>Overall</strong></span>
+          <div class="sc-bar-bg">
+            <div class="sc-bar sc-bar-{{ scorecard.labels.overall|lower }}" style="width: {{ scorecard.scores.overall }}%"></div>
+          </div>
+          <span class="sc-value {% if scorecard.labels.overall == 'Strong' %}level-strong{% elif scorecard.labels.overall == 'Good' %}level-moderate{% elif scorecard.labels.overall == 'Fair' %}level-moderate{% else %}level-low{% endif %}">
+            <strong>{{ scorecard.scores.overall }} &mdash; {{ scorecard.labels.overall }}</strong>
+          </span>
+        </div>
+        {% if scorecard.highlights %}
+        <ul class="sc-highlights">
+          {% for item in scorecard.highlights %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Resume Improvement Guidance -->
+      {% if feedback %}
+      <div class="card">
+        <h2 class="card-title">Resume Improvement Guidance</h2>
+        <hr class="card-divider" />
+
+        <h3>Strengths</h3>
+        <ul class="fb-list fb-strength">
+          {% for item in feedback.strengths %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <h3>Gaps</h3>
+        <ul class="fb-list fb-gap">
+          {% for item in feedback.gaps %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <h3>Recommendations</h3>
+        <ul class="fb-list fb-rec">
+          {% for item in feedback.recommendations %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <h3>Completeness</h3>
+        {% for check in feedback.completeness %}
+        <p class="fb-check {% if check.passed %}fb-check-pass{% else %}fb-check-fail{% endif %}">
+          {% if check.passed %}&#10003;{% else %}&#10007;{% endif %} {{ check.label }}
+        </p>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- ATS Rewrite Guidance -->
+      {% if rewrite %}
+      <div class="card">
+        <h2 class="card-title">ATS Rewrite Guidance</h2>
+        <hr class="card-divider" />
+
+        <h3>Summary Focus</h3>
+        <ul class="rw-list rw-focus">
+          {% for item in rewrite.summary_focus %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <h3>Keyword Additions</h3>
+        <ul class="rw-list rw-keyword">
+          {% for item in rewrite.keyword_additions %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <h3>Bullet Improvements</h3>
+        <ul class="rw-list rw-bullet">
+          {% for item in rewrite.bullet_improvements %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <h3>Section Improvements</h3>
+        <ul class="rw-list rw-section">
+          {% for item in rewrite.section_improvements %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <h3>ATS Notes</h3>
+        <ul class="rw-list rw-ats">
+          {% for item in rewrite.ats_notes %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- Tailored Resume Version Builder -->
+      {% if tailored %}
+      <div class="card">
+        <h2 class="card-title">Tailored Resume Version Builder</h2>
+        <hr class="card-divider" />
+        <p class="field"><strong>Target Title:</strong> {{ tailored.target_title }}</p>
+
+        <h3>Professional Summary Guidance</h3>
+        <ul class="tl-list tl-summary">
+          {% for item in tailored.professional_summary %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        {% if tailored.priority_keywords %}
+        <h3>Priority Keywords</h3>
+        <table class="tl-kw-table">
+          <thead>
+            <tr><th>Keyword</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            {% for kw in tailored.priority_keywords %}
+            <tr>
+              <td>{{ kw.keyword }}</td>
+              <td class="tl-status-{{ kw.status }}">{{ kw.status }}</td>
+              <td>{{ kw.action }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+
+        <h3>Experience Focus Points</h3>
+        <ul class="tl-list tl-exp">
+          {% for item in tailored.experience_focus_points %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        {% if tailored.skills_to_feature %}
+        <h3>Skills to Feature</h3>
+        <div>
+          {% for sf in tailored.skills_to_feature %}
+          <span class="tl-skill-{{ sf.priority }}" title="{{ sf.reason }}">{{ sf.skill }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <h3>Section Focus</h3>
+        <ul class="tl-list tl-section">
+          {% for item in tailored.section_focus %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+
+        <h3>Tailoring Notes</h3>
+        <ul class="tl-list tl-notes">
+          {% for item in tailored.tailoring_notes %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- Resume Profile Summary -->
+      {% if profile %}
+      <div class="card">
+        <h2 class="card-title">Resume Profile Summary</h2>
+        <hr class="card-divider" />
+        <p class="field">
+          <strong>Name:</strong>
+          {% if profile.name == "Not detected" %}<span class="not-detected">{{ profile.name }}</span>{% else %}{{ profile.name }}{% endif %}
+        </p>
+        <p class="field">
+          <strong>Email:</strong>
+          {% if profile.email == "Not detected" %}<span class="not-detected">{{ profile.email }}</span>{% else %}{{ profile.email }}{% endif %}
+        </p>
+        <p class="field">
+          <strong>Phone:</strong>
+          {% if profile.phone == "Not detected" %}<span class="not-detected">{{ profile.phone }}</span>{% else %}{{ profile.phone }}{% endif %}
+        </p>
+        <div class="field">
+          <strong>Skills:</strong><br />
+          {% for skill in profile.skills %}
+            {% if skill == "Not detected" %}<span class="not-detected">{{ skill }}</span>{% else %}<span class="tag tag-skill">{{ skill }}</span>{% endif %}
+          {% endfor %}
+        </div>
+        <div class="field" style="margin-top: 0.6rem">
+          <strong>Education Indicators:</strong>
+          {% for item in profile.education %}
+            {% if item == "Not detected" %}
+            <p class="not-detected" style="margin: 0.3rem 0">{{ item }}</p>
+            {% else %}
+            <div class="hint-item">{{ item }}</div>
+            {% endif %}
+          {% endfor %}
+        </div>
+        <div class="field" style="margin-top: 0.6rem">
+          <strong>Experience Indicators:</strong>
+          {% for item in profile.experience %}
+            {% if item == "Not detected" %}
+            <p class="not-detected" style="margin: 0.3rem 0">{{ item }}</p>
+            {% else %}
+            <div class="hint-item">{{ item }}</div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Extraction Result -->
+      {% if result %}
+      <div class="card">
+        <h2 class="card-title">Extraction Result</h2>
+        <hr class="card-divider" />
+        <p class="field"><strong>File:</strong> {{ result.filename }}</p>
+        <p class="field"><strong>Type:</strong> {{ result.filetype }}</p>
+        <p class="field"><strong>Status:</strong> {{ result.status }}</p>
+        {% if result.preview %}
+        <div class="preview">{{ result.preview }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div>
+  </body>
+</html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Offerion</title>
+    <style>
       body {
         font-family: Arial, sans-serif;
         display: flex;

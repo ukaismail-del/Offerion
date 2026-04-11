@@ -119,8 +119,12 @@ def index():
                             )
 
                             tailored = generate_tailored_resume(
-                                text, profile, match, jd_comparison,
-                                rewrite, scorecard,
+                                text,
+                                profile,
+                                match,
+                                jd_comparison,
+                                rewrite,
+                                scorecard,
                             )
 
                             session["report_data"] = {

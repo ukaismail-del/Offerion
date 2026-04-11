@@ -181,9 +181,7 @@ def _build_highlights(scores, labels, match, jd_comparison):
         )
 
     # Highlight weakest category (excluding overall)
-    category_scores = {
-        k: v for k, v in scores.items() if k != "overall"
-    }
+    category_scores = {k: v for k, v in scores.items() if k != "overall"}
     weakest = min(category_scores, key=category_scores.get)
     weakest_score = category_scores[weakest]
     if weakest_score < 60:

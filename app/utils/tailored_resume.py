@@ -34,9 +34,7 @@ def generate_tailored_resume(
     section_focus = _build_section_focus(
         profile, skills, exp_items, edu_items, scorecard
     )
-    tailoring_notes = _build_tailoring_notes(
-        match, jd_comparison, scorecard, rewrite
-    )
+    tailoring_notes = _build_tailoring_notes(match, jd_comparison, scorecard, rewrite)
 
     return {
         "target_title": target_title,
@@ -86,13 +84,9 @@ def _build_summary(target_role, skills, exp_items, match, jd_comparison):
 
     if jd_comparison and jd_comparison.get("matched"):
         jd_matched = ", ".join(jd_comparison["matched"][:4])
-        lines.append(
-            f"Mirror JD language by referencing: {jd_matched}."
-        )
+        lines.append(f"Mirror JD language by referencing: {jd_matched}.")
 
-    lines.append(
-        "Close with a clear value statement about what you bring to the team."
-    )
+    lines.append("Close with a clear value statement about what you bring to the team.")
 
     return lines
 
@@ -105,32 +99,58 @@ def _build_priority_keywords(match, jd_comparison, current_skills):
     if match and match.get("matched"):
         for kw in match["matched"]:
             if kw.lower() not in seen:
-                keywords.append({"keyword": kw, "status": "matched", "action": "feature prominently"})
+                keywords.append(
+                    {
+                        "keyword": kw,
+                        "status": "matched",
+                        "action": "feature prominently",
+                    }
+                )
                 seen.add(kw.lower())
 
     if jd_comparison and jd_comparison.get("matched"):
         for kw in jd_comparison["matched"]:
             if kw.lower() not in seen:
-                keywords.append({"keyword": kw, "status": "matched", "action": "feature prominently"})
+                keywords.append(
+                    {
+                        "keyword": kw,
+                        "status": "matched",
+                        "action": "feature prominently",
+                    }
+                )
                 seen.add(kw.lower())
 
     # Missing keywords should be added if truthful
     if match and match.get("missing"):
         for kw in match["missing"][:5]:
             if kw.lower() not in seen:
-                keywords.append({"keyword": kw, "status": "missing", "action": "add if you have experience"})
+                keywords.append(
+                    {
+                        "keyword": kw,
+                        "status": "missing",
+                        "action": "add if you have experience",
+                    }
+                )
                 seen.add(kw.lower())
 
     if jd_comparison and jd_comparison.get("missing"):
         for kw in jd_comparison["missing"][:5]:
             if kw.lower() not in seen:
-                keywords.append({"keyword": kw, "status": "missing", "action": "add if you have experience"})
+                keywords.append(
+                    {
+                        "keyword": kw,
+                        "status": "missing",
+                        "action": "add if you have experience",
+                    }
+                )
                 seen.add(kw.lower())
 
     # Include current skills as "keep"
     for s in current_skills[:5]:
         if s.lower() not in seen:
-            keywords.append({"keyword": s, "status": "present", "action": "keep in skills section"})
+            keywords.append(
+                {"keyword": s, "status": "present", "action": "keep in skills section"}
+            )
             seen.add(s.lower())
 
     return keywords[:12]
@@ -165,7 +185,8 @@ def _build_experience_focus(exp_items, match, jd_comparison, target_role):
 
     if jd_comparison and jd_comparison.get("missing"):
         jd_missing = [
-            k for k in jd_comparison["missing"][:3]
+            k
+            for k in jd_comparison["missing"][:3]
             if not match or k not in match.get("missing", [])
         ]
         if jd_missing:
@@ -196,20 +217,34 @@ def _build_skills_to_feature(skills, match, jd_comparison):
 
     for s in skills:
         if s.lower() in matched_set and s.lower() not in seen:
-            featured.append({"skill": s, "priority": "high", "reason": "matches target requirements"})
+            featured.append(
+                {
+                    "skill": s,
+                    "priority": "high",
+                    "reason": "matches target requirements",
+                }
+            )
             seen.add(s.lower())
 
     # Then: remaining detected skills
     for s in skills:
         if s.lower() not in seen:
-            featured.append({"skill": s, "priority": "medium", "reason": "detected in resume"})
+            featured.append(
+                {"skill": s, "priority": "medium", "reason": "detected in resume"}
+            )
             seen.add(s.lower())
 
     # Then: missing but important keywords to consider adding
     if match and match.get("missing"):
         for kw in match["missing"][:3]:
             if kw.lower() not in seen:
-                featured.append({"skill": kw, "priority": "add", "reason": "missing from resume \u2014 add if truthful"})
+                featured.append(
+                    {
+                        "skill": kw,
+                        "priority": "add",
+                        "reason": "missing from resume \u2014 add if truthful",
+                    }
+                )
                 seen.add(kw.lower())
 
     return featured[:10]
@@ -221,10 +256,7 @@ def _build_section_focus(profile, skills, exp_items, edu_items, scorecard):
     # Use scorecard to determine emphasis order
     if scorecard:
         scores = scorecard.get("scores", {})
-        weak_areas = [
-            (k, v) for k, v in scores.items()
-            if k != "overall" and v < 60
-        ]
+        weak_areas = [(k, v) for k, v in scores.items() if k != "overall" and v < 60]
         weak_areas.sort(key=lambda x: x[1])
 
         area_map = {
@@ -246,7 +278,9 @@ def _build_section_focus(profile, skills, exp_items, edu_items, scorecard):
             )
     else:
         if len(skills) < 5:
-            sections.append("Skills Section \u2014 needs expansion with more relevant terms.")
+            sections.append(
+                "Skills Section \u2014 needs expansion with more relevant terms."
+            )
         if len(exp_items) < 2:
             sections.append("Work Experience \u2014 needs more entries or detail.")
         if len(edu_items) == 0:
@@ -255,9 +289,7 @@ def _build_section_focus(profile, skills, exp_items, edu_items, scorecard):
     sections.append(
         "Professional Summary \u2014 place at the top, tailored to the target role."
     )
-    sections.append(
-        "Skills \u2014 list directly below summary for quick ATS scanning."
-    )
+    sections.append("Skills \u2014 list directly below summary for quick ATS scanning.")
 
     return sections
 
