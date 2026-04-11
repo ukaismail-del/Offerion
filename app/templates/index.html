@@ -37,15 +37,14 @@
 
   <!-- Hero -->
   <div class="hero">
-    <h1>Turn your resume into a role-ready action plan</h1>
+    <h1>Turn your resume into a job-winning system</h1>
     <p class="hero-sub">
-      Offerion analyzes your resume against target roles and job descriptions,
-      then gives you a score, tailored guidance, and a downloadable brief.
+      From resume &rarr; application &rarr; follow-up &mdash; all in one flow.
     </p>
     <ul class="hero-benefits">
       <li>Match your resume to target roles</li>
-      <li>Compare against job descriptions</li>
-      <li>Download tailored guidance and briefs</li>
+      <li>Generate complete applications in one click</li>
+      <li>Track jobs and never miss a follow-up</li>
     </ul>
   </div>
 
@@ -67,6 +66,59 @@
       <h3>Get your plan</h3>
       <p>Score, action plan, and downloadable tailored brief</p>
     </div>
+  </div>
+  {% endif %}
+
+  <!-- Onboarding Banner (M58) -->
+  {% if show_onboarding %}
+  <div class="onboarding-banner">
+    <div class="onboarding-header">
+      <span class="onboarding-title">Getting Started</span>
+      <a href="/onboarding-dismiss" class="onboarding-dismiss">&times;</a>
+    </div>
+    <div class="onboarding-steps">
+      <div class="onboarding-step {% if onboarding_step >= 1 %}onboarding-step-active{% endif %} {% if onboarding_step > 1 %}onboarding-step-done{% endif %}">
+        <div class="onboarding-num">1</div>
+        <span>Upload your resume</span>
+      </div>
+      <div class="onboarding-step {% if onboarding_step >= 2 %}onboarding-step-active{% endif %} {% if onboarding_step > 2 %}onboarding-step-done{% endif %}">
+        <div class="onboarding-num">2</div>
+        <span>Analyze &amp; improve it</span>
+      </div>
+      <div class="onboarding-step {% if onboarding_step >= 3 %}onboarding-step-active{% endif %} {% if onboarding_step > 3 %}onboarding-step-done{% endif %}">
+        <div class="onboarding-num">3</div>
+        <span>Generate full application</span>
+      </div>
+      <div class="onboarding-step {% if onboarding_step >= 4 %}onboarding-step-active{% endif %}">
+        <div class="onboarding-num">4</div>
+        <span>Track + follow up</span>
+      </div>
+    </div>
+    <a href="/onboarding-next" class="btn btn-primary btn-sm onboarding-continue">
+      {% if onboarding_step >= 4 %}Got it!{% else %}Continue{% endif %}
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- Upgrade Nudge (M60) -->
+  {% if upgrade_nudge_message %}
+  <div class="upgrade-nudge">
+    <span>{{ upgrade_nudge_message }}</span>
+    <a href="/pricing" class="btn btn-primary btn-sm">View Plans</a>
+  </div>
+  {% endif %}
+
+  <!-- Quick Start Card (M59) -->
+  {% if show_quick_start %}
+  <div class="quick-start-card">
+    <p class="quick-start-text">You're one step away from a full job-ready application</p>
+    {% if show_enhance_cta and has_access('enhance_resume') %}
+    <a href="/enhance-resume" class="btn btn-purple btn-sm">Enhance Resume First</a>
+    {% elif has_access('prepare_application') %}
+    <a href="/prepare-application" class="btn btn-primary">Prepare Full Application</a>
+    {% else %}
+    <a href="/pricing" class="btn btn-primary btn-sm">Upgrade to Prepare Application</a>
+    {% endif %}
   </div>
   {% endif %}
 
@@ -336,8 +388,8 @@
       {% if has_access('save_job') %}
       <a href="/save-job" class="btn btn-primary btn-sm">Save Current Job</a>
       {% else %}
-      <span class="btn btn-primary btn-sm btn-locked">Save Current Job</span>
-      <span class="upsell-hint"><a href="/pricing">Requires {{ required_tier_for('save_job')|title }}</a></span>
+      <span class="btn btn-primary btn-sm btn-locked" title="Upgrade to access this feature">Save Current Job</span>
+      <span class="locked-hint">Unlock in Operator &mdash; <a href="/pricing">upgrade to continue</a></span>
       {% endif %}
     </div>
     {% endif %}

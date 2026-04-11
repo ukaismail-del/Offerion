@@ -1403,3 +1403,140 @@ textarea {
     max-width: 360px;
   }
 }
+
+/* ==========================================================================
+   M58-M62 — Onboarding + Growth + Conversion UX
+   ========================================================================== */
+
+/* --- Onboarding Banner (M58) --- */
+.onboarding-banner {
+  background: linear-gradient(135deg, var(--color-primary-subtle), #dbeafe);
+  border: 1px solid var(--color-primary-light);
+  border-radius: var(--radius-lg);
+  padding: 1.2rem 1.5rem;
+  margin-bottom: var(--space-lg);
+}
+.onboarding-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+.onboarding-title {
+  font-weight: 700;
+  font-size: var(--font-md);
+  color: var(--color-primary-hover);
+}
+.onboarding-dismiss {
+  font-size: 1.4rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  line-height: 1;
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--radius-sm);
+}
+.onboarding-dismiss:hover { background: rgba(0,0,0,0.06); }
+.onboarding-steps {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.8rem;
+}
+.onboarding-step {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--font-sm);
+  color: var(--text-faint);
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.5);
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+.onboarding-step-active {
+  color: var(--color-primary);
+  background: #fff;
+  border-color: var(--color-primary-light);
+  font-weight: 500;
+}
+.onboarding-step-done {
+  color: var(--color-success);
+}
+.onboarding-step-done .onboarding-num {
+  background: var(--color-success);
+}
+.onboarding-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.onboarding-continue {
+  display: inline-block;
+}
+
+/* --- Quick Start Card (M59) --- */
+.quick-start-card {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.5rem;
+  margin-bottom: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.quick-start-text {
+  font-weight: 600;
+  font-size: var(--font-md);
+  color: #166534;
+  margin: 0;
+  flex: 1;
+  min-width: 200px;
+}
+
+/* --- Upgrade Nudge (M60) --- */
+.upgrade-nudge {
+  background: linear-gradient(135deg, #ede9fe, #f5f3ff);
+  border: 1px solid #c4b5fd;
+  border-radius: var(--radius-lg);
+  padding: 0.9rem 1.3rem;
+  margin-bottom: var(--space-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: var(--font-sm);
+  color: #5b21b6;
+  font-weight: 500;
+}
+
+/* --- Locked Hint (M62) --- */
+.locked-hint {
+  display: inline-block;
+  font-size: var(--font-xs);
+  color: var(--text-faint);
+  margin-left: 0.5rem;
+}
+.locked-hint a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+.locked-hint a:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .onboarding-steps { flex-direction: column; gap: 0.4rem; }
+  .quick-start-card { flex-direction: column; text-align: center; }
+  .upgrade-nudge { flex-direction: column; text-align: center; }
+}

@@ -41,39 +41,43 @@
       {% if has_access('save_version') %}
       <a href="/save-resume-version" class="btn btn-teal">Save Version</a>
       {% else %}
-      <span class="btn btn-teal btn-locked">Save Version</span>
+      <span class="btn btn-teal btn-locked" title="Upgrade to access this feature">Save Version</span>
+      <span class="locked-hint">Unlock in Comet</span>
       {% endif %}
       {% if not enhanced %}
         {% if has_access('enhance_resume') %}
         <a href="/enhance-resume" class="btn btn-purple">Enhance Resume</a>
         {% else %}
-        <span class="btn btn-purple btn-locked">Enhance Resume</span>
+        <span class="btn btn-purple btn-locked" title="Upgrade to access this feature">Enhance Resume</span>
+        <span class="locked-hint">Unlock in Comet</span>
         {% endif %}
       {% endif %}
       {% if not cover_letter_draft %}
         {% if has_access('generate_cover_letter') %}
         <a href="/generate-cover-letter" class="btn btn-amber">Generate Cover Letter</a>
         {% else %}
-        <span class="btn btn-amber btn-locked">Generate Cover Letter</span>
+        <span class="btn btn-amber btn-locked" title="Upgrade to access this feature">Generate Cover Letter</span>
+        <span class="locked-hint">Unlock in Comet</span>
         {% endif %}
       {% endif %}
       {% if cover_letter_draft and not enhanced_cover_letter %}
         {% if has_access('enhance_cover_letter') %}
         <a href="/enhance-cover-letter" class="btn btn-purple">Enhance Cover Letter</a>
         {% else %}
-        <span class="btn btn-purple btn-locked">Enhance Cover Letter</span>
+        <span class="btn btn-purple btn-locked" title="Upgrade to access this feature">Enhance Cover Letter</span>
+        <span class="locked-hint">Unlock in Operator</span>
         {% endif %}
       {% endif %}
       {% if cover_letter_draft or enhanced_cover_letter %}
         {% if has_access('download_package') %}
         <a href="/download-application-package" class="btn btn-success">Download Package</a>
         {% else %}
-        <span class="btn btn-success btn-locked">Download Package</span>
+        <span class="btn btn-success btn-locked" title="Upgrade to access this feature">Download Package</span>
         {% endif %}
         {% if has_access('save_package') %}
         <a href="/save-application-package" class="btn btn-teal">Save Package</a>
         {% else %}
-        <span class="btn btn-teal btn-locked">Save Package</span>
+        <span class="btn btn-teal btn-locked" title="Upgrade to access this feature">Save Package</span>
         {% endif %}
       {% endif %}
     </div>
@@ -81,6 +85,14 @@
     <p class="upsell-hint" style="margin-top:var(--space-sm)">Some actions are locked. <a href="/pricing">View plans to unlock</a></p>
     {% endif %}
   </div>
+
+  <!-- Upgrade Nudge (M60) -->
+  {% if upgrade_nudge_message %}
+  <div class="upgrade-nudge">
+    <span>{{ upgrade_nudge_message }}</span>
+    <a href="/pricing" class="btn btn-primary btn-sm">View Plans</a>
+  </div>
+  {% endif %}
 
   <!-- Next Best Action (M42/M45) -->
   {% if next_best_action %}

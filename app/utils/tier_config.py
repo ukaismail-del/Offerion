@@ -53,7 +53,7 @@ TIER_CONFIG = {
     "comet": {
         "label": "Comet",
         "price": "$9/mo",
-        "tagline": "Stand out",
+        "tagline": "Turn your resume into an interview-ready asset",
         "features": [
             "Everything in Free",
             "AI resume enhancement",
@@ -64,7 +64,7 @@ TIER_CONFIG = {
     "operator": {
         "label": "Operator",
         "price": "$19/mo",
-        "tagline": "Full toolkit",
+        "tagline": "Generate complete job applications in one click",
         "features": [
             "Everything in Comet",
             "Cover letter enhancement",
@@ -76,7 +76,7 @@ TIER_CONFIG = {
     "professional": {
         "label": "Professional",
         "price": "$29/mo",
-        "tagline": "Stay ahead",
+        "tagline": "Never miss a follow-up again",
         "features": [
             "Everything in Operator",
             "Follow-up alerts",
@@ -86,7 +86,7 @@ TIER_CONFIG = {
     "elite": {
         "label": "Elite",
         "price": "$49/mo",
-        "tagline": "Unlimited power",
+        "tagline": "Operate at peak job search efficiency",
         "features": [
             "Everything in Professional",
             "Priority processing",

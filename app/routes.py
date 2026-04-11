@@ -188,7 +188,8 @@ def _gate(feature_key):
         return None
     needed = required_tier_for(feature_key)
     session["gate_message"] = (
-        f"This feature requires the {tier_label(needed)} plan or higher."
+        f"You tried to access a premium feature. "
+        f"Upgrade to {tier_label(needed)} or higher to continue this workflow."
     )
     return redirect(url_for("main.pricing"))
 
@@ -203,6 +204,33 @@ def _tier_ctx():
         "required_tier_for": required_tier_for,
         "check_limit": lambda key, count: check_limit(ut, key, count),
     }
+
+
+def _onboarding_ctx():
+    """Return onboarding-related template variables (M58)."""
+    show = not session.get("has_seen_onboarding")
+    step = session.get("onboarding_step", 1) if show else 0
+    return {"show_onboarding": show, "onboarding_step": step}
+
+
+def _increment_usage(key):
+    """Increment a usage counter in session (M60)."""
+    usage = session.get("usage", {})
+    usage[key] = usage.get(key, 0) + 1
+    session["usage"] = usage
+
+
+def _upgrade_nudge():
+    """Return an upgrade nudge message if warranted (M60), else None."""
+    ut = _user_tier()
+    if ut != "free":
+        return None
+    usage = session.get("usage", {})
+    if usage.get("enhance_resume", 0) >= 2:
+        return "You're using this like a pro \u2014 unlock full automation with Comet."
+    if usage.get("generate_cl", 0) >= 2:
+        return "You love cover letters \u2014 upgrade for unlimited generation."
+    return None
 
 
 @main_bp.before_app_request
@@ -407,7 +435,11 @@ def index():
         get_source_label=get_source_label,
         next_best_action=next_action,
         report_data_exists=bool(session.get("report_data")),
+        upgrade_nudge_message=_upgrade_nudge(),
+        show_quick_start=bool(session.get("report_data")) and not session.get("application_packages"),
+        show_enhance_cta=bool(session.get("report_data")) and not session.get("enhanced_resume"),
         **_tier_ctx(),
+        **_onboarding_ctx(),
     )
 
 
@@ -629,6 +661,7 @@ def resume_preview():
         provenance=provenance,
         get_source_label=get_source_label,
         next_best_action=next_action,
+        upgrade_nudge_message=_upgrade_nudge(),
         **_tier_ctx(),
     )
 
@@ -655,6 +688,7 @@ def enhance_resume_route():
         set_last_action(session, "Resume enhanced")
         _record_activity(user_id, "resume_enhanced", "Enhanced resume")
 
+    _increment_usage("enhance_resume")
     return redirect(url_for("main.resume_preview"))
 
 
@@ -791,6 +825,7 @@ def generate_cover_letter_route():
             "Generated cover letter draft",
         )
 
+    _increment_usage("generate_cl")
     return redirect(url_for("main.resume_preview"))
 
 
@@ -1033,6 +1068,7 @@ def save_job_route():
         active_company=job.get("company", ""),
     )
     _record_activity(user_id, "job_saved", "Saved job: %s" % job["title"])
+    _increment_usage("save_job")
     return redirect(url_for("main.index"))
 
 
@@ -1263,6 +1299,29 @@ def upgrade(tier_name):
     session["user_tier"] = tier_name
     persist_tier(user_id, tier_name)
     return redirect(url_for("main.pricing"))
+
+
+# ------------------------------------------------------------------
+# M58 — Onboarding Flow
+# ------------------------------------------------------------------
+
+
+@main_bp.route("/onboarding-next")
+def onboarding_next():
+    step = session.get("onboarding_step", 1)
+    if step >= 4:
+        session["has_seen_onboarding"] = True
+        session.pop("onboarding_step", None)
+    else:
+        session["onboarding_step"] = step + 1
+    return redirect(url_for("main.index"))
+
+
+@main_bp.route("/onboarding-dismiss")
+def onboarding_dismiss():
+    session["has_seen_onboarding"] = True
+    session.pop("onboarding_step", None)
+    return redirect(url_for("main.index"))
 
 
 @main_bp.route("/<path:path>")

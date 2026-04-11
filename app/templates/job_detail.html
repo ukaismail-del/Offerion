@@ -124,8 +124,8 @@
     {% if has_access('create_alert') %}
     <a href="/create-followup-alert/{{ job.id }}" class="btn btn-purple">Create Follow-Up Alert</a>
     {% else %}
-    <span class="btn btn-purple btn-locked">Create Follow-Up Alert</span>
-    <span class="upsell-hint"><a href="/pricing">Requires Professional</a></span>
+    <span class="btn btn-purple btn-locked" title="Upgrade to access this feature">Create Follow-Up Alert</span>
+    <span class="locked-hint">Unlock in Professional &mdash; <a href="/pricing">upgrade to continue</a></span>
     {% endif %}
     <div style="flex:1"></div>
     <a href="/delete-job/{{ job.id }}" class="btn btn-danger">Delete Job</a>
