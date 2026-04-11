@@ -1,847 +1,483 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Resume Preview — Offerion</title>
-    <style>
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-      }
-      body {
-        font-family: "Segoe UI", Arial, sans-serif;
-        min-height: 100vh;
-        margin: 0;
-        padding: 0;
-        background: #f0f2f5;
-        color: #333;
-        line-height: 1.6;
-      }
-      .container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 2rem 1.5rem 3rem;
-      }
-      .back-link {
-        display: inline-block;
-        font-size: 0.9rem;
-        color: #2563eb;
-        text-decoration: none;
-        margin-bottom: 1rem;
-      }
-      .back-link:hover {
-        text-decoration: underline;
-      }
-      .resume-page {
-        background: #fff;
-        border-radius: 12px;
-        padding: 2.5rem 2.5rem 2rem;
-        box-shadow:
-          0 1px 3px rgba(0, 0, 0, 0.06),
-          0 1px 2px rgba(0, 0, 0, 0.04);
-      }
-      .resume-name {
-        font-size: 2rem;
-        font-weight: 800;
-        color: #1e293b;
-        margin: 0 0 0.2rem 0;
-        text-align: center;
-      }
-      .resume-contact {
-        text-align: center;
-        font-size: 0.92rem;
-        color: #64748b;
-        margin: 0 0 0.3rem 0;
-      }
-      .resume-target {
-        text-align: center;
-        font-size: 1rem;
-        font-weight: 600;
-        color: #2563eb;
-        margin: 0.5rem 0 1.5rem 0;
-      }
-      .section-title {
-        font-size: 1.05rem;
-        font-weight: 700;
-        color: #1e293b;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        border-bottom: 2px solid #e2e8f0;
-        padding-bottom: 0.3rem;
-        margin: 1.5rem 0 0.8rem 0;
-      }
-      .resume-summary {
-        font-size: 0.95rem;
-        color: #475569;
-        line-height: 1.7;
-      }
-      .resume-summary li {
-        margin-bottom: 0.3rem;
-      }
-      .skill-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.4rem;
-        padding: 0;
-        list-style: none;
-        margin: 0;
-      }
-      .skill-tag {
-        display: inline-block;
-        background: #e0e7ff;
-        color: #3730a3;
-        padding: 0.25rem 0.7rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-      }
-      .exp-entry {
-        margin-bottom: 1rem;
-      }
-      .exp-title {
-        font-weight: 700;
-        color: #1e293b;
-        font-size: 0.95rem;
-        margin: 0;
-      }
-      .exp-hint {
-        font-size: 0.88rem;
-        color: #64748b;
-        font-style: italic;
-        margin: 0.2rem 0 0.4rem 0;
-      }
-      .exp-bullets {
-        padding-left: 1.2rem;
-        margin: 0.3rem 0 0;
-      }
-      .exp-bullets li {
-        font-size: 0.92rem;
-        color: #555;
-        margin-bottom: 0.25rem;
-      }
-      .edu-item {
-        font-size: 0.93rem;
-        color: #475569;
-        margin-bottom: 0.3rem;
-      }
-      .placeholder {
-        color: #94a3b8;
-        font-style: italic;
-      }
-      .actions {
-        text-align: center;
-        margin-top: 1.5rem;
-      }
-      .dl-btn {
-        display: inline-block;
-        background: #059669;
-        color: #fff;
-        border: none;
-        padding: 0.7rem 2rem;
-        font-size: 1rem;
-        font-weight: 600;
-        border-radius: 8px;
-        cursor: pointer;
-        text-decoration: none;
-        transition: background-color 0.2s;
-      }
-      .dl-btn:hover {
-        background: #047857;
-      }
-      .dl-btn-alt {
-        background: #2563eb;
-        margin-left: 0.6rem;
-      }
-      .dl-btn-alt:hover {
-        background: #1d4ed8;
-      }
-      .dl-btn-enhance {
-        background: #7c3aed;
-        margin-left: 0.6rem;
-      }
-      .dl-btn-enhance:hover {
-        background: #6d28d9;
-      }
-      .enhanced-badge {
-        display: inline-block;
-        background: #7c3aed;
-        color: #fff;
-        font-size: 0.72rem;
-        font-weight: 700;
-        padding: 0.15rem 0.5rem;
-        border-radius: 12px;
-        margin-left: 0.5rem;
-        vertical-align: middle;
-        letter-spacing: 0.3px;
-      }
-      .summary-text {
-        font-size: 0.95rem;
-        color: #475569;
-        line-height: 1.7;
-      }
-      .notes-box {
-        background: #fffbeb;
-        border-left: 3px solid #f59e0b;
-        padding: 0.8rem 1rem;
-        border-radius: 0 6px 6px 0;
-        margin-top: 0.8rem;
-        font-size: 0.88rem;
-        color: #92400e;
-        line-height: 1.5;
-      }
-      .dl-btn-save {
-        background: #0891b2;
-        margin-left: 0.6rem;
-      }
-      .dl-btn-save:hover {
-        background: #0e7490;
-      }
-      .versions-panel {
-        background: #fff;
-        border-radius: 12px;
-        padding: 1.5rem 1.8rem;
-        margin-top: 1.5rem;
-        box-shadow:
-          0 1px 3px rgba(0, 0, 0, 0.06),
-          0 1px 2px rgba(0, 0, 0, 0.04);
-      }
-      .versions-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0 0 0.8rem 0;
-      }
-      .version-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.55rem 0;
-        border-bottom: 1px solid #e2e8f0;
-        font-size: 0.9rem;
-      }
-      .version-row:last-child {
-        border-bottom: none;
-      }
-      .version-label {
-        font-weight: 600;
-        color: #1e293b;
-      }
-      .version-date {
-        color: #94a3b8;
-        font-size: 0.82rem;
-        margin-left: 0.5rem;
-      }
-      .version-actions {
-        display: flex;
-        gap: 0.4rem;
-      }
-      .ver-btn {
-        display: inline-block;
-        padding: 0.3rem 0.7rem;
-        border-radius: 6px;
-        font-size: 0.78rem;
-        font-weight: 600;
-        text-decoration: none;
-        color: #fff;
-      }
-      .ver-btn-open {
-        background: #2563eb;
-      }
-      .ver-btn-open:hover {
-        background: #1d4ed8;
-      }
-      .ver-btn-dl {
-        background: #059669;
-      }
-      .ver-btn-dl:hover {
-        background: #047857;
-      }
-      .ver-btn-del {
-        background: #dc2626;
-      }
-      .ver-btn-del:hover {
-        background: #b91c1c;
-      }
-      .dl-btn-cover {
-        background: #d97706;
-        margin-left: 0.6rem;
-      }
-      .dl-btn-cover:hover {
-        background: #b45309;
-      }
-      .dl-btn-pkg {
-        background: #0f766e;
-        margin-left: 0.6rem;
-      }
-      .dl-btn-pkg:hover {
-        background: #115e59;
-      }
-      .cl-page {
-        background: #fff;
-        border-radius: 12px;
-        padding: 2.5rem 2.5rem 2rem;
-        margin-top: 1.5rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-      }
-      .cl-badge {
-        display: inline-block;
-        background: #d97706;
-        color: #fff;
-        font-size: 0.72rem;
-        font-weight: 700;
-        padding: 0.15rem 0.5rem;
-        border-radius: 12px;
-        margin-left: 0.5rem;
-        vertical-align: middle;
-      }
-      .cl-text {
-        font-size: 0.93rem;
-        color: #475569;
-        line-height: 1.8;
-        white-space: pre-line;
-      }
-      .packages-panel {
-        background: #fff;
-        border-radius: 12px;
-        padding: 1.5rem 1.8rem;
-        margin-top: 1.5rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-      }
-      .packages-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0 0 0.8rem 0;
-      }
-      .intel-panel {
-        background: #fff;
-        border-radius: 12px;
-        padding: 1.5rem 1.8rem;
-        margin-top: 1.5rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-      }
-      .intel-panel h3 { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin: 1rem 0 0.4rem; }
-      .intel-panel h3:first-of-type { margin-top: 0.2rem; }
-      .intel-list { padding-left: 1.2rem; margin: 0.3rem 0 0.6rem; }
-      .intel-list li { font-size: 0.88rem; color: #475569; margin-bottom: 0.25rem; line-height: 1.5; }
-      .intel-summary { font-size: 0.9rem; color: #334155; line-height: 1.6; margin-bottom: 0.4rem; }
-      .intel-note { font-size: 0.8rem; color: #94a3b8; font-style: italic; margin-top: 0.4rem; }
-      .fit-badge { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; color: #fff; margin-left: 0.4rem; }
-      .fit-strong { background: #16a34a; }
-      .fit-moderate { background: #ca8a04; }
-      .fit-developing { background: #dc2626; }
-      .section-target { font-size: 0.86rem; color: #475569; margin-bottom: 0.25rem; }
-      .section-target strong { color: #1e293b; }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Preview — Offerion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
 
-      /* --- Job tracker & alerts (M34-M37) --- */
-      .job-panel { background: #fff; border-radius: 12px; padding: 1.5rem 1.8rem; margin-top: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04); }
-      .job-row { display: flex; align-items: center; justify-content: space-between; padding: 0.45rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.88rem; }
-      .job-row:last-child { border-bottom: none; }
-      .job-title-sm { font-weight: 600; color: #1e293b; }
-      .job-company-sm { color: #64748b; font-size: 0.82rem; margin-left: 0.3rem; }
-      .status-badge-sm { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; color: #fff; margin-right: 0.3rem; }
-      .status-Saved { background: #64748b; }
-      .status-Preparing { background: #f59e0b; }
-      .status-Applied { background: #3b82f6; }
-      .status-Follow-Up { background: #8b5cf6; }
-      .status-Interview { background: #06b6d4; }
-      .status-Offer { background: #10b981; }
-      .status-Rejected { background: #ef4444; }
-      .alert-row-sm { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.86rem; }
-      .alert-row-sm:last-child { border-bottom: none; }
-      .followup-action { padding: 0.3rem 0; font-size: 0.88rem; border-bottom: 1px solid #f8fafc; }
-      .followup-action:last-child { border-bottom: none; }
-      .followup-action::before { content: "→ "; color: #3b82f6; font-weight: 600; }
-      .followup-next { background: #f0fdf4; border: 1.5px solid #bbf7d0; padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.88rem; color: #166534; margin-top: 0.6rem; }
+<!-- Top Navigation -->
+<nav class="top-nav">
+  <div class="top-nav-inner">
+    <a href="/" class="top-nav-brand">Offerion</a>
+    <div class="top-nav-links">
+      <a href="/">Dashboard</a>
+      <a href="#resume-section">Resume</a>
+      {% if cover_letter_draft or enhanced_cover_letter %}<a href="#cover-letter-section">Cover Letter</a>{% endif %}
+      <a href="#actions-section">Actions</a>
+    </div>
+  </div>
+</nav>
 
-      /* --- Session context & provenance (M38/M40) --- */
-      .ctx-grid-sm { display: grid; grid-template-columns: auto 1fr; gap: 0.2rem 0.8rem; font-size: 0.85rem; }
-      .ctx-label-sm { color: #64748b; font-weight: 500; }
-      .ctx-val-sm { color: #1e293b; font-weight: 600; }
-      .prov-compact { font-size: 0.85rem; }
-      .prov-compact .prov-key { color: #64748b; font-weight: 500; }
-      .prov-compact .prov-val { color: #1e293b; font-weight: 600; }
-      .conf-tag-sm { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; margin: 0.15rem 0.2rem; }
-      .conf-Low { background: #fef2f2; color: #dc2626; }
-      .conf-Moderate { background: #fffbeb; color: #ca8a04; }
-      .conf-Strong { background: #f0fdf4; color: #16a34a; }
-      .prov-note-sm { font-size: 0.78rem; color: #94a3b8; font-style: italic; margin-top: 0.3rem; }
+<div class="container">
+  <a href="/" class="back-link">&larr; Back to Dashboard</a>
 
-      /* --- Next Best Action (M42/M45) --- */
-      .nba-bar { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #fff; border-radius: 12px; padding: 1rem 1.5rem; margin-top: 1.5rem; text-align: center; }
-      .nba-bar a { display: inline-block; background: #fff; color: #2563eb; padding: 0.55rem 1.6rem; font-size: 0.95rem; font-weight: 700; border-radius: 8px; text-decoration: none; margin: 0 0.3rem; transition: all 0.2s; }
-      .nba-bar a:hover { background: #f8fafc; transform: scale(1.02); }
-      .nba-bar .nba-secondary-sm { display: inline-block; background: rgba(255,255,255,0.15); color: #fff; padding: 0.55rem 1.4rem; font-size: 0.9rem; font-weight: 600; border-radius: 8px; text-decoration: none; margin: 0 0.3rem; transition: background 0.2s; }
-      .nba-bar .nba-secondary-sm:hover { background: rgba(255,255,255,0.25); }
-
-      @media (max-width: 640px) {
-        .resume-page {
-          padding: 1.5rem 1.2rem;
-        }
-        .resume-name {
-          font-size: 1.6rem;
-        }
-        .container {
-          padding: 1rem;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <a href="/" class="back-link">&larr; Back to Dashboard</a>
-
-      <div class="resume-page">
-        <!-- Name -->
-        <h1 class="resume-name">
-          {% if enhanced and enhanced.name %} {{ enhanced.name }} {% elif
-          profile and profile.name != "Not detected" %} {{ profile.name }} {%
-          else %}
-          <span class="placeholder">[Your Full Name]</span>
-          {% endif %} {% if enhanced %}
-          <span class="enhanced-badge">ENHANCED</span>
-          {% endif %}
-        </h1>
-
-        <!-- Contact -->
-        <p class="resume-contact">
-          {% if enhanced and enhanced.contact %} {{ enhanced.contact }} {% else
-          %} {% if profile and profile.email != "Not detected" %} {{
-          profile.email }} {% else %}
-          <span class="placeholder">[email]</span>
-          {% endif %} &nbsp;&bull;&nbsp; {% if profile and profile.phone != "Not
-          detected" %} {{ profile.phone }} {% else %}
-          <span class="placeholder">[phone]</span>
-          {% endif %} {% endif %}
-        </p>
-
-        <!-- Target Title -->
-        {% if enhanced and enhanced.target_title %}
-        <p class="resume-target">{{ enhanced.target_title }}</p>
-        {% elif target_title %}
-        <p class="resume-target">{{ target_title }}</p>
-        {% endif %}
-
-        <!-- Professional Summary -->
-        <h2 class="section-title">Professional Summary</h2>
-        {% if enhanced and enhanced.enhanced_summary %}
-        <p class="summary-text">{{ enhanced.enhanced_summary }}</p>
-        {% elif tailored and tailored.professional_summary %}
-        <ul class="resume-summary">
-          {% for item in tailored.professional_summary %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <p class="placeholder">
-          [Write 2–3 sentences summarizing your professional background and
-          target role alignment.]
-        </p>
-        {% endif %}
-
-        <!-- Skills -->
-        <h2 class="section-title">Skills</h2>
-        {% if enhanced and enhanced.enhanced_skills %}
-        <ul class="skill-tags">
-          {% for skill in enhanced.enhanced_skills %}
-          <li class="skill-tag">{{ skill }}</li>
-          {% endfor %}
-        </ul>
-        {% elif skills_list %}
-        <ul class="skill-tags">
-          {% for skill in skills_list %}
-          <li class="skill-tag">{{ skill }}</li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <p class="placeholder">[List 8–10 relevant skills]</p>
-        {% endif %}
-
-        <!-- Experience -->
-        <h2 class="section-title">Experience</h2>
-        {% if enhanced and enhanced.enhanced_experience_bullets %}
-        <div class="exp-entry">
-          <ul class="exp-bullets">
-            {% for bullet in enhanced.enhanced_experience_bullets %}
-            <li>{{ bullet }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-        {% else %} {% if tailored and tailored.experience_focus_points %}
-        <div class="exp-entry">
-          <p class="exp-hint">Focus your experience bullets on:</p>
-          <ul class="exp-bullets">
-            {% for item in tailored.experience_focus_points %}
-            <li>{{ item }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-        {% endif %}
-        <div class="exp-entry">
-          <p class="exp-title">
-            <span class="placeholder">[Job Title] — [Company Name]</span>
-          </p>
-          <p class="exp-hint">[Start Date] – [End Date]</p>
-          <ul class="exp-bullets">
-            <li class="placeholder">[Add 2–3 quantified bullet points here]</li>
-            <li class="placeholder">
-              [Use action verbs: Led, Built, Improved, Delivered...]
-            </li>
-            <li class="placeholder">
-              [Insert relevant project outcome with numbers]
-            </li>
-          </ul>
-        </div>
-        {% endif %}
-
-        <!-- Education -->
-        <h2 class="section-title">Education</h2>
-        {% if enhanced and enhanced.enhanced_education %} {% for edu in
-        enhanced.enhanced_education %}
-        <p class="edu-item">{{ edu }}</p>
-        {% endfor %} {% elif education_list %} {% for edu in education_list %}
-        <p class="edu-item">{{ edu }}</p>
-        {% endfor %} {% else %}
-        <p class="placeholder">[Degree] — [Institution], [Year]</p>
-        {% endif %}
-
-        <!-- ATS Notes -->
-        {% if enhanced and enhanced.ats_alignment_notes %}
-        <h2 class="section-title">ATS Alignment Notes</h2>
-        <div class="notes-box">
-          <ul style="margin: 0; padding-left: 1.2rem">
-            {% for note in enhanced.ats_alignment_notes %}
-            <li>{{ note }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-        {% elif rewrite and rewrite.ats_notes %}
-        <h2 class="section-title">ATS Alignment Notes</h2>
-        <div class="notes-box">
-          <ul style="margin: 0; padding-left: 1.2rem">
-            {% for note in rewrite.ats_notes %}
-            <li>{{ note }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-        {% endif %}
-      </div>
-
-      <!-- Cover Letter Preview -->
-      {% if enhanced_cover_letter or cover_letter_draft %}
-      <div class="cl-page">
-        <h2 class="section-title" style="margin-top: 0">
-          Cover Letter
-          {% if enhanced_cover_letter %}
-          <span class="cl-badge">ENHANCED</span>
-          {% endif %}
-        </h2>
-        {% if enhanced_cover_letter and enhanced_cover_letter.full_text %}
-        <div class="cl-text">{{ enhanced_cover_letter.full_text }}</div>
-        {% elif cover_letter_draft and cover_letter_draft.full_text %}
-        <div class="cl-text">{{ cover_letter_draft.full_text }}</div>
-        {% endif %}
-      </div>
+  <!-- ═══════════════════════════════════════════
+       PRIMARY ACTIONS BAR
+       ═══════════════════════════════════════════ -->
+  <div class="card" id="actions-section">
+    <h2 class="card-title">Actions</h2>
+    <hr class="card-divider" />
+    <p class="form-hint">Prepare a complete package in one guided step, or use individual actions below.</p>
+    <div class="btn-row">
+      <a href="/download-resume-draft" class="btn btn-success">Download Resume Draft</a>
+      <a href="/save-resume-version" class="btn btn-teal">Save Version</a>
+      {% if not enhanced %}
+      <a href="/enhance-resume" class="btn btn-purple">Enhance Resume</a>
       {% endif %}
-
-      <!-- Match Intelligence (M30-M33) -->
-      {% if match_explanation %}
-      <div class="intel-panel">
-        <h2 class="section-title" style="margin-top: 0">Match Score Explanation</h2>
-        <p class="intel-summary">{{ match_explanation.summary }}</p>
-        <h3>Strengths</h3>
-        <ul class="intel-list">
-          {% for s in match_explanation.strengths %}
-          <li>{{ s }}</li>
-          {% endfor %}
-        </ul>
-        <h3>Gaps</h3>
-        <ul class="intel-list">
-          {% for g in match_explanation.gaps %}
-          <li>{{ g }}</li>
-          {% endfor %}
-        </ul>
-        <p class="intel-note">{{ match_explanation.confidence_note }}</p>
-      </div>
+      {% if not cover_letter_draft %}
+      <a href="/generate-cover-letter" class="btn btn-amber">Generate Cover Letter</a>
       {% endif %}
-
-      {% if keyword_gaps %}
-      <div class="intel-panel">
-        <h2 class="section-title" style="margin-top: 0">Missing Keyword Gaps</h2>
-        {% if keyword_gaps.missing_keywords %}
-        <h3>Missing Keywords</h3>
-        <ul class="intel-list">
-          {% for kw in keyword_gaps.missing_keywords %}
-          <li>{{ kw }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-        {% if keyword_gaps.underused_keywords %}
-        <h3>Underused Keywords</h3>
-        <ul class="intel-list">
-          {% for kw in keyword_gaps.underused_keywords %}
-          <li>{{ kw }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-        {% if keyword_gaps.recommended_additions %}
-        <h3>Recommended Additions</h3>
-        <ul class="intel-list">
-          {% for r in keyword_gaps.recommended_additions %}
-          <li>{{ r }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-      </div>
+      {% if cover_letter_draft and not enhanced_cover_letter %}
+      <a href="/enhance-cover-letter" class="btn btn-purple">Enhance Cover Letter</a>
       {% endif %}
-
-      {% if priority_fixes %}
-      <div class="intel-panel">
-        <h2 class="section-title" style="margin-top: 0">Priority Fixes / Quick Wins</h2>
-        {% if priority_fixes.top_priority %}
-        <h3>Top Priority</h3>
-        <ul class="intel-list">
-          {% for item in priority_fixes.top_priority %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-        {% if priority_fixes.quick_wins %}
-        <h3>Quick Wins</h3>
-        <ul class="intel-list">
-          {% for item in priority_fixes.quick_wins %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-        {% if priority_fixes.section_targets %}
-        <h3>Section Targets</h3>
-        {% for t in priority_fixes.section_targets %}
-        <p class="section-target"><strong>{{ t.section }}:</strong> {{ t.action }}</p>
-        {% endfor %}
-        {% endif %}
-      </div>
-      {% endif %}
-
-      {% if role_fit %}
-      <div class="intel-panel">
-        <h2 class="section-title" style="margin-top: 0">Role-Fit Suggestions</h2>
-        <p class="intel-summary">
-          <strong>{{ role_fit.target_title }}</strong>
-          <span class="fit-badge {% if role_fit.fit_level == 'Strong' %}fit-strong{% elif role_fit.fit_level == 'Moderate' %}fit-moderate{% else %}fit-developing{% endif %}">{{ role_fit.fit_level }}</span>
-        </p>
-        {% if role_fit.improvement_suggestions %}
-        <h3>Improvement Suggestions</h3>
-        <ul class="intel-list">
-          {% for s in role_fit.improvement_suggestions %}
-          <li>{{ s }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-        {% if role_fit.positioning_advice %}
-        <h3>Positioning Advice</h3>
-        <ul class="intel-list">
-          {% for a in role_fit.positioning_advice %}
-          <li>{{ a }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-        {% if role_fit.next_step %}
-        <h3>Next Step</h3>
-        <p class="intel-summary">{{ role_fit.next_step }}</p>
-        {% endif %}
-      </div>
-      {% endif %}
-
-      <!-- Saved Jobs (M34) -->
-      {% if saved_jobs %}
-      <div class="job-panel">
-        <h2 class="section-title" style="margin-top: 0">Saved Jobs</h2>
-        {% for job in saved_jobs %}
-        <div class="job-row">
-          <div>
-            <span class="status-badge-sm status-{{ job.status }}">{{ job.status }}</span>
-            <span class="job-title-sm">{{ job.title }}</span>
-            {% if job.company %}<span class="job-company-sm">– {{ job.company }}</span>{% endif %}
-          </div>
-          <a href="/job/{{ job.id }}" class="ver-btn ver-btn-open" style="font-size:0.75rem">Open</a>
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-
-      <!-- Upcoming Alerts (M36) -->
-      {% if alerts %}
-      <div class="job-panel">
-        <h2 class="section-title" style="margin-top: 0">Upcoming Alerts</h2>
-        {% for a in alerts %}
-        <div class="alert-row-sm">
-          <div>
-            <span>{{ a.message }}</span>
-            <span style="color:#64748b; font-size:0.8rem; margin-left:0.4rem">Due: {{ a.due_at }}</span>
-          </div>
-          <div>
-            <a href="/complete-alert/{{ a.id }}" style="color:#10b981; font-size:0.8rem; font-weight:600; text-decoration:none; margin-left:0.4rem">Complete</a>
-            <a href="/delete-alert/{{ a.id }}" style="color:#ef4444; font-size:0.8rem; font-weight:600; text-decoration:none; margin-left:0.4rem">Delete</a>
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-
-      <!-- Follow-Up Suggestions (M37) -->
-      {% if followup and followup.recommended_actions %}
-      <div class="job-panel">
-        <h2 class="section-title" style="margin-top: 0">Follow-Up Suggestions</h2>
-        {% for action in followup.recommended_actions %}
-        <div class="followup-action">{{ action }}</div>
-        {% endfor %}
-        {% if followup.next_step %}
-        <div class="followup-next"><strong>Next Step:</strong> {{ followup.next_step }}</div>
-        {% endif %}
-      </div>
-      {% endif %}
-
-      <!-- Current Session Context (M38) -->
-      {% if not session_memory_empty %}
-      <div class="job-panel">
-        <h2 class="section-title" style="margin-top: 0">Session Context</h2>
-        <div class="ctx-grid-sm">
-          {% if session_memory.active_target_title %}
-          <span class="ctx-label-sm">Role:</span>
-          <span class="ctx-val-sm">{{ session_memory.active_target_title }}</span>
-          {% endif %}
-          {% if session_memory.active_company %}
-          <span class="ctx-label-sm">Company:</span>
-          <span class="ctx-val-sm">{{ session_memory.active_company }}</span>
-          {% endif %}
-          {% if session_memory.last_action %}
-          <span class="ctx-label-sm">Last:</span>
-          <span class="ctx-val-sm">{{ session_memory.last_action }}</span>
-          {% endif %}
-        </div>
-      </div>
-      {% endif %}
-
-      <!-- Confidence & Sources (M40) -->
-      {% if provenance and provenance.resume_source != 'none' %}
-      <div class="job-panel">
-        <h2 class="section-title" style="margin-top: 0">Confidence &amp; Sources</h2>
-        <div class="prov-compact">
-          <span class="prov-key">Resume:</span> <span class="prov-val">{{ get_source_label(provenance.resume_source) }}</span> ·
-          <span class="prov-key">Cover Letter:</span> <span class="prov-val">{{ get_source_label(provenance.cover_letter_source) }}</span>
-        </div>
-        {% if provenance.confidence_labels %}
-        <div style="margin-top: 0.3rem">
-          {% for key, lvl in provenance.confidence_labels.items() %}
-          <span class="conf-tag-sm conf-{{ lvl }}">{{ key.replace('_', ' ').title() }}: {{ lvl }}</span>
-          {% endfor %}
-        </div>
-        {% endif %}
-        {% if provenance.notes %}
-        <div class="prov-note-sm">{{ provenance.notes[-1] }}</div>
-        {% endif %}
-      </div>
-      {% endif %}
-
-      <!-- Next Best Action + Prepare Application (M42/M45) -->
-      {% if next_best_action %}
-      <div class="nba-bar">
-        {% if next_best_action.label != 'Analyze Resume' %}
-        <a href="{{ next_best_action.route }}">{{ next_best_action.label }}</a>
-        {% endif %}
-        <a href="/prepare-application" class="nba-secondary-sm">Prepare Full Application</a>
-      </div>
-      {% endif %}
-
-      <!-- Action buttons -->
-      <div class="actions">
-        <a href="/download-resume-draft" class="dl-btn"
-          >Download Resume Draft</a
-        >
-        <a href="/save-resume-version" class="dl-btn dl-btn-save"
-          >Save Version</a
-        >
-        {% if not enhanced %}
-        <a href="/enhance-resume" class="dl-btn dl-btn-enhance"
-          >Enhance Resume</a
-        >
-        {% endif %}
-        {% if not cover_letter_draft %}
-        <a href="/generate-cover-letter" class="dl-btn dl-btn-cover"
-          >Generate Cover Letter</a
-        >
-        {% endif %}
-        {% if cover_letter_draft and not enhanced_cover_letter %}
-        <a href="/enhance-cover-letter" class="dl-btn dl-btn-enhance"
-          >Enhance Cover Letter</a
-        >
-        {% endif %}
-        {% if cover_letter_draft or enhanced_cover_letter %}
-        <a href="/download-application-package" class="dl-btn dl-btn-pkg"
-          >Download Application Package</a
-        >
-        <a href="/save-application-package" class="dl-btn dl-btn-save"
-          >Save Application Package</a
-        >
-        {% endif %}
-        <a href="/" class="dl-btn dl-btn-alt">Back to Dashboard</a>
-      </div>
-
-      <!-- Saved Versions -->
-      {% if resume_versions %}
-      <div class="versions-panel">
-        <h3 class="versions-title">Saved Resume Versions</h3>
-        {% for v in resume_versions %}
-        <div class="version-row">
-          <div>
-            <span class="version-label">{{ v.label }}</span>
-            <span class="version-date">{{ v.created_at }}</span>
-          </div>
-          <div class="version-actions">
-            <a href="/resume-version/{{ v.id }}" class="ver-btn ver-btn-open"
-              >Open</a
-            >
-            <a
-              href="/resume-version/{{ v.id }}/download"
-              class="ver-btn ver-btn-dl"
-              >Download</a
-            >
-            <a
-              href="/delete-resume-version/{{ v.id }}"
-              class="ver-btn ver-btn-del"
-              >Delete</a
-            >
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-
-      <!-- Saved Application Packages -->
-      {% if application_packages %}
-      <div class="packages-panel">
-        <h3 class="versions-title">Saved Application Packages</h3>
-        {% for p in application_packages %}
-        <div class="version-row">
-          <div>
-            <span class="version-label">{{ p.label }}</span>
-            {% if p.company %}
-            <span class="version-date">– {{ p.company }}</span>
-            {% endif %}
-            <span class="version-date">{{ p.created_at }}</span>
-          </div>
-          <div class="version-actions">
-            <a href="/application-package/{{ p.id }}" class="ver-btn ver-btn-open">Open</a>
-            <a href="/application-package/{{ p.id }}/download" class="ver-btn ver-btn-dl">Download</a>
-            <a href="/delete-application-package/{{ p.id }}" class="ver-btn ver-btn-del">Delete</a>
-          </div>
-        </div>
-        {% endfor %}
-      </div>
+      {% if cover_letter_draft or enhanced_cover_letter %}
+      <a href="/download-application-package" class="btn btn-success">Download Package</a>
+      <a href="/save-application-package" class="btn btn-teal">Save Package</a>
       {% endif %}
     </div>
-  </body>
+  </div>
+
+  <!-- Next Best Action (M42/M45) -->
+  {% if next_best_action %}
+  <div class="nba-card">
+    {% if next_best_action.label != 'Analyze Resume' %}
+    <a href="{{ next_best_action.route }}" class="nba-btn">{{ next_best_action.label }}</a>
+    {% endif %}
+    <a href="/prepare-application" class="nba-btn" style="margin-left:0.5rem;background:rgba(255,255,255,0.15);color:#fff;box-shadow:none">Prepare Full Application</a>
+  </div>
+  {% endif %}
+
+  <!-- ═══════════════════════════════════════════
+       RESUME PREVIEW
+       ═══════════════════════════════════════════ -->
+  <div class="resume-page" id="resume-section">
+    <!-- Name -->
+    <h1 class="resume-name">
+      {% if enhanced and enhanced.name %}
+        {{ enhanced.name }}
+      {% elif profile and profile.name != "Not detected" %}
+        {{ profile.name }}
+      {% else %}
+        <span class="placeholder">[Your Full Name]</span>
+      {% endif %}
+      {% if enhanced %}
+      <span class="badge badge-enhanced">ENHANCED</span>
+      {% endif %}
+    </h1>
+
+    <!-- Contact -->
+    <p class="resume-contact">
+      {% if enhanced and enhanced.contact %}
+        {{ enhanced.contact }}
+      {% else %}
+        {% if profile and profile.email != "Not detected" %}{{ profile.email }}{% else %}<span class="placeholder">[email]</span>{% endif %}
+        &nbsp;&bull;&nbsp;
+        {% if profile and profile.phone != "Not detected" %}{{ profile.phone }}{% else %}<span class="placeholder">[phone]</span>{% endif %}
+      {% endif %}
+    </p>
+
+    <!-- Target Title -->
+    {% if enhanced and enhanced.target_title %}
+    <p class="resume-target">{{ enhanced.target_title }}</p>
+    {% elif target_title %}
+    <p class="resume-target">{{ target_title }}</p>
+    {% endif %}
+
+    <!-- Professional Summary -->
+    <h2 class="section-title">Professional Summary</h2>
+    {% if enhanced and enhanced.enhanced_summary %}
+    <p class="summary-text">{{ enhanced.enhanced_summary }}</p>
+    {% elif tailored and tailored.professional_summary %}
+    <ul class="resume-summary">
+      {% for item in tailored.professional_summary %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="placeholder">[Write 2–3 sentences summarizing your professional background and target role alignment.]</p>
+    {% endif %}
+
+    <!-- Skills -->
+    <h2 class="section-title">Skills</h2>
+    {% if enhanced and enhanced.enhanced_skills %}
+    <ul class="skill-tags">
+      {% for skill in enhanced.enhanced_skills %}
+      <li class="skill-tag">{{ skill }}</li>
+      {% endfor %}
+    </ul>
+    {% elif skills_list %}
+    <ul class="skill-tags">
+      {% for skill in skills_list %}
+      <li class="skill-tag">{{ skill }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="placeholder">[List 8–10 relevant skills]</p>
+    {% endif %}
+
+    <!-- Experience -->
+    <h2 class="section-title">Experience</h2>
+    {% if enhanced and enhanced.enhanced_experience_bullets %}
+    <div class="exp-entry">
+      <ul class="exp-bullets">
+        {% for bullet in enhanced.enhanced_experience_bullets %}
+        <li>{{ bullet }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% else %}
+      {% if tailored and tailored.experience_focus_points %}
+      <div class="exp-entry">
+        <p class="exp-hint">Focus your experience bullets on:</p>
+        <ul class="exp-bullets">
+          {% for item in tailored.experience_focus_points %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+      <div class="exp-entry">
+        <p class="exp-title"><span class="placeholder">[Job Title] — [Company Name]</span></p>
+        <p class="exp-hint">[Start Date] – [End Date]</p>
+        <ul class="exp-bullets">
+          <li class="placeholder">[Add 2–3 quantified bullet points here]</li>
+          <li class="placeholder">[Use action verbs: Led, Built, Improved, Delivered...]</li>
+          <li class="placeholder">[Insert relevant project outcome with numbers]</li>
+        </ul>
+      </div>
+    {% endif %}
+
+    <!-- Education -->
+    <h2 class="section-title">Education</h2>
+    {% if enhanced and enhanced.enhanced_education %}
+      {% for edu in enhanced.enhanced_education %}
+      <p class="edu-item">{{ edu }}</p>
+      {% endfor %}
+    {% elif education_list %}
+      {% for edu in education_list %}
+      <p class="edu-item">{{ edu }}</p>
+      {% endfor %}
+    {% else %}
+    <p class="placeholder">[Degree] — [Institution], [Year]</p>
+    {% endif %}
+
+    <!-- ATS Notes -->
+    {% if enhanced and enhanced.ats_alignment_notes %}
+    <h2 class="section-title">ATS Alignment Notes</h2>
+    <div class="notes-box">
+      <ul style="margin:0;padding-left:1.2rem">
+        {% for note in enhanced.ats_alignment_notes %}
+        <li>{{ note }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% elif rewrite and rewrite.ats_notes %}
+    <h2 class="section-title">ATS Alignment Notes</h2>
+    <div class="notes-box">
+      <ul style="margin:0;padding-left:1.2rem">
+        {% for note in rewrite.ats_notes %}
+        <li>{{ note }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       COVER LETTER PREVIEW
+       ═══════════════════════════════════════════ -->
+  {% if enhanced_cover_letter or cover_letter_draft %}
+  <div class="cl-page" id="cover-letter-section">
+    <h2 class="section-title" style="margin-top:0">
+      Cover Letter
+      {% if enhanced_cover_letter %}<span class="badge badge-cover">ENHANCED</span>{% endif %}
+    </h2>
+    {% if enhanced_cover_letter and enhanced_cover_letter.full_text %}
+    <div class="cl-text">{{ enhanced_cover_letter.full_text }}</div>
+    {% elif cover_letter_draft and cover_letter_draft.full_text %}
+    <div class="cl-text">{{ cover_letter_draft.full_text }}</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ═══════════════════════════════════════════
+       MATCH INTELLIGENCE (on preview page)
+       ═══════════════════════════════════════════ -->
+  {% if match_explanation %}
+  <div class="card">
+    <h2 class="card-title">Match Score Explanation</h2>
+    <hr class="card-divider" />
+    <p class="intel-summary">{{ match_explanation.summary }}</p>
+    <h3>Strengths</h3>
+    <ul class="intel-list">
+      {% for s in match_explanation.strengths %}
+      <li>{{ s }}</li>
+      {% endfor %}
+    </ul>
+    <h3>Gaps</h3>
+    <ul class="intel-list">
+      {% for g in match_explanation.gaps %}
+      <li>{{ g }}</li>
+      {% endfor %}
+    </ul>
+    <p class="intel-note">{{ match_explanation.confidence_note }}</p>
+  </div>
+  {% endif %}
+
+  {% if keyword_gaps %}
+  <div class="card">
+    <h2 class="card-title">Missing Keyword Gaps</h2>
+    <hr class="card-divider" />
+    {% if keyword_gaps.missing_keywords %}
+    <h3>Missing Keywords</h3>
+    <ul class="intel-list">
+      {% for kw in keyword_gaps.missing_keywords %}
+      <li>{{ kw }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if keyword_gaps.underused_keywords %}
+    <h3>Underused Keywords</h3>
+    <ul class="intel-list">
+      {% for kw in keyword_gaps.underused_keywords %}
+      <li>{{ kw }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if keyword_gaps.recommended_additions %}
+    <h3>Recommended Additions</h3>
+    <ul class="intel-list">
+      {% for r in keyword_gaps.recommended_additions %}
+      <li>{{ r }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if priority_fixes %}
+  <div class="card">
+    <h2 class="card-title">Priority Fixes / Quick Wins</h2>
+    <hr class="card-divider" />
+    {% if priority_fixes.top_priority %}
+    <h3>Top Priority</h3>
+    <ul class="intel-list">
+      {% for item in priority_fixes.top_priority %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if priority_fixes.quick_wins %}
+    <h3>Quick Wins</h3>
+    <ul class="intel-list">
+      {% for item in priority_fixes.quick_wins %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if priority_fixes.section_targets %}
+    <h3>Section Targets</h3>
+    {% for t in priority_fixes.section_targets %}
+    <p class="section-target"><strong>{{ t.section }}:</strong> {{ t.action }}</p>
+    {% endfor %}
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if role_fit %}
+  <div class="card">
+    <h2 class="card-title">Role-Fit Suggestions</h2>
+    <hr class="card-divider" />
+    <p class="intel-summary">
+      <strong>{{ role_fit.target_title }}</strong>
+      <span class="badge {% if role_fit.fit_level == 'Strong' %}badge-fit-strong{% elif role_fit.fit_level == 'Moderate' %}badge-fit-moderate{% else %}badge-fit-developing{% endif %}">{{ role_fit.fit_level }}</span>
+    </p>
+    {% if role_fit.improvement_suggestions %}
+    <h3>Improvement Suggestions</h3>
+    <ul class="intel-list">
+      {% for s in role_fit.improvement_suggestions %}
+      <li>{{ s }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if role_fit.positioning_advice %}
+    <h3>Positioning Advice</h3>
+    <ul class="intel-list">
+      {% for a in role_fit.positioning_advice %}
+      <li>{{ a }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if role_fit.next_step %}
+    <h3>Next Step</h3>
+    <p class="intel-summary">{{ role_fit.next_step }}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Saved Jobs -->
+  {% if saved_jobs %}
+  <div class="card">
+    <h2 class="card-title">Saved Jobs</h2>
+    <hr class="card-divider" />
+    {% for job in saved_jobs %}
+    <div class="item-row">
+      <div>
+        <span class="status-badge status-{{ job.status }}">{{ job.status }}</span>
+        <span class="item-label">{{ job.title }}</span>
+        {% if job.company %}<span class="item-meta">&ndash; {{ job.company }}</span>{% endif %}
+      </div>
+      <a href="/job/{{ job.id }}" class="pill pill-primary" style="font-size:0.75rem">Open</a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Upcoming Alerts -->
+  {% if alerts %}
+  <div class="card">
+    <h2 class="card-title">Upcoming Alerts</h2>
+    <hr class="card-divider" />
+    {% for a in alerts %}
+    <div class="alert-row">
+      <div>
+        <span class="alert-msg">{{ a.message }}</span>
+        <span class="alert-due">Due: {{ a.due_at }}</span>
+      </div>
+      <div class="alert-actions">
+        <a href="/complete-alert/{{ a.id }}" class="link-success">Complete</a>
+        <a href="/delete-alert/{{ a.id }}" class="link-danger">Delete</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Follow-Up Suggestions -->
+  {% if followup and followup.recommended_actions %}
+  <div class="card">
+    <h2 class="card-title">Follow-Up Suggestions</h2>
+    <hr class="card-divider" />
+    {% for action in followup.recommended_actions %}
+    <div class="followup-action">{{ action }}</div>
+    {% endfor %}
+    {% if followup.next_step %}
+    <div class="followup-next"><strong>Next Step:</strong> {{ followup.next_step }}</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Session Context -->
+  {% if not session_memory_empty %}
+  <div class="card">
+    <h2 class="card-title">Session Context</h2>
+    <hr class="card-divider" />
+    <div class="ctx-grid">
+      {% if session_memory.active_target_title %}
+      <span class="ctx-label">Role:</span>
+      <span class="ctx-value">{{ session_memory.active_target_title }}</span>
+      {% endif %}
+      {% if session_memory.active_company %}
+      <span class="ctx-label">Company:</span>
+      <span class="ctx-value">{{ session_memory.active_company }}</span>
+      {% endif %}
+      {% if session_memory.last_action %}
+      <span class="ctx-label">Last:</span>
+      <span class="ctx-value">{{ session_memory.last_action }}</span>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Confidence & Sources -->
+  {% if provenance and provenance.resume_source != 'none' %}
+  <div class="card">
+    <h2 class="card-title">Confidence &amp; Sources</h2>
+    <hr class="card-divider" />
+    <div style="font-size:var(--font-sm)">
+      <span class="prov-key">Resume:</span>
+      <span class="prov-val">{{ get_source_label(provenance.resume_source) }}</span>
+      &middot;
+      <span class="prov-key">Cover Letter:</span>
+      <span class="prov-val">{{ get_source_label(provenance.cover_letter_source) }}</span>
+    </div>
+    {% if provenance.confidence_labels %}
+    <div class="confidence-grid" style="margin-top:0.3rem">
+      {% for key, lvl in provenance.confidence_labels.items() %}
+      <span class="conf-tag conf-{{ lvl }}">{{ key.replace('_', ' ').title() }}: {{ lvl }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if provenance.notes %}
+    <div class="prov-notes">{{ provenance.notes[-1] }}</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Saved Resume Versions -->
+  {% if resume_versions %}
+  <div class="card">
+    <h2 class="card-title">Saved Resume Versions</h2>
+    <hr class="card-divider" />
+    {% for v in resume_versions %}
+    <div class="item-row">
+      <div>
+        <span class="item-label">{{ v.label }}</span>
+        <span class="item-meta">{{ v.created_at }}</span>
+      </div>
+      <div class="item-actions">
+        <a href="/resume-version/{{ v.id }}" class="pill pill-primary">Open</a>
+        <a href="/resume-version/{{ v.id }}/download" class="pill pill-success">Download</a>
+        <a href="/delete-resume-version/{{ v.id }}" class="pill pill-danger">Delete</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Saved Application Packages -->
+  {% if application_packages %}
+  <div class="card">
+    <h2 class="card-title">Saved Application Packages</h2>
+    <hr class="card-divider" />
+    {% for p in application_packages %}
+    <div class="item-row">
+      <div>
+        <span class="item-label">{{ p.label }}</span>
+        {% if p.company %}<span class="item-meta">&ndash; {{ p.company }}</span>{% endif %}
+        <span class="item-meta">{{ p.created_at }}</span>
+      </div>
+      <div class="item-actions">
+        <a href="/application-package/{{ p.id }}" class="pill pill-primary">Open</a>
+        <a href="/application-package/{{ p.id }}/download" class="pill pill-success">Download</a>
+        <a href="/delete-application-package/{{ p.id }}" class="pill pill-danger">Delete</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Secondary nav -->
+  <div style="text-align:center;margin-top:var(--space-xl)">
+    <a href="/" class="btn btn-secondary">Back to Dashboard</a>
+  </div>
+
+</div><!-- /container -->
+</body>
 </html>
