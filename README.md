@@ -251,6 +251,22 @@ Generates a prioritized next-step checklist so users know exactly what to fix fi
 
 All logic is rule-based and local. No AI or external APIs are used.
 
+---
+
+### Module 20 — Landing Value & Conversion Flow
+
+UX/content upgrade to make the landing page clearer for first-time visitors.
+
+**Changes (template only):**
+
+- **Hero section** — replaced generic header with a strong headline ("Turn your resume into a role-ready action plan"), a one-sentence value proposition, and three benefit bullets
+- **How It Works strip** — three horizontal step cards (Upload resume → Add context → Get your plan) placed below the hero
+- **Upload card intro** — added a helper sentence explaining supported files and optional fields
+- **Trust note** — subtle reassurance below the submit button that Offerion is guidance-focused and does not fabricate experience
+- **CTA clarity** — surrounding context improved so the upload action feels obvious
+
+No backend changes. Preserves the card-based dashboard layout from M16.
+
 ## Run Locally
 
 ```
