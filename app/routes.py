@@ -36,6 +36,14 @@ from app.utils.resume_versioning import (
     find_version,
     delete_version,
 )
+from app.utils.cover_letter_builder import build_cover_letter
+from app.utils.cover_letter_enhancer import enhance_cover_letter
+from app.utils.application_package import (
+    save_package,
+    load_package,
+    find_package,
+    delete_package,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -181,6 +189,7 @@ def index():
 
     history = session.get("history", [])
     resume_versions = session.get("resume_versions", [])
+    application_packages = session.get("application_packages", [])
 
     return render_template(
         "index.html",
@@ -198,6 +207,7 @@ def index():
         action_plan=action_plan,
         history=history,
         resume_versions=resume_versions,
+        application_packages=application_packages,
     )
 
 
@@ -373,6 +383,9 @@ def resume_preview():
         education_list = profile["education"]
 
     resume_versions = session.get("resume_versions", [])
+    cover_letter_draft = session.get("cover_letter_draft")
+    enhanced_cover_letter = session.get("enhanced_cover_letter")
+    application_packages = session.get("application_packages", [])
 
     return render_template(
         "resume_preview.html",
@@ -384,6 +397,9 @@ def resume_preview():
         education_list=education_list,
         enhanced=enhanced,
         resume_versions=resume_versions,
+        cover_letter_draft=cover_letter_draft,
+        enhanced_cover_letter=enhanced_cover_letter,
+        application_packages=application_packages,
     )
 
 
@@ -471,6 +487,198 @@ def download_resume_version(version_id):
 def delete_resume_version_route(version_id):
     versions = session.get("resume_versions", [])
     session["resume_versions"] = delete_version(versions, version_id)
+    return redirect(url_for("main.index"))
+
+
+# ------------------------------------------------------------------
+# M26 — Cover Letter Draft
+# ------------------------------------------------------------------
+
+@main_bp.route("/generate-cover-letter")
+def generate_cover_letter_route():
+    report_data = session.get("report_data")
+    if not report_data:
+        return redirect(url_for("main.index"))
+
+    enhanced_resume = session.get("enhanced_resume")
+
+    draft = build_cover_letter(
+        profile=report_data.get("profile"),
+        tailored=report_data.get("tailored"),
+        rewrite=report_data.get("rewrite"),
+        match=report_data.get("match"),
+        enhanced_resume=enhanced_resume,
+    )
+
+    if draft:
+        session["cover_letter_draft"] = draft
+
+    return redirect(url_for("main.resume_preview"))
+
+
+# ------------------------------------------------------------------
+# M27 — Cover Letter Enhancement
+# ------------------------------------------------------------------
+
+@main_bp.route("/enhance-cover-letter")
+def enhance_cover_letter_route():
+    draft = session.get("cover_letter_draft")
+    if not draft:
+        return redirect(url_for("main.resume_preview"))
+
+    enhanced_resume = session.get("enhanced_resume")
+    enhanced_cl = enhance_cover_letter(draft, enhanced_resume)
+
+    if enhanced_cl:
+        session["enhanced_cover_letter"] = enhanced_cl
+
+    return redirect(url_for("main.resume_preview"))
+
+
+# ------------------------------------------------------------------
+# M28 — Application Package Download
+# ------------------------------------------------------------------
+
+@main_bp.route("/download-application-package")
+def download_application_package():
+    report_data = session.get("report_data")
+    if not report_data:
+        return "No analysis data available.", 400
+
+    enhanced_resume = session.get("enhanced_resume")
+    cover_letter_draft = session.get("cover_letter_draft")
+    enhanced_cl = session.get("enhanced_cover_letter")
+
+    package_text = _build_application_package_text(
+        report_data, enhanced_resume, cover_letter_draft, enhanced_cl
+    )
+
+    return Response(
+        package_text,
+        mimetype="text/plain",
+        headers={
+            "Content-Disposition": "attachment; filename=offerion_application_package.txt"
+        },
+    )
+
+
+def _build_application_package_text(report_data, enhanced_resume,
+                                     cover_letter_draft, enhanced_cl):
+    """Assemble combined resume + cover letter plain-text package."""
+    sep = "=" * 60
+    sub = "-" * 40
+    lines = []
+
+    lines.append(sep)
+    lines.append("OFFERION APPLICATION PACKAGE")
+    lines.append(sep)
+    lines.append(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    lines.append("")
+
+    # --- Section 1: Resume ---
+    lines.append(sep)
+    lines.append("SECTION 1 — RESUME")
+    lines.append(sep)
+    lines.append("")
+
+    if enhanced_resume:
+        lines.append(_build_enhanced_draft(enhanced_resume))
+    else:
+        draft = build_resume_draft(
+            profile=report_data.get("profile"),
+            tailored=report_data.get("tailored"),
+            rewrite=report_data.get("rewrite"),
+            action_plan=report_data.get("action_plan"),
+            match=report_data.get("match"),
+            jd_comparison=report_data.get("jd_comparison"),
+        )
+        lines.append(draft or "[Resume draft not available]")
+
+    lines.append("")
+
+    # --- Section 2: Cover Letter ---
+    lines.append(sep)
+    lines.append("SECTION 2 — COVER LETTER")
+    lines.append(sep)
+    lines.append("")
+
+    if enhanced_cl and enhanced_cl.get("full_text"):
+        lines.append(enhanced_cl["full_text"])
+    elif cover_letter_draft and cover_letter_draft.get("full_text"):
+        lines.append(cover_letter_draft["full_text"])
+    else:
+        lines.append("[Cover letter not generated yet]")
+
+    lines.append("")
+    lines.append(sep)
+    lines.append("END OF APPLICATION PACKAGE")
+    lines.append(sep)
+    lines.append("")
+    lines.append("Generated by Offerion \u2014 offerion.onrender.com")
+
+    return "\n".join(lines)
+
+
+# ------------------------------------------------------------------
+# M29 — Application Package Versioning
+# ------------------------------------------------------------------
+
+@main_bp.route("/save-application-package")
+def save_application_package_route():
+    pkg = save_package(session)
+    if not pkg:
+        return redirect(url_for("main.index"))
+
+    packages = session.get("application_packages", [])
+    packages.append(pkg)
+    session["application_packages"] = packages
+
+    return redirect(url_for("main.resume_preview"))
+
+
+@main_bp.route("/application-package/<package_id>")
+def open_application_package(package_id):
+    packages = session.get("application_packages", [])
+    pkg = find_package(packages, package_id)
+    if not pkg:
+        return redirect(url_for("main.index"))
+
+    report_data, enhanced_resume, cl_draft, enhanced_cl = load_package(pkg)
+    session["report_data"] = report_data
+    session["enhanced_resume"] = enhanced_resume
+    session["cover_letter_draft"] = cl_draft
+    session["enhanced_cover_letter"] = enhanced_cl
+
+    return redirect(url_for("main.resume_preview"))
+
+
+@main_bp.route("/application-package/<package_id>/download")
+def download_application_package_version(package_id):
+    packages = session.get("application_packages", [])
+    pkg = find_package(packages, package_id)
+    if not pkg:
+        return "Package not found.", 404
+
+    report_data, enhanced_resume, cl_draft, enhanced_cl = load_package(pkg)
+
+    package_text = _build_application_package_text(
+        report_data, enhanced_resume, cl_draft, enhanced_cl
+    )
+
+    safe_label = (pkg.get("label") or "package").replace(" ", "_").lower()
+    filename = f"offerion_{safe_label}_package.txt"
+
+    return Response(
+        package_text,
+        mimetype="text/plain",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@main_bp.route("/delete-application-package/<package_id>")
+def delete_application_package_route(package_id):
+    packages = session.get("application_packages", [])
+    session["application_packages"] = delete_package(packages, package_id)
     return redirect(url_for("main.index"))
 
 

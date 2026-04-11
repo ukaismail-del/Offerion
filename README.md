@@ -413,6 +413,85 @@ Save and manage multiple tailored resume versions per session so users can gener
 - Opening a version restores both report_data and enhanced_resume
 - Existing M22–M24 flow works unchanged when no versions are saved
 
+---
+
+### Module 26 — Cover Letter Draft Generator
+
+Generates a structured cover letter draft from the active resume/job session.
+
+**File:** `app/utils/cover_letter_builder.py`
+
+**Function:** `build_cover_letter(profile, tailored, rewrite, match, enhanced_resume)`
+
+**Returns:** dict with `recipient`, `company`, `target_title`, `opening`, `body_points`, `closing`, `full_text`
+
+**Route:** `GET /generate-cover-letter` — builds draft, stores in session, redirects to preview
+
+**UI:** "Generate Cover Letter" amber button on preview page (hidden after generation)
+
+---
+
+### Module 27 — Cover Letter Enhancement Layer
+
+Transforms the structured cover letter draft into stronger, more professional language.
+
+**File:** `app/utils/cover_letter_enhancer.py`
+
+**Function:** `enhance_cover_letter(cover_letter_draft, enhanced_resume)`
+
+**Returns:** dict with `recipient`, `company`, `target_title`, `enhanced_opening`, `enhanced_body`, `enhanced_closing`, `full_text`
+
+**Route:** `GET /enhance-cover-letter` — enhances draft, stores in session, redirects to preview
+
+**UI:** "Enhance Cover Letter" purple button (shown only when draft exists but not yet enhanced); "ENHANCED" badge on cover letter section
+
+---
+
+### Module 28 — Resume + Cover Letter Paired Export
+
+Downloads a combined application package as a single .txt file.
+
+**Route:** `GET /download-application-package`
+
+**Output:** Plain-text file with Section 1 (Resume) and Section 2 (Cover Letter), using enhanced versions when available.
+
+**UI:** "Download Application Package" teal button on preview page (shown when cover letter exists)
+
+---
+
+### Module 29 — Saved Application Package View
+
+Save and manage combined resume + cover letter packages per session.
+
+**File:** `app/utils/application_package.py`
+
+**Functions:**
+
+- `save_package(session_data)` — snapshots report_data, enhanced_resume, cover_letter_draft, enhanced_cover_letter
+- `load_package(package)` — returns deep copies of all four data objects
+- `find_package(packages, package_id)` / `delete_package(packages, package_id)`
+
+**Routes:**
+
+- `GET /save-application-package` — saves current state as a package
+- `GET /application-package/<id>` — loads a saved package into active session
+- `GET /application-package/<id>/download` — downloads saved package directly
+- `GET /delete-application-package/<id>` — removes a saved package
+
+**UI:**
+
+- "Save Application Package" button on preview page (when cover letter exists)
+- Saved Application Packages panel on dashboard and preview page with Open, Download, Delete actions
+- Labels derived from target title; company shown if available
+
+**Behavior:**
+
+- Session-based, no database
+- Deep copies prevent cross-package contamination
+- Duplicates allowed, distinguished by timestamp
+- Opening a package restores resume, cover letter, and enhancement state
+- Existing resume-only flow works unchanged when no cover letter or packages exist
+
 ## Run Locally
 
 ```

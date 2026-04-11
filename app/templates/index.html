@@ -265,6 +265,12 @@
       .ver-btn-del:hover {
         background: #b91c1c;
       }
+      .pkg-card-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 0.6rem;
+      }
       .status-bar {
         text-align: center;
       }
@@ -1025,6 +1031,30 @@
               class="ver-btn ver-btn-del"
               >Delete</a
             >
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Saved Application Packages -->
+      {% if application_packages %}
+      <div class="card versions-card">
+        <h2 class="pkg-card-title">Saved Application Packages</h2>
+        <hr class="card-divider" />
+        {% for p in application_packages %}
+        <div class="ver-row">
+          <div>
+            <span class="ver-label">{{ p.label }}</span>
+            {% if p.company %}
+            <span class="ver-date">– {{ p.company }}</span>
+            {% endif %}
+            <span class="ver-date">{{ p.created_at }}</span>
+          </div>
+          <div class="ver-actions">
+            <a href="/application-package/{{ p.id }}" class="ver-btn ver-btn-open">Open</a>
+            <a href="/application-package/{{ p.id }}/download" class="ver-btn ver-btn-dl">Download</a>
+            <a href="/delete-application-package/{{ p.id }}" class="ver-btn ver-btn-del">Delete</a>
           </div>
         </div>
         {% endfor %}
