@@ -30,6 +30,12 @@ from app.utils.tailored_brief import build_tailored_brief
 from app.utils.action_plan import generate_action_plan
 from app.utils.resume_draft_builder import build_resume_draft
 from app.utils.resume_enhancer import enhance_resume
+from app.utils.resume_versioning import (
+    save_version,
+    load_version,
+    find_version,
+    delete_version,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -174,6 +180,7 @@ def index():
                         delete_file(filepath)
 
     history = session.get("history", [])
+    resume_versions = session.get("resume_versions", [])
 
     return render_template(
         "index.html",
@@ -190,6 +197,7 @@ def index():
         tailored=tailored,
         action_plan=action_plan,
         history=history,
+        resume_versions=resume_versions,
     )
 
 
@@ -364,6 +372,8 @@ def resume_preview():
     if profile and profile.get("education"):
         education_list = profile["education"]
 
+    resume_versions = session.get("resume_versions", [])
+
     return render_template(
         "resume_preview.html",
         profile=profile,
@@ -373,6 +383,7 @@ def resume_preview():
         skills_list=skills_list,
         education_list=education_list,
         enhanced=enhanced,
+        resume_versions=resume_versions,
     )
 
 
@@ -393,6 +404,74 @@ def enhance_resume_route():
         session["enhanced_resume"] = enhanced
 
     return redirect(url_for("main.resume_preview"))
+
+
+@main_bp.route("/save-resume-version")
+def save_resume_version():
+    version = save_version(session)
+    if not version:
+        return redirect(url_for("main.index"))
+
+    versions = session.get("resume_versions", [])
+    versions.append(version)
+    session["resume_versions"] = versions
+
+    return redirect(url_for("main.resume_preview"))
+
+
+@main_bp.route("/resume-version/<version_id>")
+def open_resume_version(version_id):
+    versions = session.get("resume_versions", [])
+    version = find_version(versions, version_id)
+    if not version:
+        return redirect(url_for("main.index"))
+
+    report_data, enhanced = load_version(version)
+    session["report_data"] = report_data
+    session["enhanced_resume"] = enhanced
+
+    return redirect(url_for("main.resume_preview"))
+
+
+@main_bp.route("/resume-version/<version_id>/download")
+def download_resume_version(version_id):
+    versions = session.get("resume_versions", [])
+    version = find_version(versions, version_id)
+    if not version:
+        return "Version not found.", 404
+
+    report_data, enhanced = load_version(version)
+
+    if enhanced:
+        draft_text = _build_enhanced_draft(enhanced)
+    else:
+        draft_text = build_resume_draft(
+            profile=report_data.get("profile"),
+            tailored=report_data.get("tailored"),
+            rewrite=report_data.get("rewrite"),
+            action_plan=report_data.get("action_plan"),
+            match=report_data.get("match"),
+            jd_comparison=report_data.get("jd_comparison"),
+        )
+
+    if not draft_text:
+        return "Not enough data to generate this version.", 400
+
+    safe_label = (version.get("label") or "resume").replace(" ", "_").lower()
+    filename = f"offerion_{safe_label}.txt"
+
+    return Response(
+        draft_text,
+        mimetype="text/plain",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@main_bp.route("/delete-resume-version/<version_id>")
+def delete_resume_version_route(version_id):
+    versions = session.get("resume_versions", [])
+    session["resume_versions"] = delete_version(versions, version_id)
+    return redirect(url_for("main.index"))
 
 
 @main_bp.route("/<path:path>")

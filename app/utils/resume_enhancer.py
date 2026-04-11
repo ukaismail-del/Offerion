@@ -4,7 +4,6 @@ Transforms structured analysis data into polished, resume-ready language
 without fabricating employers, dates, or achievements.
 """
 
-
 _STRONG_VERBS = [
     "Spearheaded",
     "Delivered",
@@ -110,7 +109,11 @@ def _build_summary(profile, tailored, rewrite, target_title):
     skills = profile.get("skills", []) if profile else []
     top_skills = ", ".join(skills[:3]) if skills else "core competencies"
 
-    opening = f"Results-driven {target_title} professional" if target_title else "Seasoned professional"
+    opening = (
+        f"Results-driven {target_title} professional"
+        if target_title
+        else "Seasoned professional"
+    )
 
     # Use first two guidance points as focus areas
     focus_areas = []
@@ -121,7 +124,9 @@ def _build_summary(profile, tailored, rewrite, target_title):
             cleaned = cleaned[0].lower() + cleaned[1:]
         focus_areas.append(cleaned)
 
-    focus_text = " and ".join(focus_areas) if focus_areas else "delivering measurable outcomes"
+    focus_text = (
+        " and ".join(focus_areas) if focus_areas else "delivering measurable outcomes"
+    )
 
     summary = (
         f"{opening} with demonstrated expertise in {top_skills}. "

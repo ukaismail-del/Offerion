@@ -191,6 +191,79 @@
         color: #92400e;
         line-height: 1.5;
       }
+      .dl-btn-save {
+        background: #0891b2;
+        margin-left: 0.6rem;
+      }
+      .dl-btn-save:hover {
+        background: #0e7490;
+      }
+      .versions-panel {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.5rem 1.8rem;
+        margin-top: 1.5rem;
+        box-shadow:
+          0 1px 3px rgba(0, 0, 0, 0.06),
+          0 1px 2px rgba(0, 0, 0, 0.04);
+      }
+      .versions-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 0.8rem 0;
+      }
+      .version-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.55rem 0;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 0.9rem;
+      }
+      .version-row:last-child {
+        border-bottom: none;
+      }
+      .version-label {
+        font-weight: 600;
+        color: #1e293b;
+      }
+      .version-date {
+        color: #94a3b8;
+        font-size: 0.82rem;
+        margin-left: 0.5rem;
+      }
+      .version-actions {
+        display: flex;
+        gap: 0.4rem;
+      }
+      .ver-btn {
+        display: inline-block;
+        padding: 0.3rem 0.7rem;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-decoration: none;
+        color: #fff;
+      }
+      .ver-btn-open {
+        background: #2563eb;
+      }
+      .ver-btn-open:hover {
+        background: #1d4ed8;
+      }
+      .ver-btn-dl {
+        background: #059669;
+      }
+      .ver-btn-dl:hover {
+        background: #047857;
+      }
+      .ver-btn-del {
+        background: #dc2626;
+      }
+      .ver-btn-del:hover {
+        background: #b91c1c;
+      }
       @media (max-width: 640px) {
         .resume-page {
           padding: 1.5rem 1.2rem;
@@ -211,35 +284,25 @@
       <div class="resume-page">
         <!-- Name -->
         <h1 class="resume-name">
-          {% if enhanced and enhanced.name %}
-            {{ enhanced.name }}
-          {% elif profile and profile.name != "Not detected" %}
-            {{ profile.name }}
-          {% else %}
-            <span class="placeholder">[Your Full Name]</span>
-          {% endif %}
-          {% if enhanced %}
-            <span class="enhanced-badge">ENHANCED</span>
+          {% if enhanced and enhanced.name %} {{ enhanced.name }} {% elif
+          profile and profile.name != "Not detected" %} {{ profile.name }} {%
+          else %}
+          <span class="placeholder">[Your Full Name]</span>
+          {% endif %} {% if enhanced %}
+          <span class="enhanced-badge">ENHANCED</span>
           {% endif %}
         </h1>
 
         <!-- Contact -->
         <p class="resume-contact">
-          {% if enhanced and enhanced.contact %}
-            {{ enhanced.contact }}
-          {% else %}
-            {% if profile and profile.email != "Not detected" %}
-              {{ profile.email }}
-            {% else %}
-              <span class="placeholder">[email]</span>
-            {% endif %}
-            &nbsp;&bull;&nbsp;
-            {% if profile and profile.phone != "Not detected" %}
-              {{ profile.phone }}
-            {% else %}
-              <span class="placeholder">[phone]</span>
-            {% endif %}
-          {% endif %}
+          {% if enhanced and enhanced.contact %} {{ enhanced.contact }} {% else
+          %} {% if profile and profile.email != "Not detected" %} {{
+          profile.email }} {% else %}
+          <span class="placeholder">[email]</span>
+          {% endif %} &nbsp;&bull;&nbsp; {% if profile and profile.phone != "Not
+          detected" %} {{ profile.phone }} {% else %}
+          <span class="placeholder">[phone]</span>
+          {% endif %} {% endif %}
         </p>
 
         <!-- Target Title -->
@@ -294,41 +357,41 @@
             {% endfor %}
           </ul>
         </div>
-        {% else %}
-          {% if tailored and tailored.experience_focus_points %}
-          <div class="exp-entry">
-            <p class="exp-hint">Focus your experience bullets on:</p>
-            <ul class="exp-bullets">
-              {% for item in tailored.experience_focus_points %}
-              <li>{{ item }}</li>
-              {% endfor %}
-            </ul>
-          </div>
-          {% endif %}
-          <div class="exp-entry">
-            <p class="exp-title">
-              <span class="placeholder">[Job Title] — [Company Name]</span>
-            </p>
-            <p class="exp-hint">[Start Date] – [End Date]</p>
-            <ul class="exp-bullets">
-              <li class="placeholder">[Add 2–3 quantified bullet points here]</li>
-              <li class="placeholder">[Use action verbs: Led, Built, Improved, Delivered...]</li>
-              <li class="placeholder">[Insert relevant project outcome with numbers]</li>
-            </ul>
-          </div>
+        {% else %} {% if tailored and tailored.experience_focus_points %}
+        <div class="exp-entry">
+          <p class="exp-hint">Focus your experience bullets on:</p>
+          <ul class="exp-bullets">
+            {% for item in tailored.experience_focus_points %}
+            <li>{{ item }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        <div class="exp-entry">
+          <p class="exp-title">
+            <span class="placeholder">[Job Title] — [Company Name]</span>
+          </p>
+          <p class="exp-hint">[Start Date] – [End Date]</p>
+          <ul class="exp-bullets">
+            <li class="placeholder">[Add 2–3 quantified bullet points here]</li>
+            <li class="placeholder">
+              [Use action verbs: Led, Built, Improved, Delivered...]
+            </li>
+            <li class="placeholder">
+              [Insert relevant project outcome with numbers]
+            </li>
+          </ul>
+        </div>
         {% endif %}
 
         <!-- Education -->
         <h2 class="section-title">Education</h2>
-        {% if enhanced and enhanced.enhanced_education %}
-          {% for edu in enhanced.enhanced_education %}
-          <p class="edu-item">{{ edu }}</p>
-          {% endfor %}
-        {% elif education_list %}
-          {% for edu in education_list %}
-          <p class="edu-item">{{ edu }}</p>
-          {% endfor %}
-        {% else %}
+        {% if enhanced and enhanced.enhanced_education %} {% for edu in
+        enhanced.enhanced_education %}
+        <p class="edu-item">{{ edu }}</p>
+        {% endfor %} {% elif education_list %} {% for edu in education_list %}
+        <p class="edu-item">{{ edu }}</p>
+        {% endfor %} {% else %}
         <p class="placeholder">[Degree] — [Institution], [Year]</p>
         {% endif %}
 
@@ -356,12 +419,49 @@
 
       <!-- Action buttons -->
       <div class="actions">
-        <a href="/download-resume-draft" class="dl-btn">Download Resume Draft</a>
+        <a href="/download-resume-draft" class="dl-btn"
+          >Download Resume Draft</a
+        >
+        <a href="/save-resume-version" class="dl-btn dl-btn-save"
+          >Save Version</a
+        >
         {% if not enhanced %}
-        <a href="/enhance-resume" class="dl-btn dl-btn-enhance">Enhance Resume</a>
+        <a href="/enhance-resume" class="dl-btn dl-btn-enhance"
+          >Enhance Resume</a
+        >
         {% endif %}
         <a href="/" class="dl-btn dl-btn-alt">Back to Dashboard</a>
       </div>
+
+      <!-- Saved Versions -->
+      {% if resume_versions %}
+      <div class="versions-panel">
+        <h3 class="versions-title">Saved Resume Versions</h3>
+        {% for v in resume_versions %}
+        <div class="version-row">
+          <div>
+            <span class="version-label">{{ v.label }}</span>
+            <span class="version-date">{{ v.created_at }}</span>
+          </div>
+          <div class="version-actions">
+            <a href="/resume-version/{{ v.id }}" class="ver-btn ver-btn-open"
+              >Open</a
+            >
+            <a
+              href="/resume-version/{{ v.id }}/download"
+              class="ver-btn ver-btn-dl"
+              >Download</a
+            >
+            <a
+              href="/delete-resume-version/{{ v.id }}"
+              class="ver-btn ver-btn-del"
+              >Delete</a
+            >
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
     </div>
   </body>
 </html>

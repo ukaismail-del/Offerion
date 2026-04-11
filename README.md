@@ -376,6 +376,43 @@ Adds a deterministic enhancement layer that converts structured resume drafts in
 
 All logic is rule-based and local. No AI or external APIs are used.
 
+---
+
+### Module 25 — Job-Targeted Resume Versioning
+
+Save and manage multiple tailored resume versions per session so users can generate different resume variants for different target jobs.
+
+**File:** `app/utils/resume_versioning.py`
+
+**Functions:**
+
+- `save_version(session_data)` — creates a snapshot of current report_data and enhanced_resume with unique id, label, and timestamp
+- `load_version(version)` — returns deep copies of report_data and enhanced_resume from a saved version
+- `find_version(versions, version_id)` — looks up a version by id
+- `delete_version(versions, version_id)` — removes a version from the list
+
+**Routes:**
+
+- `GET /save-resume-version` — saves current state as a new version, redirects to preview
+- `GET /resume-version/<id>` — loads a saved version into active session, redirects to preview
+- `GET /resume-version/<id>/download` — downloads the saved version's resume draft directly
+- `GET /delete-resume-version/<id>` — removes a saved version, redirects to dashboard
+
+**UI:**
+
+- "Save Version" teal button on the resume preview page
+- Saved Resume Versions panel on dashboard (when versions exist) with Open, Download, Delete actions per entry
+- Saved Resume Versions panel on preview page with same actions
+- Labels derived from target title with timestamp; falls back to "Resume Version N"
+
+**Behavior:**
+
+- Session-based storage — no database required
+- Deep copies prevent cross-version contamination
+- Duplicate target titles allowed, distinguished by timestamp
+- Opening a version restores both report_data and enhanced_resume
+- Existing M22–M24 flow works unchanged when no versions are saved
+
 ## Run Locally
 
 ```

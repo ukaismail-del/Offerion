@@ -205,6 +205,66 @@
       .download-btn-preview:hover {
         background-color: #1e293b;
       }
+      .versions-card {
+        text-align: left;
+      }
+      .versions-card-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 0.6rem;
+      }
+      .ver-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.55rem 0;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 0.9rem;
+      }
+      .ver-row:last-child {
+        border-bottom: none;
+      }
+      .ver-label {
+        font-weight: 600;
+        color: #1e293b;
+      }
+      .ver-date {
+        color: #94a3b8;
+        font-size: 0.82rem;
+        margin-left: 0.5rem;
+      }
+      .ver-actions {
+        display: flex;
+        gap: 0.4rem;
+      }
+      .ver-btn {
+        display: inline-block;
+        padding: 0.3rem 0.7rem;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-decoration: none;
+        color: #fff;
+      }
+      .ver-btn-open {
+        background: #2563eb;
+      }
+      .ver-btn-open:hover {
+        background: #1d4ed8;
+      }
+      .ver-btn-dl {
+        background: #059669;
+      }
+      .ver-btn-dl:hover {
+        background: #047857;
+      }
+      .ver-btn-del {
+        background: #dc2626;
+      }
+      .ver-btn-del:hover {
+        background: #b91c1c;
+      }
       .status-bar {
         text-align: center;
       }
@@ -937,6 +997,37 @@
       {% endif %} {% if error %}
       <div class="card status-bar">
         <p class="msg-error">{{ error }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Saved Resume Versions -->
+      {% if resume_versions %}
+      <div class="card versions-card">
+        <h2 class="versions-card-title">Saved Resume Versions</h2>
+        <hr class="card-divider" />
+        {% for v in resume_versions %}
+        <div class="ver-row">
+          <div>
+            <span class="ver-label">{{ v.label }}</span>
+            <span class="ver-date">{{ v.created_at }}</span>
+          </div>
+          <div class="ver-actions">
+            <a href="/resume-version/{{ v.id }}" class="ver-btn ver-btn-open"
+              >Open</a
+            >
+            <a
+              href="/resume-version/{{ v.id }}/download"
+              class="ver-btn ver-btn-dl"
+              >Download</a
+            >
+            <a
+              href="/delete-resume-version/{{ v.id }}"
+              class="ver-btn ver-btn-del"
+              >Delete</a
+            >
+          </div>
+        </div>
+        {% endfor %}
       </div>
       {% endif %}
 
