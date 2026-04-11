@@ -1732,6 +1732,71 @@ textarea {
   flex-wrap: wrap;
 }
 
+/* ── Job Filters (M77) ──────────────────────────────────────── */
+.job-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+.filter-input,
+.filter-select {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  flex: 1 1 140px;
+  max-width: 220px;
+}
+.filter-select { flex: 0 0 auto; max-width: 160px; }
+
+/* ── Match-level badges (M80) ───────────────────────────────── */
+.badge-strong { background: var(--color-success-light); color: var(--color-success); }
+.badge-moderate { background: #fff3e0; color: #e67e22; }
+.badge-weak { background: #fde8e8; color: #c0392b; }
+
+/* ── Remote badge ────────────────────────────────────────────── */
+.badge-remote {
+  display: inline-block;
+  font-size: var(--font-xs);
+  font-weight: 600;
+  background: #e8f4fd;
+  color: #2980b9;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  margin-left: 0.3rem;
+}
+
+/* ── Job meta line ───────────────────────────────────────────── */
+.job-meta {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+}
+
+/* ── Skill breakdown with matched/missing split ──────────────── */
+.job-skill-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.tag-missing {
+  background: #fde8e8;
+  color: #c0392b;
+  font-size: var(--font-xs);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
 @media (max-width: 640px) {
   .job-grid { grid-template-columns: 1fr; }
+  .job-filters { flex-direction: column; }
+  .filter-input, .filter-select { max-width: 100%; }
 }

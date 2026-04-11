@@ -97,6 +97,7 @@ from app.utils.tier_config import (
     TIER_ORDER,
 )
 from app.utils.job_data import find_job_by_id
+from app.utils.job_feed import fetch_jobs
 from app.utils.job_matcher import match_jobs
 
 logger = logging.getLogger(__name__)
@@ -410,7 +411,22 @@ def dashboard():
     session["next_best_action"] = next_action
 
     report_data = session.get("report_data")
-    recommended_jobs = match_jobs(report_data) if report_data else []
+
+    # ── Job filters (M77) ────────────────────────────────────────
+    job_query = request.args.get("job_query", "").strip()
+    job_location = request.args.get("job_location", "").strip()
+    job_remote = request.args.get("job_remote", "").strip()
+    remote_flag = True if job_remote == "true" else (False if job_remote == "false" else None)
+
+    if report_data:
+        filtered_jobs = fetch_jobs(
+            query=job_query or None,
+            location=job_location or None,
+            remote=remote_flag,
+        )
+        recommended_jobs = match_jobs(report_data, jobs=filtered_jobs)
+    else:
+        recommended_jobs = []
 
     return render_template(
         "index.html",
@@ -445,6 +461,9 @@ def dashboard():
         report_data_exists=bool(session.get("report_data")),
         upgrade_nudge_message=_upgrade_nudge(),
         recommended_jobs=recommended_jobs,
+        job_query=job_query,
+        job_location=job_location,
+        job_remote=job_remote,
         show_quick_start=bool(session.get("report_data"))
         and not session.get("application_packages"),
         show_enhance_cta=bool(session.get("report_data"))
@@ -1069,7 +1088,7 @@ def save_job_route():
     user_id = session.get("user_id")
     report_data = session.get("report_data")
 
-    # M73: Use job_context from dataset if available
+    # M73/M79: Use job_context from dataset if available
     job_ctx = report_data.get("job_context") if report_data else None
     if job_ctx:
         job = create_saved_job(
@@ -1080,7 +1099,10 @@ def save_job_route():
             session_data=session,
         )
         job["dataset_job_id"] = job_ctx.get("job_id")
-        job["matched_skills"] = job_ctx.get("skills", [])
+        job["source"] = "internal"
+        job["skills"] = job_ctx.get("skills", [])
+        job["matched_skills"] = job_ctx.get("matched_skills", job_ctx.get("skills", []))
+        job["missing_skills"] = job_ctx.get("missing_skills", [])
     else:
         job = create_saved_job(report_data=report_data, session_data=session)
     saved_jobs = session.get("saved_jobs", [])
@@ -1119,7 +1141,9 @@ def open_job(job_id):
         if dataset_job:
             report_data = session.get("report_data")
             profile = report_data.get("profile") if report_data else None
-            resume_skills = {s.lower() for s in (profile.get("skills", []) if profile else [])}
+            resume_skills = {
+                s.lower() for s in (profile.get("skills", []) if profile else [])
+            }
             job_skills = {s.lower() for s in dataset_job.get("skills", [])}
             overlap = resume_skills & job_skills
             score = round(len(overlap) / len(job_skills) * 100) if job_skills else 0
@@ -1513,6 +1537,12 @@ def job_match(job_id):
     if not report_data.get("match"):
         report_data["match"] = {}
     report_data["match"]["target_role"] = job["title"]
+
+    # Compute match info for this specific job (M79)
+    match_result = match_jobs(report_data, jobs=[job], limit=1)
+    matched_skills = match_result[0]["matched_skills"] if match_result else []
+    missing_skills = match_result[0]["missing_skills"] if match_result else []
+
     report_data["job_context"] = {
         "job_id": job["id"],
         "title": job["title"],
@@ -1520,6 +1550,8 @@ def job_match(job_id):
         "location": job.get("location", ""),
         "description": job.get("description", ""),
         "skills": job.get("skills", []),
+        "matched_skills": matched_skills,
+        "missing_skills": missing_skills,
     }
     session["report_data"] = report_data
 

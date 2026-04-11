@@ -259,22 +259,46 @@
       <!-- /section-actions -->
 
       <!-- ═══════════════════════════════════════════
-     SECTION — RECOMMENDED JOBS (M71)
+     SECTION — RECOMMENDED JOBS (M71/M77/M80)
      ═══════════════════════════════════════════ -->
-      {% if recommended_jobs %}
+      {% if recommended_jobs or report_data_exists %}
       <div class="section" id="section-jobs">
         <h2 class="section-heading">Recommended Jobs For You</h2>
+
+        <!-- Filter bar (M77) -->
+        <form class="job-filters" method="get" action="/#section-jobs">
+          <input type="text" name="job_query" placeholder="Search title, skill, company…" value="{{ job_query }}" class="filter-input" />
+          <input type="text" name="job_location" placeholder="Location" value="{{ job_location }}" class="filter-input" />
+          <select name="job_remote" class="filter-select">
+            <option value="">All</option>
+            <option value="true" {% if job_remote == 'true' %}selected{% endif %}>Remote only</option>
+            <option value="false" {% if job_remote == 'false' %}selected{% endif %}>On-site only</option>
+          </select>
+          <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+          {% if job_query or job_location or job_remote %}
+          <a href="/#section-jobs" class="btn btn-secondary btn-sm">Clear</a>
+          {% endif %}
+        </form>
+
+        {% if recommended_jobs %}
         <div class="job-grid">
           {% for rj in recommended_jobs %}
           <div class="job-card">
             <div class="job-card-header">
               <h3 class="job-card-title">{{ rj.title }}</h3>
-              <span class="job-score">{{ (rj.score * 100)|int }}% match</span>
+              <span class="job-score badge-{{ rj.match_level|lower }}">{{ (rj.score * 100)|int }}% · {{ rj.match_level }}</span>
             </div>
-            <p class="job-card-company">{{ rj.company }}{% if rj.location %} &middot; {{ rj.location }}{% endif %}</p>
-            <div class="job-card-skills">
+            <div class="job-meta">
+              <span>{{ rj.company }}</span>
+              {% if rj.location %}<span>&middot; {{ rj.location }}</span>{% endif %}
+              {% if rj.remote %}<span class="badge-remote">Remote</span>{% endif %}
+            </div>
+            <div class="job-skill-breakdown">
               {% for sk in rj.matched_skills %}
               <span class="tag tag-matched">{{ sk }}</span>
+              {% endfor %}
+              {% for sk in rj.missing_skills %}
+              <span class="tag tag-missing">{{ sk }}</span>
               {% endfor %}
             </div>
             <div class="job-actions">
@@ -290,6 +314,9 @@
           </div>
           {% endfor %}
         </div>
+        {% else %}
+        <p style="text-align:center;color:var(--text-muted);padding:1rem 0;">No jobs match your filters. Try broadening your search.</p>
+        {% endif %}
       </div>
       {% endif %}
 
@@ -508,7 +535,16 @@
               >
                 <option value="">Status…</option>
                 {% for s in allowed_statuses %}
-                <option value="{{ s }}" {% if s == job.status %}selected{% endif %}>
+                <option
+                  value="{{ s }}"
+                  {%
+                  if
+                  s=""
+                  ="job.status"
+                  %}selected{%
+                  endif
+                  %}
+                >
                   {{ s }}
                 </option>
                 {% endfor %}

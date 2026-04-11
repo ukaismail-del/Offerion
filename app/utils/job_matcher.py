@@ -1,12 +1,58 @@
-"""M70 — Job Matching Engine. Rank jobs by skill overlap with resume."""
+"""M76 — Advanced Job Matching Engine.
 
-from app.utils.job_data import get_all_jobs
+Weighted scoring: skill overlap (0.6) + title similarity (0.3) + experience signal (0.1).
+Returns match_level and missing_skills alongside the score.
+"""
 
 
-def match_jobs(report_data, limit=5):
-    """Return top *limit* jobs ranked by skill overlap with the resume.
+def _title_similarity(target_role, job_title):
+    """Token-overlap similarity between target role and job title (0-1)."""
+    if not target_role:
+        return 0.0
+    a_tokens = set(target_role.lower().split())
+    b_tokens = set(job_title.lower().split())
+    if not a_tokens or not b_tokens:
+        return 0.0
+    overlap = a_tokens & b_tokens
+    return len(overlap) / max(len(a_tokens), len(b_tokens))
 
-    Each result contains: id, title, company, location, score, matched_skills.
+
+def _experience_signal(profile):
+    """Quick proxy for experience depth (0-1).
+
+    Uses the length of the detected experience lines list (max 6 entries
+    from resume_analyzer).  More lines ≈ more experience.
+    """
+    exp_lines = profile.get("experience", []) if profile else []
+    return min(len(exp_lines) / 6.0, 1.0)
+
+
+def _match_level(score):
+    if score >= 0.65:
+        return "Strong"
+    if score >= 0.35:
+        return "Moderate"
+    return "Weak"
+
+
+def match_jobs(report_data, jobs=None, limit=10):
+    """Return top *limit* jobs ranked by weighted match score.
+
+    Parameters
+    ----------
+    report_data : dict
+        Session report_data containing ``profile`` and ``match`` keys.
+    jobs : list[dict] | None
+        Pre-filtered job list (from job_feed.fetch_jobs).  Falls back to
+        the full dataset when *None*.
+    limit : int
+        Maximum results to return.
+
+    Returns
+    -------
+    list[dict]
+        Each item: id, title, company, location, remote, score,
+        match_level, matched_skills, missing_skills.
     """
     if not report_data:
         return []
@@ -25,30 +71,38 @@ def match_jobs(report_data, limit=5):
     if not resume_skills:
         return []
 
+    if jobs is None:
+        from app.utils.job_data import get_all_jobs
+        jobs = get_all_jobs()
+
+    exp_sig = _experience_signal(profile)
+
     results = []
-    for job in get_all_jobs():
+    for job in jobs:
         job_skills = {s.lower().strip() for s in job.get("skills", [])}
         if not job_skills:
             continue
 
         overlap = resume_skills & job_skills
-        score = len(overlap) / len(job_skills)
+        skill_score = len(overlap) / len(job_skills)
+        title_score = _title_similarity(target_role, job["title"])
 
-        # Boost if job title contains the target role (or vice versa)
-        if target_role:
-            job_title_lower = job["title"].lower()
-            if target_role in job_title_lower or job_title_lower in target_role:
-                score = min(score + 0.1, 1.0)
+        score = (skill_score * 0.6) + (title_score * 0.3) + (exp_sig * 0.1)
+        score = min(round(score, 2), 1.0)
 
         if score > 0:
+            missing = job_skills - resume_skills
             results.append(
                 {
                     "id": job["id"],
                     "title": job["title"],
                     "company": job["company"],
                     "location": job.get("location", ""),
-                    "score": round(score, 2),
+                    "remote": job.get("remote", False),
+                    "score": score,
+                    "match_level": _match_level(score),
                     "matched_skills": sorted(overlap),
+                    "missing_skills": sorted(missing),
                 }
             )
 

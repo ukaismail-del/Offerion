@@ -93,22 +93,33 @@
         <h2 class="card-title">Why This Job Fits You</h2>
         <hr class="card-divider" />
         {% if job_match_info.score is not none %}
-        <p class="field"><strong>Match Score:</strong>
-          <span class="score-display {% if job_match_info.score >= 70 %}level-strong{% elif job_match_info.score >= 40 %}level-moderate{% else %}level-low{% endif %}" style="display:inline; font-size:var(--font-md)">
+        <p class="field">
+          <strong>Match Score:</strong>
+          <span
+            class="score-display {% if job_match_info.score >= 70 %}level-strong{% elif job_match_info.score >= 40 %}level-moderate{% else %}level-low{% endif %}"
+            style="display: inline; font-size: var(--font-md)"
+          >
             {{ job_match_info.score }}%
           </span>
         </p>
-        {% endif %}
-        {% if job_match_info.matched_skills %}
+        {% endif %} {% if job_match_info.matched_skills %}
         <h3>Matched Skills</h3>
-        <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:var(--space-sm)">
+        <div
+          style="
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: var(--space-sm);
+          "
+        >
           {% for sk in job_match_info.matched_skills %}
           <span class="tag tag-matched">{{ sk }}</span>
           {% endfor %}
         </div>
-        {% endif %}
-        {% if job_match_info.description %}
-        <p class="field"><strong>Role:</strong> {{ job_match_info.description }}</p>
+        {% endif %} {% if job_match_info.description %}
+        <p class="field">
+          <strong>Role:</strong> {{ job_match_info.description }}
+        </p>
         {% endif %}
       </div>
       {% endif %}
