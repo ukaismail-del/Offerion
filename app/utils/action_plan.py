@@ -44,7 +44,9 @@ def _build_top_priority(scores, feedback, jd_comparison):
     if skills < 60:
         return "Add more relevant skills to improve keyword coverage and ATS pass rate."
     if ats < 60:
-        return "Tighten keyword alignment with your target role to improve match scoring."
+        return (
+            "Tighten keyword alignment with your target role to improve match scoring."
+        )
 
     return "Your resume is in good shape \u2014 focus on polishing language and tailoring to each specific application."
 
@@ -54,7 +56,9 @@ def _build_quick_wins(scores, feedback, jd_comparison, rewrite):
 
     contact = scores.get("contact_info", 100)
     if contact < 80:
-        wins.append("Add any missing contact details (name, email, phone) at the top of your resume.")
+        wins.append(
+            "Add any missing contact details (name, email, phone) at the top of your resume."
+        )
 
     if feedback:
         gaps = feedback.get("gaps", [])
@@ -68,7 +72,9 @@ def _build_quick_wins(scores, feedback, jd_comparison, rewrite):
 
     skills = scores.get("skills_coverage", 50)
     if skills < 60:
-        wins.append("List at least 8\u201310 relevant skills in a dedicated Skills section.")
+        wins.append(
+            "List at least 8\u201310 relevant skills in a dedicated Skills section."
+        )
 
     if rewrite and rewrite.get("keyword_additions"):
         first_kw = rewrite["keyword_additions"][0]
@@ -90,10 +96,14 @@ def _build_next_steps(scores, rewrite, tailored, jd_comparison):
     experience = scores.get("experience_strength", 50)
 
     if experience < 60:
-        steps.append("Rewrite experience bullets with measurable outcomes (numbers, percentages, timeframes).")
+        steps.append(
+            "Rewrite experience bullets with measurable outcomes (numbers, percentages, timeframes)."
+        )
 
     if ats < 60:
-        steps.append("Align your summary and bullet language with the target role terminology.")
+        steps.append(
+            "Align your summary and bullet language with the target role terminology."
+        )
 
     if rewrite and rewrite.get("bullet_improvements"):
         steps.append(rewrite["bullet_improvements"][0])
@@ -104,7 +114,9 @@ def _build_next_steps(scores, rewrite, tailored, jd_comparison):
             steps.append(focus)
 
     if jd_comparison and jd_comparison.get("score", 100) < 60:
-        steps.append("Restructure your resume to mirror the job description's priority areas.")
+        steps.append(
+            "Restructure your resume to mirror the job description's priority areas."
+        )
 
     if rewrite and rewrite.get("section_improvements"):
         for item in rewrite["section_improvements"][:1]:
@@ -123,38 +135,50 @@ def _build_checklist(scores, feedback, tailored, overall):
     checklist = []
 
     contact = scores.get("contact_info", 100)
-    checklist.append({
-        "label": "Contact info complete (name, email, phone)",
-        "done": contact >= 80,
-    })
+    checklist.append(
+        {
+            "label": "Contact info complete (name, email, phone)",
+            "done": contact >= 80,
+        }
+    )
 
     skills_score = scores.get("skills_coverage", 0)
-    checklist.append({
-        "label": "Skills section has 8+ relevant keywords",
-        "done": skills_score >= 60,
-    })
+    checklist.append(
+        {
+            "label": "Skills section has 8+ relevant keywords",
+            "done": skills_score >= 60,
+        }
+    )
 
     exp_score = scores.get("experience_strength", 0)
-    checklist.append({
-        "label": "Experience bullets include measurable outcomes",
-        "done": exp_score >= 60,
-    })
+    checklist.append(
+        {
+            "label": "Experience bullets include measurable outcomes",
+            "done": exp_score >= 60,
+        }
+    )
 
     edu_score = scores.get("education_completeness", 0)
-    checklist.append({
-        "label": "Education section is present and complete",
-        "done": edu_score >= 60,
-    })
+    checklist.append(
+        {
+            "label": "Education section is present and complete",
+            "done": edu_score >= 60,
+        }
+    )
 
     ats_score = scores.get("ats_alignment", 0)
-    checklist.append({
-        "label": "ATS keyword alignment is adequate",
-        "done": ats_score >= 60,
-    })
+    checklist.append(
+        {
+            "label": "ATS keyword alignment is adequate",
+            "done": ats_score >= 60,
+        }
+    )
 
-    checklist.append({
-        "label": "Resume saved as a clean PDF before submitting",
-        "done": False,
-    })
+    checklist.append(
+        {
+            "label": "Resume saved as a clean PDF before submitting",
+            "done": False,
+        }
+    )
 
     return checklist[:6]

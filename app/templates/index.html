@@ -703,7 +703,9 @@
         border-radius: 12px;
         padding: 1.2rem 1rem;
         text-align: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+        box-shadow:
+          0 1px 3px rgba(0, 0, 0, 0.06),
+          0 1px 2px rgba(0, 0, 0, 0.04);
       }
       .how-num {
         display: inline-flex;
@@ -747,6 +749,40 @@
         margin-top: 0.8rem;
         line-height: 1.5;
       }
+
+      /* --- Copyable box --- */
+      .copy-box {
+        position: relative;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem 1rem 1rem 1rem;
+        margin-top: 0.6rem;
+        margin-bottom: 0.8rem;
+        max-height: 320px;
+        overflow-y: auto;
+      }
+      .copy-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        padding: 0.3rem 0.75rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        z-index: 1;
+      }
+      .copy-btn:hover {
+        background: #1d4ed8;
+      }
+      .copy-btn.copied {
+        background: #16a34a;
+      }
     </style>
   </head>
   <body>
@@ -755,8 +791,9 @@
       <div class="hero">
         <h1>Turn your resume into a role-ready action plan</h1>
         <p class="hero-sub">
-          Offerion analyzes your resume against target roles and job descriptions,
-          then gives you a score, tailored guidance, and a downloadable brief.
+          Offerion analyzes your resume against target roles and job
+          descriptions, then gives you a score, tailored guidance, and a
+          downloadable brief.
         </p>
         <ul class="hero-benefits">
           <li>Match your resume to target roles</li>
@@ -813,8 +850,9 @@
       <div class="card form-card">
         <h2 class="card-title">Upload &amp; Analyze</h2>
         <hr class="card-divider" />
-        <p style="font-size:0.92rem;color:#64748b;margin:0 0 1rem 0;">
-          Upload a PDF or DOCX. Add a target role and job description for deeper tailoring.
+        <p style="font-size: 0.92rem; color: #64748b; margin: 0 0 1rem 0">
+          Upload a PDF or DOCX. Add a target role and job description for deeper
+          tailoring.
         </p>
         <form method="POST" enctype="multipart/form-data">
           <label class="form-label" for="resume">Resume File</label>
@@ -859,8 +897,8 @@
             </button>
           </div>
           <p class="trust-note">
-            Offerion is guidance-focused &mdash; it does not fabricate experience.
-            Best results come from truthful, complete inputs.
+            Offerion is guidance-focused &mdash; it does not fabricate
+            experience. Best results come from truthful, complete inputs.
           </p>
         </form>
       </div>
@@ -1045,40 +1083,46 @@
         <h2 class="card-title">Action Plan</h2>
         <hr class="card-divider" />
 
-        <div style="background:#fff3e0;border-left:4px solid #ff9800;padding:12px 16px;border-radius:6px;margin-bottom:18px;">
-          <strong style="color:#e65100;">Top Priority:</strong>
-          <span>{{ action_plan.top_priority }}</span>
-        </div>
+        <div class="copy-box" id="copy-action-plan">
+          <button class="copy-btn" onclick="copyText('copy-action-plan', this)">Copy</button>
+          <div
+            style="
+              background: #fff3e0;
+              border-left: 4px solid #ff9800;
+              padding: 12px 16px;
+              border-radius: 6px;
+              margin-bottom: 12px;
+            "
+          >
+            <strong style="color: #e65100">Top Priority:</strong>
+            <span>{{ action_plan.top_priority }}</span>
+          </div>
 
-        {% if action_plan.quick_wins %}
-        <h3>Quick Wins</h3>
-        <ul class="fb-list fb-strength">
-          {% for item in action_plan.quick_wins %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-
-        {% if action_plan.next_revision_steps %}
+          {% if action_plan.quick_wins %}
+          <strong style="color: #334155">Quick Wins</strong>
+          <ul class="fb-list fb-strength">
+            {% for item in action_plan.quick_wins %}
+            <li>{{ item }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </div> {% if action_plan.next_revision_steps %}
         <h3>Next Revision Steps</h3>
         <ul class="fb-list">
           {% for item in action_plan.next_revision_steps %}
           <li>{{ item }}</li>
           {% endfor %}
         </ul>
-        {% endif %}
-
-        {% if action_plan.final_checklist %}
+        {% endif %} {% if action_plan.final_checklist %}
         <h3>Final Checklist</h3>
-        <ul style="list-style:none;padding-left:0;">
+        <ul style="list-style: none; padding-left: 0">
           {% for item in action_plan.final_checklist %}
-          <li style="padding:6px 0;font-size:0.97rem;">
+          <li style="padding: 6px 0; font-size: 0.97rem">
             {% if item.done %}
-              <span style="color:#388e3c;">&#10003;</span>
+            <span style="color: #388e3c">&#10003;</span>
             {% else %}
-              <span style="color:#b71c1c;">&#10007;</span>
-            {% endif %}
-            {{ item.label }}
+            <span style="color: #b71c1c">&#10007;</span>
+            {% endif %} {{ item.label }}
           </li>
           {% endfor %}
         </ul>
@@ -1131,40 +1175,43 @@
         <h2 class="card-title">ATS Rewrite Guidance</h2>
         <hr class="card-divider" />
 
-        <h3>Summary Focus</h3>
-        <ul class="rw-list rw-focus">
-          {% for item in rewrite.summary_focus %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
+        <div class="copy-box" id="copy-ats-rewrite">
+          <button class="copy-btn" onclick="copyText('copy-ats-rewrite', this)">Copy</button>
+          <h3>Summary Focus</h3>
+          <ul class="rw-list rw-focus">
+            {% for item in rewrite.summary_focus %}
+            <li>{{ item }}</li>
+            {% endfor %}
+          </ul>
 
-        <h3>Keyword Additions</h3>
-        <ul class="rw-list rw-keyword">
-          {% for item in rewrite.keyword_additions %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
+          <h3>Keyword Additions</h3>
+          <ul class="rw-list rw-keyword">
+            {% for item in rewrite.keyword_additions %}
+            <li>{{ item }}</li>
+            {% endfor %}
+          </ul>
 
-        <h3>Bullet Improvements</h3>
-        <ul class="rw-list rw-bullet">
-          {% for item in rewrite.bullet_improvements %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
+          <h3>Bullet Improvements</h3>
+          <ul class="rw-list rw-bullet">
+            {% for item in rewrite.bullet_improvements %}
+            <li>{{ item }}</li>
+            {% endfor %}
+          </ul>
 
-        <h3>Section Improvements</h3>
-        <ul class="rw-list rw-section">
-          {% for item in rewrite.section_improvements %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
+          <h3>Section Improvements</h3>
+          <ul class="rw-list rw-section">
+            {% for item in rewrite.section_improvements %}
+            <li>{{ item }}</li>
+            {% endfor %}
+          </ul>
 
-        <h3>ATS Notes</h3>
-        <ul class="rw-list rw-ats">
-          {% for item in rewrite.ats_notes %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
+          <h3>ATS Notes</h3>
+          <ul class="rw-list rw-ats">
+            {% for item in rewrite.ats_notes %}
+            <li>{{ item }}</li>
+            {% endfor %}
+          </ul>
+        </div>
       </div>
       {% endif %}
 
@@ -1178,40 +1225,49 @@
         </p>
 
         <h3>Professional Summary Guidance</h3>
-        <ul class="tl-list tl-summary">
-          {% for item in tailored.professional_summary %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
+        <div class="copy-box" id="copy-prof-summary">
+          <button class="copy-btn" onclick="copyText('copy-prof-summary', this)">Copy</button>
+          <ul class="tl-list tl-summary">
+            {% for item in tailored.professional_summary %}
+            <li>{{ item }}</li>
+            {% endfor %}
+          </ul>
+        </div>
 
         {% if tailored.priority_keywords %}
         <h3>Priority Keywords</h3>
-        <table class="tl-kw-table">
-          <thead>
-            <tr>
-              <th>Keyword</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for kw in tailored.priority_keywords %}
-            <tr>
-              <td>{{ kw.keyword }}</td>
-              <td class="tl-status-{{ kw.status }}">{{ kw.status }}</td>
-              <td>{{ kw.action }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <div class="copy-box" id="copy-priority-kw">
+          <button class="copy-btn" onclick="copyText('copy-priority-kw', this)">Copy</button>
+          <table class="tl-kw-table">
+            <thead>
+              <tr>
+                <th>Keyword</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for kw in tailored.priority_keywords %}
+              <tr>
+                <td>{{ kw.keyword }}</td>
+                <td class="tl-status-{{ kw.status }}">{{ kw.status }}</td>
+                <td>{{ kw.action }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
         {% endif %}
 
         <h3>Experience Focus Points</h3>
-        <ul class="tl-list tl-exp">
-          {% for item in tailored.experience_focus_points %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
+        <div class="copy-box" id="copy-exp-focus">
+          <button class="copy-btn" onclick="copyText('copy-exp-focus', this)">Copy</button>
+          <ul class="tl-list tl-exp">
+            {% for item in tailored.experience_focus_points %}
+            <li>{{ item }}</li>
+            {% endfor %}
+          </ul>
+        </div>
 
         {% if tailored.skills_to_feature %}
         <h3>Skills to Feature</h3>
@@ -1304,5 +1360,20 @@
       </div>
       {% endif %}
     </div>
+    <script>
+      function copyText(elementId, btn) {
+        var el = document.getElementById(elementId);
+        if (!el) return;
+        var text = el.innerText.replace(/^Copy\s*/, '').trim();
+        navigator.clipboard.writeText(text).then(function () {
+          btn.textContent = 'Copied \u2713';
+          btn.classList.add('copied');
+          setTimeout(function () {
+            btn.textContent = 'Copy';
+            btn.classList.remove('copied');
+          }, 2000);
+        });
+      }
+    </script>
   </body>
 </html>
