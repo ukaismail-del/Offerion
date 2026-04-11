@@ -229,10 +229,43 @@ def _gate(feature_key):
     if has_access(_user_tier(), feature_key):
         return None
     needed = required_tier_for(feature_key)
-    session["gate_message"] = (
-        f"You tried to access a premium feature. "
-        f"Upgrade to {tier_label(needed)} or higher to continue this workflow."
+    # Feature-specific gate messages for conversion clarity (M118)
+    gate_messages = {
+        "enhance_resume": (
+            "AI resume enhancement is available on Comet and above. "
+            "Upgrade to get a polished, ATS-optimized version of your resume."
+        ),
+        "generate_cover_letter": (
+            "Cover letter generation requires Comet or higher. "
+            "Upgrade to create targeted cover letters from your resume data."
+        ),
+        "enhance_cover_letter": (
+            "Cover letter enhancement is available on Operator and above. "
+            "Upgrade to refine your cover letter with job-specific targeting."
+        ),
+        "save_package": (
+            "Application packages are an Operator feature. "
+            "Upgrade to save and manage complete application bundles."
+        ),
+        "prepare_application": (
+            "One-click application prep is an Operator feature. "
+            "Upgrade to generate a full application package in one step."
+        ),
+        "save_job": (
+            "Job tracking is available on Operator and above. "
+            "Upgrade to save, manage, and track your job applications."
+        ),
+        "create_alert": (
+            "Follow-up alerts are a Professional feature. "
+            "Upgrade to set reminders and never miss an application follow-up."
+        ),
+    }
+    session["gate_message"] = gate_messages.get(
+        feature_key,
+        f"This feature requires {tier_label(needed)} or higher. "
+        f"Upgrade to unlock it and continue your workflow.",
     )
+    session["gate_return_to"] = request.path
     return redirect(url_for("main.pricing"))
 
 
@@ -460,6 +493,20 @@ def dashboard():
 
     report_data = session.get("report_data")
 
+    # ── M119 — Usage visibility signals ──────────────────────────
+    usage_signals = []
+    if report_data:
+        usage_signals.append("Resume analyzed")
+    selected_ctx = _selected_job_state()[2]
+    if selected_ctx:
+        usage_signals.append(
+            "Targeting active for %s" % selected_ctx.get("title", "selected job")
+        )
+    if session.get("enhanced_resume"):
+        usage_signals.append("Resume enhanced")
+    if session.get("cover_letter_draft") or session.get("enhanced_cover_letter"):
+        usage_signals.append("Application draft ready")
+
     # ── Job filters (M77) ────────────────────────────────────────
     job_query = request.args.get("job_query", "").strip()
     job_location = request.args.get("job_location", "").strip()
@@ -526,6 +573,7 @@ def dashboard():
         and not session.get("enhanced_resume"),
         dashboard_notice_message=session.pop("dashboard_notice_message", None),
         package_recovery_message=session.pop("package_recovery_message", None),
+        usage_signals=usage_signals,
         **_tier_ctx(),
         **_onboarding_ctx(),
     )
@@ -711,6 +759,7 @@ def resume_preview():
             selected_job_context=None,
             preview_notice_message=session.pop("resume_preview_message", None),
             no_report=True,
+            usage_signals=[],
             **_tier_ctx(),
         )
 
@@ -757,6 +806,20 @@ def resume_preview():
     next_action = get_next_action(session)
     session["next_best_action"] = next_action
 
+    # ── M119 — Usage visibility signals for preview ──────────────
+    usage_signals = ["Resume analyzed"]
+    sel_ctx = _selected_job_state()[2]
+    if sel_ctx:
+        usage_signals.append(
+            "Targeting active for %s" % sel_ctx.get("title", "selected job")
+        )
+    if enhanced:
+        usage_signals.append("Resume enhanced")
+    if cover_letter_draft or enhanced_cover_letter:
+        usage_signals.append("Application draft ready")
+    if session.pop("package_recovery_message", None) is not None:
+        usage_signals.append("Recovered from saved package")
+
     return render_template(
         "resume_preview.html",
         profile=profile,
@@ -789,6 +852,7 @@ def resume_preview():
         selected_job_context=_selected_job_state()[2],
         preview_notice_message=session.pop("resume_preview_message", None),
         no_report=False,
+        usage_signals=usage_signals,
         **_tier_ctx(),
     )
 
@@ -1571,14 +1635,16 @@ def prepare_application():
 def pricing():
     _log_event("upgrade_clicked")
     gate_message = session.pop("gate_message", None)
-    # Don't show trial as a purchasable plan
-    display_order = [t for t in TIER_ORDER if t != "trial"]
+    gate_return_to = session.pop("gate_return_to", None)
+    # Don't show trial or elite as purchasable plans
+    display_order = [t for t in TIER_ORDER if t not in ("trial", "elite")]
     return render_template(
         "pricing.html",
         tiers=TIER_CONFIG,
         tier_order=display_order,
         full_tier_order=TIER_ORDER,
         gate_message=gate_message,
+        gate_return_to=gate_return_to,
         **_tier_ctx(),
     )
 
@@ -1595,6 +1661,10 @@ def upgrade(tier_name):
     user_id = session.get("user_id")
     session["user_tier"] = tier_name
     persist_tier(user_id, tier_name)
+    # M118: redirect back to where the user came from, if available
+    return_to = request.args.get("return_to") or session.pop("gate_return_to", None)
+    if return_to and return_to.startswith("/"):
+        return redirect(return_to)
     return redirect(url_for("main.pricing"))
 
 

@@ -61,6 +61,15 @@
         <p class="guidance-text">{{ dashboard_notice_message }}</p>
       </div>
       {% endif %}
+
+      <!-- M119: Usage visibility signals -->
+      {% if usage_signals %}
+      <div class="usage-signals">
+        {% for signal in usage_signals %}
+        <span class="usage-signal-chip">{{ signal }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
       <!-- ═══════════════════════════════════════════
      SECTION 1 — HERO + PRIMARY ACTIONS (M50)
      ═══════════════════════════════════════════ -->
@@ -72,6 +81,11 @@
             From resume &rarr; application &rarr; follow-up &mdash; all in one
             flow.
           </p>
+          {% if report_data_exists %}
+          <p class="hero-value" style="font-size:var(--font-sm);color:var(--text-muted);margin-top:0.3rem">
+            Offerion analyzed your resume and is ready to build targeted applications.
+          </p>
+          {% endif %}
           <ul class="hero-benefits">
             <li>Match your resume to target roles</li>
             <li>Generate complete applications in one click</li>

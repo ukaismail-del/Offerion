@@ -56,6 +56,17 @@
       </div>
       {% endif %}
 
+      <!-- M118: Upgrade prompt for locked job actions -->
+      {% if not has_access('save_job') %}
+      <div class="guidance-banner">
+        <p class="guidance-text">
+          Job tracking and fit analysis are available on Operator and above.
+          <a href="/pricing">View plans</a> to unlock the full job matching
+          engine.
+        </p>
+      </div>
+      {% endif %}
+
       <!-- Job Header -->
       <div style="text-align: center; margin-bottom: var(--space-xl)">
         <h1

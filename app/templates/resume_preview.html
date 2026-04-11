@@ -49,7 +49,14 @@
         <p class="guidance-text">{{ preview_notice_message }}</p>
       </div>
       {% endif %}
-
+      <!-- M119: Usage visibility signals -->
+      {% if usage_signals %}
+      <div class="usage-signals">
+        {% for signal in usage_signals %}
+        <span class="usage-signal-chip">{{ signal }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
       <!-- ═══════════════════════════════════════════
        PRIMARY ACTIONS BAR
        ═══════════════════════════════════════════ -->
@@ -157,7 +164,8 @@
         <p class="upsell-hint" style="margin-top: var(--space-sm)">
           Some actions are locked.
           <a href="/pricing">Upgrade</a> to unlock AI-enhanced resume, cover
-          letter generation, and full application packages.
+          letter generation, and full application packages. Turn your resume
+          into targeted applications in minutes.
         </p>
         {% endif %} {% if not no_report %}
         <div style="margin-top: var(--space-sm)">
@@ -519,10 +527,21 @@
             Final manual review recommended before submitting
           </li>
         </ul>
-        <p class="form-hint" style="margin-top: var(--space-xs)">
-          Offerion helps you present your real experience more effectively.
-          Always verify the final output matches your actual background.
-        </p>
+        <!-- M120: Trust layer messaging -->
+        <div
+          class="trust-layer"
+          style="
+            margin-top: var(--space-sm);
+            padding-top: var(--space-sm);
+            border-top: 1px solid var(--border-default);
+          "
+        >
+          <p class="trust-layer-text">
+            Content is based on your resume + job context
+          </p>
+          <p class="trust-layer-text">Missing skills are not fabricated</p>
+          <p class="trust-layer-text">Final manual review recommended</p>
+        </div>
       </div>
       {% endif %}
 

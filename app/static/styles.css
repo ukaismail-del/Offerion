@@ -2094,3 +2094,44 @@ a.btn.is-loading {
 .checklist-pass::before  { content: "\2713"; color: var(--color-success); }
 .checklist-neutral::before { content: "\2014"; color: var(--text-muted); }
 .checklist-review::before { content: "\270E"; color: var(--color-warning); }
+
+/* ==========================================================================
+   Bundle T (M117-M122) — Conversion + Trust + Release Hardening
+   ========================================================================== */
+
+/* ── M119: Usage visibility signals ──────────────────────────── */
+.usage-signals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: var(--space-md);
+}
+.usage-signal-chip {
+  display: inline-flex;
+  align-items: center;
+  background: var(--color-success-light, #f0fdf4);
+  color: var(--color-success, #059669);
+  font-size: var(--font-xs);
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  border: 1px solid #bbf7d0;
+}
+.usage-signal-chip::before {
+  content: "\2713";
+  margin-right: 0.3rem;
+  font-weight: 700;
+}
+
+/* ── M120: Trust layer messaging ─────────────────────────────── */
+.trust-layer-text {
+  margin: 0.15rem 0;
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.trust-layer-text::before {
+  content: "\2022 ";
+  color: var(--color-success);
+  font-weight: 700;
+}

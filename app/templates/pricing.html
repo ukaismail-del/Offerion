@@ -32,7 +32,14 @@
       {% if gate_message %}
       <div class="gate-banner">
         <span class="gate-banner-icon">🔒</span>
-        <span>{{ gate_message }}</span>
+        <div>
+          <span>{{ gate_message }}</span>
+          {% if gate_return_to %}
+          <p style="margin: 0.4rem 0 0; font-size: var(--font-xs)">
+            After upgrading, you'll return to your workflow.
+          </p>
+          {% endif %}
+        </div>
       </div>
       {% endif %}
 
@@ -104,7 +111,7 @@
           >
           {% else %}
           <a
-            href="/upgrade/{{ tier_key }}"
+            href="/upgrade/{{ tier_key }}{% if gate_return_to %}?return_to={{ gate_return_to }}{% endif %}"
             class="btn {% if tier_key == 'operator' %}btn-primary{% else %}btn-outline{% endif %} pricing-btn"
           >
             {% if is_trial %} Choose {{ tier.label }} {% elif
@@ -141,9 +148,13 @@
         "
       >
         <p style="margin: 0 0 0.5rem">
-          <strong>Why upgrade?</strong> Free gets you started. Comet unlocks AI
-          enhancement. Operator adds full application prep and job tracking.
-          Professional automates follow-ups so you never miss an opportunity.
+          <strong>Why upgrade?</strong> Free gets you started with basic
+          analysis. Comet unlocks AI enhancement and cover letters. Operator
+          adds full application prep and job tracking. Professional automates
+          follow-ups so you never miss an opportunity.
+        </p>
+        <p style="margin: 0; font-style: italic; color: var(--text-faint)">
+          Turn your resume into targeted applications in minutes.
         </p>
       </div>
     </div>
