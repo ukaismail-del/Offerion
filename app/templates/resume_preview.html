@@ -20,7 +20,9 @@
       <a href="#resume-section">Resume</a>
       {% if cover_letter_draft or enhanced_cover_letter %}<a href="#cover-letter-section">Cover Letter</a>{% endif %}
       <a href="#actions-section">Actions</a>
+      <a href="/pricing">Pricing</a>
     </div>
+    <span class="tier-badge tier-badge-{{ user_tier }}">{{ tier_label }}</span>
   </div>
 </nav>
 
@@ -36,21 +38,48 @@
     <p class="form-hint">Prepare a complete package in one guided step, or use individual actions below.</p>
     <div class="btn-row">
       <a href="/download-resume-draft" class="btn btn-success">Download Resume Draft</a>
+      {% if has_access('save_version') %}
       <a href="/save-resume-version" class="btn btn-teal">Save Version</a>
+      {% else %}
+      <span class="btn btn-teal btn-locked">Save Version</span>
+      {% endif %}
       {% if not enhanced %}
-      <a href="/enhance-resume" class="btn btn-purple">Enhance Resume</a>
+        {% if has_access('enhance_resume') %}
+        <a href="/enhance-resume" class="btn btn-purple">Enhance Resume</a>
+        {% else %}
+        <span class="btn btn-purple btn-locked">Enhance Resume</span>
+        {% endif %}
       {% endif %}
       {% if not cover_letter_draft %}
-      <a href="/generate-cover-letter" class="btn btn-amber">Generate Cover Letter</a>
+        {% if has_access('generate_cover_letter') %}
+        <a href="/generate-cover-letter" class="btn btn-amber">Generate Cover Letter</a>
+        {% else %}
+        <span class="btn btn-amber btn-locked">Generate Cover Letter</span>
+        {% endif %}
       {% endif %}
       {% if cover_letter_draft and not enhanced_cover_letter %}
-      <a href="/enhance-cover-letter" class="btn btn-purple">Enhance Cover Letter</a>
+        {% if has_access('enhance_cover_letter') %}
+        <a href="/enhance-cover-letter" class="btn btn-purple">Enhance Cover Letter</a>
+        {% else %}
+        <span class="btn btn-purple btn-locked">Enhance Cover Letter</span>
+        {% endif %}
       {% endif %}
       {% if cover_letter_draft or enhanced_cover_letter %}
-      <a href="/download-application-package" class="btn btn-success">Download Package</a>
-      <a href="/save-application-package" class="btn btn-teal">Save Package</a>
+        {% if has_access('download_package') %}
+        <a href="/download-application-package" class="btn btn-success">Download Package</a>
+        {% else %}
+        <span class="btn btn-success btn-locked">Download Package</span>
+        {% endif %}
+        {% if has_access('save_package') %}
+        <a href="/save-application-package" class="btn btn-teal">Save Package</a>
+        {% else %}
+        <span class="btn btn-teal btn-locked">Save Package</span>
+        {% endif %}
       {% endif %}
     </div>
+    {% if not has_access('enhance_resume') or not has_access('generate_cover_letter') %}
+    <p class="upsell-hint" style="margin-top:var(--space-sm)">Some actions are locked. <a href="/pricing">View plans to unlock</a></p>
+    {% endif %}
   </div>
 
   <!-- Next Best Action (M42/M45) -->

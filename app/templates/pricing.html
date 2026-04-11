@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pricing — Offerion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+      <div class="top-nav-inner">
+        <a href="/" class="top-nav-brand">Offerion</a>
+        <div class="top-nav-links">
+          <a href="/">Dashboard</a>
+          <a href="/pricing" class="active">Pricing</a>
+        </div>
+        <span class="tier-badge tier-badge-{{ user_tier }}"
+          >{{ tier_label }}</span
+        >
+      </div>
+    </nav>
+
+    <div class="container">
+      <!-- Gate message (shown when redirected from a locked feature) -->
+      {% if gate_message %}
+      <div class="gate-banner">
+        <span class="gate-banner-icon">🔒</span>
+        <span>{{ gate_message }}</span>
+      </div>
+      {% endif %}
+
+      <!-- Pricing Header -->
+      <div style="text-align: center; margin-bottom: var(--space-2xl)">
+        <h1
+          style="
+            font-size: var(--font-3xl);
+            font-weight: 800;
+            margin: 0 0 0.5rem;
+            color: var(--text-primary);
+          "
+        >
+          Choose Your Plan
+        </h1>
+        <p
+          style="
+            font-size: var(--font-md);
+            color: var(--text-muted);
+            max-width: 520px;
+            margin: 0 auto;
+          "
+        >
+          Upgrade anytime to unlock more features. No credit card required —
+          instant activation.
+        </p>
+      </div>
+
+      <!-- Pricing Grid -->
+      <div class="pricing-grid">
+        {% for tier_key in tier_order %} {% set tier = tiers[tier_key] %}
+        <div
+          class="pricing-card {% if tier_key == user_tier %}pricing-card-active{% endif %} {% if tier_key == 'operator' %}pricing-card-featured{% endif %}"
+        >
+          {% if tier_key == 'operator' %}
+          <div class="pricing-featured-badge">Most Popular</div>
+          {% endif %}
+          <h3 class="pricing-tier-name">{{ tier.label }}</h3>
+          <p class="pricing-tagline">{{ tier.tagline }}</p>
+          <div class="pricing-price">{{ tier.price }}</div>
+          <ul class="pricing-features">
+            {% for feat in tier.features %}
+            <li>{{ feat }}</li>
+            {% endfor %}
+          </ul>
+          {% if tier_key == user_tier %}
+          <span
+            class="btn btn-outline pricing-btn"
+            style="pointer-events: none; opacity: 0.6"
+            >Current Plan</span
+          >
+          {% else %}
+          <a
+            href="/upgrade/{{ tier_key }}"
+            class="btn {% if tier_key == 'operator' %}btn-primary{% else %}btn-outline{% endif %} pricing-btn"
+          >
+            {% if tier_order.index(tier_key) > tier_order.index(user_tier)
+            %}Upgrade{% else %}Switch{% endif %} to {{ tier.label }}
+          </a>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <p
+        style="
+          text-align: center;
+          margin-top: var(--space-xl);
+          color: var(--text-faint);
+          font-size: var(--font-sm);
+        "
+      >
+        This is a demo environment. No real payments are processed.
+      </p>
+    </div>
+  </body>
+</html>

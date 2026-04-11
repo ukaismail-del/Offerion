@@ -29,9 +29,15 @@ def get_or_create_user(session_obj):
         try:
             exists = UserIdentity.query.filter_by(id=user_id).first()
             if exists:
+                # Sync tier from DB to session
+                if exists.tier:
+                    session_obj.setdefault("user_tier", exists.tier)
+                else:
+                    session_obj.setdefault("user_tier", "free")
                 return user_id
         except Exception as exc:
             logger.warning("get_or_create_user lookup failed: %s", exc)
+            session_obj.setdefault("user_tier", "free")
             return user_id  # still return the session value as fallback
 
     # Create new identity
@@ -40,10 +46,12 @@ def get_or_create_user(session_obj):
         db.session.add(identity)
         db.session.commit()
         session_obj["user_id"] = identity.id
+        session_obj["user_tier"] = "free"
         return identity.id
     except Exception as exc:
         db.session.rollback()
         logger.warning("get_or_create_user create failed: %s", exc)
         fallback_id = session_obj.get("user_id") or uuid.uuid4().hex
         session_obj["user_id"] = fallback_id
+        session_obj.setdefault("user_tier", "free")
         return fallback_id

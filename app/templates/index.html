@@ -22,7 +22,9 @@
       {% if report_data_exists %}<a href="/resume-preview">Resume</a>{% endif %}
       <a href="#section-outputs">Saved</a>
       {% if match or match_explanation %}<a href="#section-intel">Intelligence</a>{% endif %}
+      <a href="/pricing">Pricing</a>
     </div>
+    <span class="tier-badge tier-badge-{{ user_tier }}">{{ tier_label }}</span>
   </div>
 </nav>
 
@@ -76,7 +78,12 @@
     <p class="nba-reason">{{ next_best_action.reason }}</p>
     {% if report_data_exists %}
     <div class="nba-secondary">
+      {% if has_access('prepare_application') %}
       <a href="/prepare-application">Prepare Full Application</a>
+      {% else %}
+      <span class="btn-locked" style="font-size:var(--font-sm)">Prepare Full Application</span>
+      <span class="upsell-hint"><a href="/pricing">Upgrade to unlock</a></span>
+      {% endif %}
     </div>
     {% endif %}
   </div>
@@ -326,7 +333,12 @@
     {% endif %}
     {% if report_data_exists %}
     <div style="margin-top: var(--space-md)">
+      {% if has_access('save_job') %}
       <a href="/save-job" class="btn btn-primary btn-sm">Save Current Job</a>
+      {% else %}
+      <span class="btn btn-primary btn-sm btn-locked">Save Current Job</span>
+      <span class="upsell-hint"><a href="/pricing">Requires {{ required_tier_for('save_job')|title }}</a></span>
+      {% endif %}
     </div>
     {% endif %}
   </div>

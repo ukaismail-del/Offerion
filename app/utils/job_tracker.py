@@ -4,9 +4,16 @@ import uuid
 from datetime import datetime
 
 
-def create_saved_job(report_data=None, title=None, company=None,
-                     location=None, job_url=None, notes=None, source=None,
-                     session_data=None):
+def create_saved_job(
+    report_data=None,
+    title=None,
+    company=None,
+    location=None,
+    job_url=None,
+    notes=None,
+    source=None,
+    session_data=None,
+):
     """Create a saved job entry from explicit fields or report_data context."""
     job_title = title or ""
     job_company = company or ""

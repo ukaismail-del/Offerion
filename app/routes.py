@@ -86,6 +86,15 @@ from app.utils.persistence import (
     remove_alerts_for_job,
     persist_event,
     hydrate_session_from_db,
+    persist_tier,
+)
+from app.utils.tier_config import (
+    has_access,
+    required_tier_for,
+    tier_label,
+    check_limit,
+    TIER_CONFIG,
+    TIER_ORDER,
 )
 
 logger = logging.getLogger(__name__)
@@ -165,6 +174,35 @@ def _same_package(existing_pkg, new_pkg):
         "enhanced_cover_letter",
     )
     return all(existing_pkg.get(key) == new_pkg.get(key) for key in keys)
+
+
+def _user_tier():
+    """Return the current user's tier from session."""
+    return session.get("user_tier", "free")
+
+
+def _gate(feature_key):
+    """Check access to *feature_key*. Returns None if allowed,
+    or a redirect Response to the pricing page with an explanation flash."""
+    if has_access(_user_tier(), feature_key):
+        return None
+    needed = required_tier_for(feature_key)
+    session["gate_message"] = (
+        f"This feature requires the {tier_label(needed)} plan or higher."
+    )
+    return redirect(url_for("main.pricing"))
+
+
+def _tier_ctx():
+    """Return dict of tier-related template variables."""
+    ut = _user_tier()
+    return {
+        "user_tier": ut,
+        "tier_label": tier_label(ut),
+        "has_access": lambda feat: has_access(ut, feat),
+        "required_tier_for": required_tier_for,
+        "check_limit": lambda key, count: check_limit(ut, key, count),
+    }
 
 
 @main_bp.before_app_request
@@ -369,6 +407,7 @@ def index():
         get_source_label=get_source_label,
         next_best_action=next_action,
         report_data_exists=bool(session.get("report_data")),
+        **_tier_ctx(),
     )
 
 
@@ -590,11 +629,15 @@ def resume_preview():
         provenance=provenance,
         get_source_label=get_source_label,
         next_best_action=next_action,
+        **_tier_ctx(),
     )
 
 
 @main_bp.route("/enhance-resume")
 def enhance_resume_route():
+    blocked = _gate("enhance_resume")
+    if blocked:
+        return blocked
     user_id = session.get("user_id")
     report_data = session.get("report_data")
     if not report_data:
@@ -617,6 +660,9 @@ def enhance_resume_route():
 
 @main_bp.route("/save-resume-version")
 def save_resume_version():
+    blocked = _gate("save_version")
+    if blocked:
+        return blocked
     user_id = session.get("user_id")
     version = save_version(session)
     if not version:
@@ -718,6 +764,9 @@ def delete_resume_version_route(version_id):
 
 @main_bp.route("/generate-cover-letter")
 def generate_cover_letter_route():
+    blocked = _gate("generate_cover_letter")
+    if blocked:
+        return blocked
     user_id = session.get("user_id")
     report_data = session.get("report_data")
     if not report_data:
@@ -752,6 +801,9 @@ def generate_cover_letter_route():
 
 @main_bp.route("/enhance-cover-letter")
 def enhance_cover_letter_route():
+    blocked = _gate("enhance_cover_letter")
+    if blocked:
+        return blocked
     user_id = session.get("user_id")
     draft = session.get("cover_letter_draft")
     if not draft:
@@ -775,6 +827,9 @@ def enhance_cover_letter_route():
 
 @main_bp.route("/download-application-package")
 def download_application_package():
+    blocked = _gate("download_package")
+    if blocked:
+        return blocked
     report_data = session.get("report_data")
     if not report_data:
         return "No analysis data available.", 400
@@ -861,6 +916,9 @@ def _build_application_package_text(
 
 @main_bp.route("/save-application-package")
 def save_application_package_route():
+    blocked = _gate("save_package")
+    if blocked:
+        return blocked
     user_id = session.get("user_id")
     pkg = save_package(session)
     if not pkg:
@@ -957,6 +1015,9 @@ def delete_application_package_route(package_id):
 
 @main_bp.route("/save-job")
 def save_job_route():
+    blocked = _gate("save_job")
+    if blocked:
+        return blocked
     user_id = session.get("user_id")
     report_data = session.get("report_data")
     job = create_saved_job(report_data=report_data, session_data=session)
@@ -977,6 +1038,9 @@ def save_job_route():
 
 @main_bp.route("/job/<job_id>")
 def open_job(job_id):
+    blocked = _gate("job_detail")
+    if blocked:
+        return blocked
     saved_jobs = session.get("saved_jobs", [])
     job = find_job(saved_jobs, job_id)
     if not job:
@@ -990,6 +1054,7 @@ def open_job(job_id):
         followup=followup,
         alerts=get_active_alerts(session.get("alerts", [])),
         allowed_statuses=ALLOWED_STATUSES,
+        **_tier_ctx(),
     )
 
 
@@ -1015,6 +1080,9 @@ def delete_job_route(job_id):
 
 @main_bp.route("/job/<job_id>/status/<new_status>")
 def update_job_status_route(job_id, new_status):
+    blocked = _gate("job_status")
+    if blocked:
+        return blocked
     user_id = session.get("user_id")
     saved_jobs = session.get("saved_jobs", [])
     update_job_status(saved_jobs, job_id, new_status)
@@ -1036,6 +1104,9 @@ def update_job_status_route(job_id, new_status):
 
 @main_bp.route("/create-followup-alert/<job_id>")
 def create_followup_alert(job_id):
+    blocked = _gate("create_alert")
+    if blocked:
+        return blocked
     user_id = session.get("user_id")
     saved_jobs = session.get("saved_jobs", [])
     job = find_job(saved_jobs, job_id)
@@ -1055,6 +1126,9 @@ def create_followup_alert(job_id):
 
 @main_bp.route("/complete-alert/<alert_id>")
 def complete_alert_route(alert_id):
+    blocked = _gate("complete_alert")
+    if blocked:
+        return blocked
     user_id = session.get("user_id")
     alerts = session.get("alerts", [])
     complete_alert(alerts, alert_id)
@@ -1067,6 +1141,9 @@ def complete_alert_route(alert_id):
 
 @main_bp.route("/delete-alert/<alert_id>")
 def delete_alert_route(alert_id):
+    blocked = _gate("delete_alert")
+    if blocked:
+        return blocked
     user_id = session.get("user_id")
     alerts = session.get("alerts", [])
     session["alerts"] = delete_alert(alerts, alert_id)
@@ -1083,6 +1160,9 @@ def delete_alert_route(alert_id):
 
 @main_bp.route("/prepare-application")
 def prepare_application():
+    blocked = _gate("prepare_application")
+    if blocked:
+        return blocked
     user_id = session.get("user_id")
     report_data = session.get("report_data")
     if not report_data:
@@ -1156,6 +1236,33 @@ def prepare_application():
     session["next_best_action"] = get_next_action(session)
 
     return redirect(url_for("main.resume_preview"))
+
+
+# ------------------------------------------------------------------
+# M56 — Pricing Page + Upgrade Flow
+# ------------------------------------------------------------------
+
+
+@main_bp.route("/pricing")
+def pricing():
+    gate_message = session.pop("gate_message", None)
+    return render_template(
+        "pricing.html",
+        tiers=TIER_CONFIG,
+        tier_order=TIER_ORDER,
+        gate_message=gate_message,
+        **_tier_ctx(),
+    )
+
+
+@main_bp.route("/upgrade/<tier_name>")
+def upgrade(tier_name):
+    if tier_name not in TIER_ORDER:
+        return redirect(url_for("main.pricing"))
+    user_id = session.get("user_id")
+    session["user_tier"] = tier_name
+    persist_tier(user_id, tier_name)
+    return redirect(url_for("main.pricing"))
 
 
 @main_bp.route("/<path:path>")

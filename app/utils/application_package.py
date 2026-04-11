@@ -22,8 +22,9 @@ def save_package(session_data):
     enhanced_cover_letter = session_data.get("enhanced_cover_letter")
 
     label = _build_label(report_data, enhanced_resume, session_data)
-    company = _resolve_company(report_data, cover_letter_draft,
-                               enhanced_cover_letter, session_data)
+    company = _resolve_company(
+        report_data, cover_letter_draft, enhanced_cover_letter, session_data
+    )
 
     package = {
         "id": uuid.uuid4().hex[:12],
@@ -33,8 +34,12 @@ def save_package(session_data):
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "report_data": copy.deepcopy(report_data),
         "enhanced_resume": copy.deepcopy(enhanced_resume) if enhanced_resume else None,
-        "cover_letter_draft": copy.deepcopy(cover_letter_draft) if cover_letter_draft else None,
-        "enhanced_cover_letter": copy.deepcopy(enhanced_cover_letter) if enhanced_cover_letter else None,
+        "cover_letter_draft": (
+            copy.deepcopy(cover_letter_draft) if cover_letter_draft else None
+        ),
+        "enhanced_cover_letter": (
+            copy.deepcopy(enhanced_cover_letter) if enhanced_cover_letter else None
+        ),
     }
 
     return package
@@ -65,6 +70,7 @@ def delete_package(packages, package_id):
 # Internal helpers
 # ------------------------------------------------------------------
 
+
 def _get_target_title(report_data, enhanced_resume):
     if enhanced_resume and enhanced_resume.get("target_title"):
         return enhanced_resume["target_title"]
@@ -77,8 +83,9 @@ def _get_target_title(report_data, enhanced_resume):
     return None
 
 
-def _resolve_company(report_data, cover_letter_draft, enhanced_cover_letter,
-                     session_data=None):
+def _resolve_company(
+    report_data, cover_letter_draft, enhanced_cover_letter, session_data=None
+):
     if enhanced_cover_letter and enhanced_cover_letter.get("company"):
         c = enhanced_cover_letter["company"]
         if c != "your organization":

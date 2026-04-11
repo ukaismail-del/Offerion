@@ -139,4 +139,6 @@ def _get_next_step(status):
         "Offer": "Review the offer, negotiate if needed, and respond by the deadline.",
         "Rejected": "Archive this application and redirect your effort to similar opportunities.",
     }
-    return steps.get(status, "Review your current application status and plan next actions.")
+    return steps.get(
+        status, "Review your current application status and plan next actions."
+    )

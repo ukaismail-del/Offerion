@@ -24,6 +24,7 @@ class UserIdentity(db.Model):
     __tablename__ = "user_identity"
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: uuid.uuid4().hex)
+    tier = db.Column(db.String(20), default="free")
     created_at = db.Column(db.DateTime, default=_now)
 
     # relationships

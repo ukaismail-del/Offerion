@@ -50,6 +50,10 @@ def is_empty(memory):
         return True
     return not any(
         memory.get(k)
-        for k in ("active_job_id", "active_resume_version_id",
-                   "active_application_package_id", "last_action")
+        for k in (
+            "active_job_id",
+            "active_resume_version_id",
+            "active_application_package_id",
+            "last_action",
+        )
     )

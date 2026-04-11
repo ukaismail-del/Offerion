@@ -37,8 +37,25 @@ def init_db(app):
             from app import models as _models  # noqa: F401
 
             db.create_all()
+            _migrate_add_columns(app)
         app.config["DB_AVAILABLE"] = True
     except Exception as exc:
         app.logger.warning(
             "Database initialization unavailable, using session fallback: %s", exc
         )
+
+
+def _migrate_add_columns(app):
+    """Add columns introduced after initial schema (safe for SQLite + Postgres)."""
+    migrations = [
+        ("user_identity", "tier", "VARCHAR(20) DEFAULT 'free'"),
+    ]
+    for table, column, col_type in migrations:
+        try:
+            db.session.execute(
+                db.text(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}")
+            )
+            db.session.commit()
+            app.logger.info("Migrated: added %s.%s", table, column)
+        except Exception:
+            db.session.rollback()  # column already exists, ignore

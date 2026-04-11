@@ -18,7 +18,9 @@
     <div class="top-nav-links">
       <a href="/">Dashboard</a>
       <a href="/resume-preview">Resume</a>
+      <a href="/pricing">Pricing</a>
     </div>
+    <span class="tier-badge tier-badge-{{ user_tier }}">{{ tier_label }}</span>
   </div>
 </nav>
 
@@ -119,7 +121,12 @@
 
   <!-- Action Buttons -->
   <div class="btn-row">
+    {% if has_access('create_alert') %}
     <a href="/create-followup-alert/{{ job.id }}" class="btn btn-purple">Create Follow-Up Alert</a>
+    {% else %}
+    <span class="btn btn-purple btn-locked">Create Follow-Up Alert</span>
+    <span class="upsell-hint"><a href="/pricing">Requires Professional</a></span>
+    {% endif %}
     <div style="flex:1"></div>
     <a href="/delete-job/{{ job.id }}" class="btn btn-danger">Delete Job</a>
     <a href="/" class="btn btn-secondary">Back to Dashboard</a>

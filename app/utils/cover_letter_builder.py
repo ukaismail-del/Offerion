@@ -5,8 +5,9 @@ Deterministic — no AI APIs, no fabrication.
 """
 
 
-def build_cover_letter(profile=None, tailored=None, rewrite=None, match=None,
-                       enhanced_resume=None):
+def build_cover_letter(
+    profile=None, tailored=None, rewrite=None, match=None, enhanced_resume=None
+):
     """Generate a structured cover letter draft.
 
     Returns a dict with recipient, company, target_title, opening,
@@ -47,6 +48,7 @@ def build_cover_letter(profile=None, tailored=None, rewrite=None, match=None,
 # ------------------------------------------------------------------
 # Internal helpers
 # ------------------------------------------------------------------
+
 
 def _resolve_target_title(tailored, match, enhanced_resume):
     if enhanced_resume and enhanced_resume.get("target_title"):
@@ -98,7 +100,8 @@ def _build_body(profile, tailored, rewrite, match, enhanced_resume):
     if exp:
         points.append(
             "In my professional experience, I have focused on areas such as "
-            + "; ".join(exp[:3]) + "."
+            + "; ".join(exp[:3])
+            + "."
         )
 
     # Match strengths

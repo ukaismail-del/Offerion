@@ -14,6 +14,7 @@ from app.models import (
     ApplicationPackage,
     Alert,
     ActivityEvent,
+    UserIdentity,
 )
 
 logger = logging.getLogger(__name__)
@@ -365,3 +366,33 @@ def hydrate_session_from_db(session_obj, user_id):
 
     except Exception as exc:
         logger.warning("hydrate_session_from_db failed: %s", exc)
+
+
+# ------------------------------------------------------------------
+# Tier Persistence (M54)
+# ------------------------------------------------------------------
+
+
+def persist_tier(user_id, tier_name):
+    """Update the user's tier in the database."""
+    try:
+        rec = UserIdentity.query.filter_by(id=user_id).first()
+        if rec:
+            rec.tier = tier_name
+            db.session.commit()
+            return True
+    except Exception as exc:
+        db.session.rollback()
+        logger.warning("persist_tier failed: %s", exc)
+    return False
+
+
+def load_tier(user_id):
+    """Load the user's tier from the database. Returns tier string or None."""
+    try:
+        rec = UserIdentity.query.filter_by(id=user_id).first()
+        if rec:
+            return rec.tier or "free"
+    except Exception as exc:
+        logger.warning("load_tier failed: %s", exc)
+    return None

@@ -5,8 +5,9 @@ Deterministic — no AI APIs.
 """
 
 
-def suggest_role_fit(match=None, profile=None, tailored=None,
-                     rewrite=None, enhanced_resume=None):
+def suggest_role_fit(
+    match=None, profile=None, tailored=None, rewrite=None, enhanced_resume=None
+):
     """Generate role-fit improvement suggestions.
 
     Returns a dict with target_title, fit_level, improvement_suggestions,
@@ -53,8 +54,11 @@ def _build_suggestions(match, profile, tailored, rewrite):
 
     # Domain tools
     if tailored and tailored.get("skills_to_feature"):
-        high = [s["skill"] for s in tailored["skills_to_feature"]
-                if s.get("priority") == "high"]
+        high = [
+            s["skill"]
+            for s in tailored["skills_to_feature"]
+            if s.get("priority") == "high"
+        ]
         if high:
             suggestions.append(
                 f"Emphasize domain-relevant tools: {', '.join(high[:4])}"
@@ -62,15 +66,11 @@ def _build_suggestions(match, profile, tailored, rewrite):
 
     # Transferable experience
     if match.get("missing_keywords"):
-        suggestions.append(
-            "Reframe transferable experience to bridge keyword gaps"
-        )
+        suggestions.append("Reframe transferable experience to bridge keyword gaps")
 
     # Action verbs
     if rewrite and rewrite.get("bullet_improvements"):
-        suggestions.append(
-            "Improve action verbs to show ownership and impact"
-        )
+        suggestions.append("Improve action verbs to show ownership and impact")
 
     # Scale / collaboration
     if tailored and tailored.get("experience_focus_points"):

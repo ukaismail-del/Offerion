@@ -29,12 +29,14 @@ def enhance_cover_letter(cover_letter_draft, enhanced_resume=None):
     name = _resolve_name(cover_letter_draft, enhanced_resume)
 
     enhanced_opening = _enhance_opening(target_title, company)
-    enhanced_body = _enhance_body(cover_letter_draft.get("body_points", []),
-                                  target_title)
+    enhanced_body = _enhance_body(
+        cover_letter_draft.get("body_points", []), target_title
+    )
     enhanced_closing = _enhance_closing(target_title)
 
-    full_text = _assemble(recipient, enhanced_opening, enhanced_body,
-                          enhanced_closing, name)
+    full_text = _assemble(
+        recipient, enhanced_opening, enhanced_body, enhanced_closing, name
+    )
 
     return {
         "recipient": recipient,
@@ -50,6 +52,7 @@ def enhance_cover_letter(cover_letter_draft, enhanced_resume=None):
 # ------------------------------------------------------------------
 # Internal helpers
 # ------------------------------------------------------------------
+
 
 def _resolve_name(draft, enhanced_resume):
     if enhanced_resume and enhanced_resume.get("name"):
@@ -76,9 +79,13 @@ def _enhance_body(body_points, target_title):
             # Keep first-person framing but strengthen
             enhanced.append(f"{cleaned}, and I have {phrase} results in this area.")
         elif cleaned.lower().startswith("i "):
-            enhanced.append(f"{cleaned}. Throughout my career, I have {phrase} meaningful outcomes.")
+            enhanced.append(
+                f"{cleaned}. Throughout my career, I have {phrase} meaningful outcomes."
+            )
         else:
-            enhanced.append(f"{cleaned}. I have {phrase} tangible results aligned with this objective.")
+            enhanced.append(
+                f"{cleaned}. I have {phrase} tangible results aligned with this objective."
+            )
         if len(enhanced) >= 5:
             break
     return enhanced

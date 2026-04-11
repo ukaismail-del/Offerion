@@ -66,19 +66,27 @@ def _build_notes(resume_source, cl_source, has_match, has_jd):
     if resume_source == "enhanced":
         notes.append("Resume has been enhanced with role-targeted optimizations.")
     elif resume_source == "structured":
-        notes.append("Resume analysis is based on structured extraction from your uploaded file.")
+        notes.append(
+            "Resume analysis is based on structured extraction from your uploaded file."
+        )
 
     if cl_source == "enhanced":
         notes.append("Cover letter has been enhanced for tone and alignment.")
     elif cl_source == "draft":
-        notes.append("Cover letter is a generated draft — consider enhancing for best results.")
+        notes.append(
+            "Cover letter is a generated draft — consider enhancing for best results."
+        )
 
     if has_match and has_jd:
-        notes.append("Match intelligence uses both target role keywords and full job description.")
+        notes.append(
+            "Match intelligence uses both target role keywords and full job description."
+        )
     elif has_match:
         notes.append("Match intelligence is based on target role keywords only.")
 
-    notes.append("Recommendations are based on structured resume and job-match signals.")
+    notes.append(
+        "Recommendations are based on structured resume and job-match signals."
+    )
     notes.append("Outputs do not guarantee hiring outcomes.")
 
     return notes

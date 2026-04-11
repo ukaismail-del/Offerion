@@ -5,8 +5,7 @@ Deterministic — no AI APIs.
 """
 
 
-def detect_keyword_gaps(match=None, tailored=None, rewrite=None,
-                        profile=None):
+def detect_keyword_gaps(match=None, tailored=None, rewrite=None, profile=None):
     """Detect missing and underused keywords.
 
     Returns a dict with missing_keywords, underused_keywords,
@@ -53,9 +52,11 @@ def _find_underused(match, tailored, profile):
     if tailored and tailored.get("skills_to_feature"):
         for sf in tailored["skills_to_feature"]:
             skill = sf.get("skill", "")
-            if (sf.get("priority") in ("medium", "low")
-                    and skill.lower() in matched
-                    and skill.lower() not in seen):
+            if (
+                sf.get("priority") in ("medium", "low")
+                and skill.lower() in matched
+                and skill.lower() not in seen
+            ):
                 underused.append(skill)
                 seen.add(skill.lower())
 
@@ -65,7 +66,11 @@ def _find_underused(match, tailored, profile):
         if tailored.get("skills_to_feature"):
             featured = {s["skill"].lower() for s in tailored["skills_to_feature"]}
         for sk in profile["skills"]:
-            if sk.lower() in matched and sk.lower() not in featured and sk.lower() not in seen:
+            if (
+                sk.lower() in matched
+                and sk.lower() not in featured
+                and sk.lower() not in seen
+            ):
                 underused.append(sk)
                 seen.add(sk.lower())
 
@@ -82,21 +87,21 @@ def _build_recommendations(missing, underused, rewrite, tailored):
         for kw in rewrite["keyword_additions"]:
             low = kw.lower().strip()
             if low not in seen:
-                recs.append(f"Add \"{kw}\" to your skills or experience section")
+                recs.append(f'Add "{kw}" to your skills or experience section')
                 seen.add(low)
 
     # From missing keywords
     for kw in missing[:3]:
         low = kw.lower()
         if low not in seen:
-            recs.append(f"Include \"{kw}\" in relevant resume sections")
+            recs.append(f'Include "{kw}" in relevant resume sections')
             seen.add(low)
 
     # From underused
     for kw in underused[:2]:
         low = kw.lower()
         if low not in seen:
-            recs.append(f"Strengthen mention of \"{kw}\" with context or examples")
+            recs.append(f'Strengthen mention of "{kw}" with context or examples')
             seen.add(low)
 
     if not recs:

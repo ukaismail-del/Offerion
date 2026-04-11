@@ -38,24 +38,21 @@ def _identify_strengths(match, profile, tailored):
     matched = match.get("matched_keywords", [])
     if matched:
         top = matched[:5]
-        strengths.append(
-            f"Strong keyword alignment: {', '.join(top)}"
-        )
+        strengths.append(f"Strong keyword alignment: {', '.join(top)}")
 
     if profile and profile.get("skills"):
         count = len(profile["skills"])
         if count >= 5:
-            strengths.append(
-                f"Solid skills inventory ({count} skills detected)"
-            )
+            strengths.append(f"Solid skills inventory ({count} skills detected)")
 
     if tailored and tailored.get("skills_to_feature"):
-        high_pri = [s["skill"] for s in tailored["skills_to_feature"]
-                    if s.get("priority") == "high"]
+        high_pri = [
+            s["skill"]
+            for s in tailored["skills_to_feature"]
+            if s.get("priority") == "high"
+        ]
         if high_pri:
-            strengths.append(
-                f"High-priority skills present: {', '.join(high_pri[:4])}"
-            )
+            strengths.append(f"High-priority skills present: {', '.join(high_pri[:4])}")
 
     target = match.get("target_role", "")
     if profile and profile.get("name") and profile["name"] != "Not detected":
@@ -76,15 +73,11 @@ def _identify_gaps(match, profile, tailored, rewrite):
     missing = match.get("missing_keywords", [])
     if missing:
         top_missing = missing[:5]
-        gaps.append(
-            f"Missing keywords: {', '.join(top_missing)}"
-        )
+        gaps.append(f"Missing keywords: {', '.join(top_missing)}")
 
     if rewrite and rewrite.get("keyword_additions"):
         adds = rewrite["keyword_additions"][:4]
-        gaps.append(
-            f"Keywords recommended for addition: {', '.join(adds)}"
-        )
+        gaps.append(f"Keywords recommended for addition: {', '.join(adds)}")
 
     if rewrite and rewrite.get("bullet_improvements"):
         gaps.append("Experience bullets need strengthening")

@@ -5,8 +5,9 @@ Deterministic — no AI APIs.
 """
 
 
-def generate_priority_fixes(match=None, profile=None, tailored=None,
-                            rewrite=None, scorecard=None):
+def generate_priority_fixes(
+    match=None, profile=None, tailored=None, rewrite=None, scorecard=None
+):
     """Generate prioritised fix recommendations.
 
     Returns a dict with top_priority, quick_wins, section_targets.
@@ -32,15 +33,11 @@ def _build_top_priority(match, tailored, rewrite):
     # Missing high-value keywords
     if match and match.get("missing_keywords"):
         top_kw = match["missing_keywords"][:3]
-        items.append(
-            f"Add missing keywords to your resume: {', '.join(top_kw)}"
-        )
+        items.append(f"Add missing keywords to your resume: {', '.join(top_kw)}")
 
     # Summary alignment
     if rewrite and rewrite.get("summary_focus"):
-        items.append(
-            "Rewrite your professional summary to align with the target role"
-        )
+        items.append("Rewrite your professional summary to align with the target role")
 
     # Target title in summary
     target = None
@@ -49,9 +46,7 @@ def _build_top_priority(match, tailored, rewrite):
     if tailored:
         target = tailored.get("target_title") or target
     if target:
-        items.append(
-            f"Include \"{target}\" in your summary or headline"
-        )
+        items.append(f'Include "{target}" in your summary or headline')
 
     if not items:
         items.append("Continue refining your resume for stronger alignment")
@@ -84,7 +79,9 @@ def _build_quick_wins(match, profile, rewrite, scorecard):
                 wins.append(f"Improve your {sec} section (currently weak)")
 
     if not wins:
-        wins.append("Your resume is in good shape — focus on targeted keyword additions")
+        wins.append(
+            "Your resume is in good shape — focus on targeted keyword additions"
+        )
 
     return wins[:5]
 
@@ -93,36 +90,45 @@ def _build_section_targets(match, tailored, rewrite):
     targets = []
 
     if rewrite and rewrite.get("summary_focus"):
-        targets.append({
-            "section": "Summary",
-            "action": "Align language with target role requirements",
-        })
+        targets.append(
+            {
+                "section": "Summary",
+                "action": "Align language with target role requirements",
+            }
+        )
 
     if match and match.get("missing_keywords"):
-        targets.append({
-            "section": "Skills",
-            "action": "Add missing high-value keywords from job requirements",
-        })
+        targets.append(
+            {
+                "section": "Skills",
+                "action": "Add missing high-value keywords from job requirements",
+            }
+        )
 
     if rewrite and rewrite.get("bullet_improvements"):
-        targets.append({
-            "section": "Experience",
-            "action": "Use stronger action verbs and quantify achievements",
-        })
+        targets.append(
+            {
+                "section": "Experience",
+                "action": "Use stronger action verbs and quantify achievements",
+            }
+        )
 
     if tailored and tailored.get("experience_focus_points"):
-        targets.append({
-            "section": "Experience",
-            "action": "Focus bullets on: " + "; ".join(
-                tailored["experience_focus_points"][:2]
-            ),
-        })
+        targets.append(
+            {
+                "section": "Experience",
+                "action": "Focus bullets on: "
+                + "; ".join(tailored["experience_focus_points"][:2]),
+            }
+        )
 
     if not targets:
-        targets.append({
-            "section": "General",
-            "action": "Review all sections for keyword and tone alignment",
-        })
+        targets.append(
+            {
+                "section": "General",
+                "action": "Review all sections for keyword and tone alignment",
+            }
+        )
 
     # Deduplicate by section
     seen = set()
