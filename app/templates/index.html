@@ -523,6 +523,48 @@
           font-size: 0.82rem;
         }
       }
+
+      /* --- History --- */
+      .history-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .history-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.55rem 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.9rem;
+        color: #475569;
+      }
+      .history-list li:last-child {
+        border-bottom: none;
+      }
+      .history-file {
+        font-weight: 600;
+        color: #1e293b;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 50%;
+      }
+      .history-meta {
+        text-align: right;
+        font-size: 0.82rem;
+        color: #94a3b8;
+        flex-shrink: 0;
+      }
+      .history-score {
+        font-weight: 700;
+        margin-right: 0.8rem;
+      }
+      .history-empty {
+        font-size: 0.9rem;
+        color: #94a3b8;
+        font-style: italic;
+      }
     </style>
   </head>
   <body>
@@ -533,6 +575,27 @@
         <h1>Offerion</h1>
         <p class="subtitle">Resume-to-offer engine</p>
         <p class="description">Upload your resume and enter a target role to see your match score.</p>
+      </div>
+
+      <!-- Recent Analyses -->
+      <div class="card">
+        <h2 class="card-title">Recent Analyses</h2>
+        <hr class="card-divider" />
+        {% if history %}
+        <ul class="history-list">
+          {% for entry in history|reverse %}
+          <li>
+            <span class="history-file">{{ entry.filename }}</span>
+            <span class="history-meta">
+              {% if entry.score is not none %}<span class="history-score {% if entry.score >= 70 %}level-strong{% elif entry.score >= 40 %}level-moderate{% else %}level-low{% endif %}">{{ entry.score }}/100</span>{% endif %}
+              {{ entry.timestamp }}
+            </span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="history-empty">No analyses yet &mdash; upload your first resume</p>
+        {% endif %}
       </div>
 
       <!-- Upload Form -->

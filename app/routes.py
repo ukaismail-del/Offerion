@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime
 
 from flask import (
     Blueprint,
@@ -138,12 +139,23 @@ def index():
                                 "scorecard": scorecard,
                                 "tailored": tailored,
                             }
+
+                            history = session.get("history", [])
+                            history.append({
+                                "filename": result.get("filename"),
+                                "score": match.get("score") if match else None,
+                                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            })
+                            session["history"] = history[-5:]
+
                             logger.info("Analysis complete for: %s", filename)
                     except Exception as exc:
                         logger.error("Error processing %s: %s", filename, exc)
                         error = "An error occurred while processing the file. Please try again."
                     finally:
                         delete_file(filepath)
+
+    history = session.get("history", [])
 
     return render_template(
         "index.html",
@@ -158,6 +170,7 @@ def index():
         rewrite=rewrite,
         scorecard=scorecard,
         tailored=tailored,
+        history=history,
     )
 
 
