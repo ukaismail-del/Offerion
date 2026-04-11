@@ -198,6 +198,13 @@
       .download-btn-draft:hover {
         background-color: #0e7490;
       }
+      .download-btn-preview {
+        background-color: #334155;
+        margin-left: 0.6rem;
+      }
+      .download-btn-preview:hover {
+        background-color: #1e293b;
+      }
       .status-bar {
         text-align: center;
       }
@@ -922,6 +929,9 @@
         {% endif %}
         <a href="/download-resume-draft" class="download-btn download-btn-draft"
           >Download Resume Draft</a
+        >
+        <a href="/resume-preview" class="download-btn download-btn-preview"
+          >View Resume</a
         >
       </div>
       {% endif %} {% if error %}

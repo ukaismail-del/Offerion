@@ -301,6 +301,39 @@ Generates a downloadable plain-text resume draft template built from analysis ou
 
 All logic is rule-based and local. No AI or external APIs are used.
 
+---
+
+### Module 23 — Resume Preview Page
+
+Adds a dedicated resume preview page that renders analysis data in a clean, resume-like layout.
+
+**Template:** `app/templates/resume_preview.html`
+
+**Route:** `/resume-preview` — renders the preview page from session data
+
+**Preview sections:**
+
+- **Name & Contact** — pre-filled from detected profile, placeholders for missing fields
+- **Target Title** — from tailored output or match target role
+- **Professional Summary** — guidance points from tailored data
+- **Skills** — pill-tag layout from skills_to_feature or detected skills
+- **Experience** — focus points plus placeholder bullet templates
+- **Education** — detected education entries or placeholder
+- **ATS Alignment Notes** — tips from rewrite guidance (if available)
+
+**UI:**
+
+- Dark "View Resume" button added to the results status bar alongside download buttons
+- Preview page has "Download Resume Draft" and "Back to Dashboard" buttons at the bottom
+- Clean, centered layout styled like a resume document
+- Responsive design for mobile
+
+**Behavior:**
+
+- Redirects to dashboard if no analysis data exists in session
+- Uses same session data as all other features — no duplicate processing
+- Placeholders shown in italic grey for any missing sections
+
 ## Run Locally
 
 ```

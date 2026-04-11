@@ -268,6 +268,44 @@ def download_resume_draft():
     )
 
 
+@main_bp.route("/resume-preview")
+def resume_preview():
+    report_data = session.get("report_data")
+    if not report_data:
+        return redirect(url_for("main.index"))
+
+    profile = report_data.get("profile")
+    tailored = report_data.get("tailored")
+    rewrite = report_data.get("rewrite")
+    match_data = report_data.get("match")
+
+    target_title = None
+    if tailored:
+        target_title = tailored.get("target_title")
+    if not target_title and match_data:
+        target_title = match_data.get("target_role")
+
+    skills_list = []
+    if tailored and tailored.get("skills_to_feature"):
+        skills_list = [sf["skill"] for sf in tailored["skills_to_feature"]]
+    elif profile and profile.get("skills"):
+        skills_list = profile["skills"]
+
+    education_list = []
+    if profile and profile.get("education"):
+        education_list = profile["education"]
+
+    return render_template(
+        "resume_preview.html",
+        profile=profile,
+        tailored=tailored,
+        rewrite=rewrite,
+        target_title=target_title,
+        skills_list=skills_list,
+        education_list=education_list,
+    )
+
+
 @main_bp.route("/<path:path>")
 def fallback(path):
     return redirect(url_for("main.index"))

@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resume Preview — Offerion</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        background: #f0f2f5;
+        color: #333;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 3rem;
+      }
+      .back-link {
+        display: inline-block;
+        font-size: 0.9rem;
+        color: #2563eb;
+        text-decoration: none;
+        margin-bottom: 1rem;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
+      .resume-page {
+        background: #fff;
+        border-radius: 12px;
+        padding: 2.5rem 2.5rem 2rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+      }
+      .resume-name {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin: 0 0 0.2rem 0;
+        text-align: center;
+      }
+      .resume-contact {
+        text-align: center;
+        font-size: 0.92rem;
+        color: #64748b;
+        margin: 0 0 0.3rem 0;
+      }
+      .resume-target {
+        text-align: center;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #2563eb;
+        margin: 0.5rem 0 1.5rem 0;
+      }
+      .section-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1e293b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 0.3rem;
+        margin: 1.5rem 0 0.8rem 0;
+      }
+      .resume-summary {
+        font-size: 0.95rem;
+        color: #475569;
+        line-height: 1.7;
+      }
+      .resume-summary li {
+        margin-bottom: 0.3rem;
+      }
+      .skill-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        padding: 0;
+        list-style: none;
+        margin: 0;
+      }
+      .skill-tag {
+        display: inline-block;
+        background: #e0e7ff;
+        color: #3730a3;
+        padding: 0.25rem 0.7rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+      .exp-entry {
+        margin-bottom: 1rem;
+      }
+      .exp-title {
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 0.95rem;
+        margin: 0;
+      }
+      .exp-hint {
+        font-size: 0.88rem;
+        color: #64748b;
+        font-style: italic;
+        margin: 0.2rem 0 0.4rem 0;
+      }
+      .exp-bullets {
+        padding-left: 1.2rem;
+        margin: 0.3rem 0 0;
+      }
+      .exp-bullets li {
+        font-size: 0.92rem;
+        color: #555;
+        margin-bottom: 0.25rem;
+      }
+      .edu-item {
+        font-size: 0.93rem;
+        color: #475569;
+        margin-bottom: 0.3rem;
+      }
+      .placeholder {
+        color: #94a3b8;
+        font-style: italic;
+      }
+      .actions {
+        text-align: center;
+        margin-top: 1.5rem;
+      }
+      .dl-btn {
+        display: inline-block;
+        background: #059669;
+        color: #fff;
+        border: none;
+        padding: 0.7rem 2rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background-color 0.2s;
+      }
+      .dl-btn:hover {
+        background: #047857;
+      }
+      .dl-btn-alt {
+        background: #2563eb;
+        margin-left: 0.6rem;
+      }
+      .dl-btn-alt:hover {
+        background: #1d4ed8;
+      }
+      .notes-box {
+        background: #fffbeb;
+        border-left: 3px solid #f59e0b;
+        padding: 0.8rem 1rem;
+        border-radius: 0 6px 6px 0;
+        margin-top: 0.8rem;
+        font-size: 0.88rem;
+        color: #92400e;
+        line-height: 1.5;
+      }
+      @media (max-width: 640px) {
+        .resume-page {
+          padding: 1.5rem 1.2rem;
+        }
+        .resume-name {
+          font-size: 1.6rem;
+        }
+        .container {
+          padding: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <a href="/" class="back-link">&larr; Back to Dashboard</a>
+
+      <div class="resume-page">
+        <!-- Name -->
+        <h1 class="resume-name">
+          {% if profile and profile.name != "Not detected" %}
+            {{ profile.name }}
+          {% else %}
+            <span class="placeholder">[Your Full Name]</span>
+          {% endif %}
+        </h1>
+
+        <!-- Contact -->
+        <p class="resume-contact">
+          {% if profile and profile.email != "Not detected" %}
+            {{ profile.email }}
+          {% else %}
+            <span class="placeholder">[email]</span>
+          {% endif %}
+          &nbsp;&bull;&nbsp;
+          {% if profile and profile.phone != "Not detected" %}
+            {{ profile.phone }}
+          {% else %}
+            <span class="placeholder">[phone]</span>
+          {% endif %}
+        </p>
+
+        <!-- Target Title -->
+        {% if target_title %}
+        <p class="resume-target">{{ target_title }}</p>
+        {% endif %}
+
+        <!-- Professional Summary -->
+        <h2 class="section-title">Professional Summary</h2>
+        {% if tailored and tailored.professional_summary %}
+        <ul class="resume-summary">
+          {% for item in tailored.professional_summary %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="placeholder">[Write 2–3 sentences summarizing your professional background and target role alignment.]</p>
+        {% endif %}
+
+        <!-- Skills -->
+        <h2 class="section-title">Skills</h2>
+        {% if skills_list %}
+        <ul class="skill-tags">
+          {% for skill in skills_list %}
+          <li class="skill-tag">{{ skill }}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="placeholder">[List 8–10 relevant skills]</p>
+        {% endif %}
+
+        <!-- Experience -->
+        <h2 class="section-title">Experience</h2>
+        {% if tailored and tailored.experience_focus_points %}
+        <div class="exp-entry">
+          <p class="exp-hint">Focus your experience bullets on:</p>
+          <ul class="exp-bullets">
+            {% for item in tailored.experience_focus_points %}
+            <li>{{ item }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        <div class="exp-entry">
+          <p class="exp-title"><span class="placeholder">[Job Title] — [Company Name]</span></p>
+          <p class="exp-hint">[Start Date] – [End Date]</p>
+          <ul class="exp-bullets">
+            <li class="placeholder">[Add 2–3 quantified bullet points here]</li>
+            <li class="placeholder">[Use action verbs: Led, Built, Improved, Delivered...]</li>
+            <li class="placeholder">[Insert relevant project outcome with numbers]</li>
+          </ul>
+        </div>
+
+        <!-- Education -->
+        <h2 class="section-title">Education</h2>
+        {% if education_list %}
+          {% for edu in education_list %}
+          <p class="edu-item">{{ edu }}</p>
+          {% endfor %}
+        {% else %}
+        <p class="placeholder">[Degree] — [Institution], [Year]</p>
+        {% endif %}
+
+        <!-- ATS Notes -->
+        {% if rewrite and rewrite.ats_notes %}
+        <h2 class="section-title">ATS Alignment Notes</h2>
+        <div class="notes-box">
+          <ul style="margin:0;padding-left:1.2rem;">
+            {% for note in rewrite.ats_notes %}
+            <li>{{ note }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Action buttons -->
+      <div class="actions">
+        <a href="/download-resume-draft" class="dl-btn">Download Resume Draft</a>
+        <a href="/" class="dl-btn dl-btn-alt">Back to Dashboard</a>
+      </div>
+    </div>
+  </body>
+</html>
