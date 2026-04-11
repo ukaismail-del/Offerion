@@ -16,7 +16,7 @@
   <div class="top-nav-inner">
     <a href="/" class="top-nav-brand">Offerion</a>
     <div class="top-nav-links">
-      <a href="/">Dashboard</a>
+      <a href="/dashboard">Dashboard</a>
       <a href="#resume-section">Resume</a>
       {% if cover_letter_draft or enhanced_cover_letter %}<a href="#cover-letter-section">Cover Letter</a>{% endif %}
       <a href="#actions-section">Actions</a>
@@ -27,7 +27,7 @@
 </nav>
 
 <div class="container">
-  <a href="/" class="back-link">&larr; Back to Dashboard</a>
+  <a href="/dashboard" class="back-link">&larr; Back to Dashboard</a>
 
   <!-- ═══════════════════════════════════════════
        PRIMARY ACTIONS BAR
@@ -84,6 +84,9 @@
     {% if not has_access('enhance_resume') or not has_access('generate_cover_letter') %}
     <p class="upsell-hint" style="margin-top:var(--space-sm)">Some actions are locked. <a href="/pricing">View plans to unlock</a></p>
     {% endif %}
+    <div style="margin-top:var(--space-sm)">
+      <a href="/share/create" class="btn btn-dark btn-sm">Share Report</a>
+    </div>
   </div>
 
   <!-- Upgrade Nudge (M60) -->
@@ -516,7 +519,7 @@
 
   <!-- Secondary nav -->
   <div style="text-align:center;margin-top:var(--space-xl)">
-    <a href="/" class="btn btn-secondary">Back to Dashboard</a>
+    <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
   </div>
 
 </div><!-- /container -->

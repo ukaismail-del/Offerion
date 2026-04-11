@@ -1,4 +1,4 @@
-import logging
+﻿import logging
 import os
 from datetime import datetime
 
@@ -240,8 +240,8 @@ def _bootstrap_persistence():
     _ensure_user()
 
 
-@main_bp.route("/", methods=["GET", "POST"])
-def index():
+@main_bp.route("/dashboard", methods=["GET", "POST"])
+def dashboard():
     user_id = session.get("user_id")
     message = None
     error = None
@@ -255,6 +255,8 @@ def index():
     scorecard = None
     tailored = None
     action_plan = None
+
+    _log_event("dashboard_view")
 
     if request.method == "POST":
         if "resume" not in request.files:
@@ -273,6 +275,7 @@ def index():
                     error = "Failed to save the uploaded file. Please try again."
                 else:
                     logger.info("File uploaded: %s", filename)
+                    _log_event("resume_uploaded", {"filename": filename})
 
                     try:
                         ext = get_file_extension(filename)
@@ -590,7 +593,7 @@ def _build_enhanced_draft(enhanced):
 def resume_preview():
     report_data = session.get("report_data")
     if not report_data:
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main.dashboard"))
 
     profile = report_data.get("profile")
     tailored = report_data.get("tailored")
@@ -674,7 +677,7 @@ def enhance_resume_route():
     user_id = session.get("user_id")
     report_data = session.get("report_data")
     if not report_data:
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main.dashboard"))
 
     enhanced = enhance_resume(
         profile=report_data.get("profile"),
@@ -689,6 +692,7 @@ def enhance_resume_route():
         _record_activity(user_id, "resume_enhanced", "Enhanced resume")
 
     _increment_usage("enhance_resume")
+    _log_event("enhance_resume_clicked")
     return redirect(url_for("main.resume_preview"))
 
 
@@ -700,7 +704,7 @@ def save_resume_version():
     user_id = session.get("user_id")
     version = save_version(session)
     if not version:
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main.dashboard"))
 
     versions = session.get("resume_versions", [])
     versions.append(version)
@@ -726,7 +730,7 @@ def open_resume_version(version_id):
     versions = session.get("resume_versions", [])
     version = find_version(versions, version_id)
     if not version:
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main.dashboard"))
 
     report_data, enhanced = load_version(version)
     session["report_data"] = report_data
@@ -788,11 +792,11 @@ def delete_resume_version_route(version_id):
     db_remove_version(user_id, version_id)
     set_last_action(session, "Resume version deleted")
     _record_activity(user_id, "version_deleted", "Deleted a resume version")
-    return redirect(url_for("main.index"))
+    return redirect(url_for("main.dashboard"))
 
 
 # ------------------------------------------------------------------
-# M26 — Cover Letter Draft
+# M26 â€” Cover Letter Draft
 # ------------------------------------------------------------------
 
 
@@ -804,7 +808,7 @@ def generate_cover_letter_route():
     user_id = session.get("user_id")
     report_data = session.get("report_data")
     if not report_data:
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main.dashboard"))
 
     enhanced_resume = session.get("enhanced_resume")
 
@@ -826,11 +830,12 @@ def generate_cover_letter_route():
         )
 
     _increment_usage("generate_cl")
+    _log_event("generate_cl_clicked")
     return redirect(url_for("main.resume_preview"))
 
 
 # ------------------------------------------------------------------
-# M27 — Cover Letter Enhancement
+# M27 â€” Cover Letter Enhancement
 # ------------------------------------------------------------------
 
 
@@ -856,7 +861,7 @@ def enhance_cover_letter_route():
 
 
 # ------------------------------------------------------------------
-# M28 — Application Package Download
+# M28 â€” Application Package Download
 # ------------------------------------------------------------------
 
 
@@ -902,7 +907,7 @@ def _build_application_package_text(
 
     # --- Section 1: Resume ---
     lines.append(sep)
-    lines.append("SECTION 1 — RESUME")
+    lines.append("SECTION 1 â€” RESUME")
     lines.append(sep)
     lines.append("")
 
@@ -923,7 +928,7 @@ def _build_application_package_text(
 
     # --- Section 2: Cover Letter ---
     lines.append(sep)
-    lines.append("SECTION 2 — COVER LETTER")
+    lines.append("SECTION 2 â€” COVER LETTER")
     lines.append(sep)
     lines.append("")
 
@@ -945,7 +950,7 @@ def _build_application_package_text(
 
 
 # ------------------------------------------------------------------
-# M29 — Application Package Versioning
+# M29 â€” Application Package Versioning
 # ------------------------------------------------------------------
 
 
@@ -957,7 +962,7 @@ def save_application_package_route():
     user_id = session.get("user_id")
     pkg = save_package(session)
     if not pkg:
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main.dashboard"))
 
     packages = session.get("application_packages", [])
     existing_pkg = next((item for item in packages if _same_package(item, pkg)), None)
@@ -987,7 +992,7 @@ def open_application_package(package_id):
     packages = session.get("application_packages", [])
     pkg = find_package(packages, package_id)
     if not pkg:
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main.dashboard"))
 
     report_data, enhanced_resume, cl_draft, enhanced_cl = load_package(pkg)
     session["report_data"] = report_data
@@ -1040,11 +1045,11 @@ def delete_application_package_route(package_id):
     db_remove_package(user_id, package_id)
     set_last_action(session, "Application package deleted")
     _record_activity(user_id, "package_deleted", "Deleted an application package")
-    return redirect(url_for("main.index"))
+    return redirect(url_for("main.dashboard"))
 
 
 # ------------------------------------------------------------------
-# M34 — Saved Jobs Tracker
+# M34 â€” Saved Jobs Tracker
 # ------------------------------------------------------------------
 
 
@@ -1069,7 +1074,8 @@ def save_job_route():
     )
     _record_activity(user_id, "job_saved", "Saved job: %s" % job["title"])
     _increment_usage("save_job")
-    return redirect(url_for("main.index"))
+    _log_event("save_job_clicked", {"title": job["title"]})
+    return redirect(url_for("main.dashboard"))
 
 
 @main_bp.route("/job/<job_id>")
@@ -1080,7 +1086,7 @@ def open_job(job_id):
     saved_jobs = session.get("saved_jobs", [])
     job = find_job(saved_jobs, job_id)
     if not job:
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main.dashboard"))
 
     followup = generate_followup_prompts(job)
 
@@ -1106,11 +1112,11 @@ def delete_job_route(job_id):
     remove_alerts_for_job(user_id, job_id)
     set_last_action(session, "Job deleted")
     _record_activity(user_id, "job_deleted", "Deleted a saved job")
-    return redirect(url_for("main.index"))
+    return redirect(url_for("main.dashboard"))
 
 
 # ------------------------------------------------------------------
-# M35 — Application Status Tracker
+# M35 â€” Application Status Tracker
 # ------------------------------------------------------------------
 
 
@@ -1134,7 +1140,7 @@ def update_job_status_route(job_id, new_status):
 
 
 # ------------------------------------------------------------------
-# M36 — Alerts Foundation
+# M36 â€” Alerts Foundation
 # ------------------------------------------------------------------
 
 
@@ -1172,7 +1178,7 @@ def complete_alert_route(alert_id):
     persist_alert_complete(user_id, alert_id)
     set_last_action(session, "Alert completed")
     _record_activity(user_id, "alert_completed", "Completed an alert")
-    return redirect(url_for("main.index"))
+    return redirect(url_for("main.dashboard"))
 
 
 @main_bp.route("/delete-alert/<alert_id>")
@@ -1186,11 +1192,11 @@ def delete_alert_route(alert_id):
     db_remove_alert(user_id, alert_id)
     set_last_action(session, "Alert deleted")
     _record_activity(user_id, "alert_deleted", "Deleted an alert")
-    return redirect(url_for("main.index"))
+    return redirect(url_for("main.dashboard"))
 
 
 # ------------------------------------------------------------------
-# M45 — Guided Flow (One-Click Application Prep)
+# M45 â€” Guided Flow (One-Click Application Prep)
 # ------------------------------------------------------------------
 
 
@@ -1202,7 +1208,7 @@ def prepare_application():
     user_id = session.get("user_id")
     report_data = session.get("report_data")
     if not report_data:
-        return redirect(url_for("main.index"))
+        return redirect(url_for("main.dashboard"))
 
     # Step 2: Enhance resume if not done
     if not session.get("enhanced_resume"):
@@ -1275,12 +1281,13 @@ def prepare_application():
 
 
 # ------------------------------------------------------------------
-# M56 — Pricing Page + Upgrade Flow
+# M56 â€” Pricing Page + Upgrade Flow
 # ------------------------------------------------------------------
 
 
 @main_bp.route("/pricing")
 def pricing():
+    _log_event("upgrade_clicked")
     gate_message = session.pop("gate_message", None)
     return render_template(
         "pricing.html",
@@ -1302,7 +1309,7 @@ def upgrade(tier_name):
 
 
 # ------------------------------------------------------------------
-# M58 — Onboarding Flow
+# M58 â€” Onboarding Flow
 # ------------------------------------------------------------------
 
 
@@ -1314,16 +1321,134 @@ def onboarding_next():
         session.pop("onboarding_step", None)
     else:
         session["onboarding_step"] = step + 1
-    return redirect(url_for("main.index"))
+    return redirect(url_for("main.dashboard"))
 
 
 @main_bp.route("/onboarding-dismiss")
 def onboarding_dismiss():
     session["has_seen_onboarding"] = True
     session.pop("onboarding_step", None)
-    return redirect(url_for("main.index"))
+    return redirect(url_for("main.dashboard"))
+
+
+# ------------------------------------------------------------------
+# M63 — Public Landing Page
+# ------------------------------------------------------------------
+
+
+def _log_event(event_name, metadata=None):
+    """Log an analytics event into session (M64)."""
+    events = session.get("analytics_events", [])
+    entry = {
+        "event": event_name,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    if metadata:
+        entry["meta"] = metadata
+    events.append(entry)
+    session["analytics_events"] = events
+
+
+@main_bp.route("/")
+def landing():
+    # M66: capture referral param
+    ref = request.args.get("ref")
+    if ref:
+        session["referrer"] = ref
+        _log_event("referred_signup", {"referrer": ref})
+
+    _log_event("landing_view")
+    email_status = session.pop("email_capture_status", None)
+    return render_template(
+        "landing.html",
+        referrer=session.get("referrer"),
+        email_capture_status=email_status,
+    )
+
+
+# ------------------------------------------------------------------
+# M64 — Analytics event injection into existing routes
+# ------------------------------------------------------------------
+# (log_event calls are added inline in dashboard, enhance, cl, save-job, pricing)
+
+
+# ------------------------------------------------------------------
+# M65 — Shareable Report Links (Lite)
+# ------------------------------------------------------------------
+
+
+@main_bp.route("/share/create")
+def share_create():
+    """Create a shareable snapshot of the current report."""
+    import uuid
+
+    report_data = session.get("report_data")
+    if not report_data:
+        return redirect(url_for("main.dashboard"))
+
+    match_data = report_data.get("match")
+    profile = report_data.get("profile")
+    match_explanation = session.get("match_explanation")
+
+    snapshot = {
+        "id": uuid.uuid4().hex[:10],
+        "score": match_data.get("score") if match_data else None,
+        "target_role": match_data.get("target_role", "") if match_data else "",
+        "top_skills": (profile.get("skills", [])[:8] if profile else []),
+        "summary": (
+            match_explanation.get("summary", "")
+            if match_explanation
+            else "Resume analyzed with Offerion."
+        ),
+        "strengths": (
+            match_explanation.get("strengths", [])[:5] if match_explanation else []
+        ),
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+    shared = session.get("shared_reports", [])
+    shared.append(snapshot)
+    session["shared_reports"] = shared
+
+    _log_event("share_created", {"report_id": snapshot["id"]})
+    return redirect(url_for("main.share_report", report_id=snapshot["id"]))
+
+
+@main_bp.route("/share/report/<report_id>")
+def share_report(report_id):
+    """Public view of a shared report."""
+    shared = session.get("shared_reports", [])
+    report = next((r for r in shared if r["id"] == report_id), None)
+    if not report:
+        return "Report not found.", 404
+
+    return render_template("share_report.html", report=report)
+
+
+# ------------------------------------------------------------------
+# M67 — Email Capture
+# ------------------------------------------------------------------
+
+
+@main_bp.route("/capture-email", methods=["POST"])
+def capture_email():
+    """Store an email address in session (no backend email service yet)."""
+    import re
+
+    email = request.form.get("email", "").strip()
+    if not email or not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        session["email_capture_status"] = "invalid"
+        return redirect(url_for("main.landing"))
+
+    captured = session.get("captured_emails", [])
+    if email not in captured:
+        captured.append(email)
+        session["captured_emails"] = captured
+    session["email_capture_status"] = "success"
+    _log_event("email_captured")
+    return redirect(url_for("main.landing"))
 
 
 @main_bp.route("/<path:path>")
 def fallback(path):
-    return redirect(url_for("main.index"))
+    return redirect(url_for("main.dashboard"))

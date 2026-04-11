@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offerion — Shared Report</title>
+  <meta name="description" content="See how this resume scored on Offerion." />
+  <meta property="og:title" content="Offerion — Resume Match Report" />
+  <meta property="og:description" content="See how this resume scored on Offerion." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="top-nav-inner">
+    <a href="/" class="top-nav-brand">Offerion</a>
+    <div class="top-nav-links">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/pricing">Pricing</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+
+  <div class="share-card">
+    <h1 class="share-title">Resume Match Report</h1>
+
+    {% if report.target_role %}
+    <p class="share-role">Target Role: {{ report.target_role }}</p>
+    {% endif %}
+
+    {% if report.score is not none %}
+    <div class="share-score">
+      <span class="score-display {% if report.score >= 70 %}level-strong{% elif report.score >= 40 %}level-moderate{% else %}level-low{% endif %}">
+        {{ report.score }} / 100
+      </span>
+    </div>
+    {% endif %}
+
+    <p class="share-summary">{{ report.summary }}</p>
+
+    {% if report.strengths %}
+    <h3>Key Strengths</h3>
+    <ul class="intel-list">
+      {% for s in report.strengths %}
+      <li>{{ s }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if report.top_skills %}
+    <h3>Top Skills</h3>
+    <div class="share-skills">
+      {% for skill in report.top_skills %}
+      <span class="tag tag-matched">{{ skill }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <p class="share-meta">Shared on {{ report.created_at }}</p>
+  </div>
+
+  <div class="cta-section">
+    <h2>Build your own with Offerion</h2>
+    <a href="/dashboard" class="btn btn-primary btn-lg">Get Started Free</a>
+  </div>
+
+</div>
+
+</body>
+</html>

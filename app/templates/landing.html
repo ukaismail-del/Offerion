@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- M68: SEO Meta Tags -->
+  <title>Offerion — Turn Your Resume Into a Job-Winning System</title>
+  <meta name="description" content="Optimize your resume, generate applications, and track jobs in one place." />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Offerion — Turn Your Resume Into a Job-Winning System" />
+  <meta property="og:description" content="Optimize your resume, generate applications, and track jobs in one place." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://offerion.onrender.com/" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+
+<!-- Top Navigation -->
+<nav class="top-nav">
+  <div class="top-nav-inner">
+    <a href="/" class="top-nav-brand">Offerion</a>
+    <div class="top-nav-links">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/pricing">Pricing</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- ═══════════════════════════════════════════
+       HERO SECTION
+       ═══════════════════════════════════════════ -->
+  <div class="landing-hero">
+    <h1>Turn your resume into a job-winning system</h1>
+    <p class="landing-hero-sub">
+      From resume &rarr; application &rarr; follow-up &mdash; in minutes.
+    </p>
+    <div class="landing-hero-actions">
+      <a href="/dashboard" class="btn btn-primary btn-lg">Get Started Free</a>
+      <a href="/pricing" class="btn btn-secondary btn-lg">View Pricing</a>
+    </div>
+  </div>
+
+  <!-- Referral message (M66) -->
+  {% if referrer %}
+  <div class="card" style="text-align:center; background:var(--color-primary-subtle); border:1px solid var(--color-primary-light)">
+    <p style="margin:0; color:var(--text-secondary)">You were invited to try Offerion</p>
+  </div>
+  {% endif %}
+
+  <!-- ═══════════════════════════════════════════
+       HOW IT WORKS
+       ═══════════════════════════════════════════ -->
+  <div class="section">
+    <h2 class="section-heading">How It Works</h2>
+    <div class="how-strip">
+      <div class="how-step">
+        <div class="how-num">1</div>
+        <h3>Upload resume</h3>
+        <p>PDF or DOCX &mdash; we extract the text automatically</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">2</div>
+        <h3>Generate full application</h3>
+        <p>Enhanced resume, cover letter, and tailored brief in one click</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">3</div>
+        <h3>Track + follow up</h3>
+        <p>Save jobs, set alerts, and never miss a follow-up deadline</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       FEATURE HIGHLIGHTS
+       ═══════════════════════════════════════════ -->
+  <div class="section">
+    <h2 class="section-heading">What You Get</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>Resume Intelligence</h3>
+        <p>Match scoring, keyword gap detection, priority fixes, and role-fit analysis &mdash; all from one upload.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Application Generator</h3>
+        <p>Enhanced resume, tailored cover letter, and downloadable application package &mdash; generated automatically.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Job Tracker</h3>
+        <p>Save jobs, track application status, and create follow-up alerts so nothing falls through the cracks.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SOCIAL PROOF
+       ═══════════════════════════════════════════ -->
+  <div class="section" style="text-align:center">
+    <p class="social-proof-text">Used by job seekers to streamline applications</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       EMAIL CAPTURE (M67)
+       ═══════════════════════════════════════════ -->
+  <div class="section">
+    <div class="card" style="text-align:center">
+      <h2 class="card-title">Get updates + early features</h2>
+      <hr class="card-divider" />
+      {% if email_capture_status == 'success' %}
+      <p class="msg-success">You're on the list!</p>
+      {% elif email_capture_status == 'invalid' %}
+      <p class="msg-error">Please enter a valid email address.</p>
+      {% endif %}
+      <form method="POST" action="/capture-email" style="display:flex; gap:var(--space-sm); max-width:460px; margin:0 auto">
+        <input type="email" name="email" placeholder="you@example.com" required style="flex:1" />
+        <button type="submit" class="btn btn-primary">Subscribe</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       CTA SECTION
+       ═══════════════════════════════════════════ -->
+  <div class="cta-section">
+    <h2>Start your first application in minutes</h2>
+    <a href="/dashboard" class="btn btn-primary btn-lg">Get Started Free</a>
+  </div>
+
+</div><!-- /container -->
+
+</body>
+</html>

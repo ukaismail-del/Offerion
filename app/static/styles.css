@@ -1540,3 +1540,136 @@ textarea {
   .quick-start-card { flex-direction: column; text-align: center; }
   .upgrade-nudge { flex-direction: column; text-align: center; }
 }
+
+/* ==========================================================================
+   Bundle K — Distribution + Traffic (M63-M68)
+   ========================================================================== */
+
+/* --- Landing Hero (M63) --- */
+.landing-hero {
+  text-align: center;
+  padding: var(--space-xl) var(--space-md);
+  margin-bottom: var(--space-xl);
+  background: linear-gradient(135deg, var(--color-primary-subtle), #e0e7ff 60%, #f5f3ff);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-primary-light);
+}
+.landing-hero h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 0.6rem;
+  line-height: 1.2;
+}
+.landing-hero-sub {
+  font-size: var(--font-lg);
+  color: var(--text-body);
+  margin: 0 0 1.5rem;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.landing-hero-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* --- Feature Grid (M63) --- */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-lg);
+}
+.feature-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  text-align: center;
+}
+.feature-card h3 {
+  font-size: var(--font-lg);
+  color: var(--text-primary);
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+}
+.feature-card p {
+  font-size: var(--font-sm);
+  color: var(--text-body);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* --- CTA Section (M63) --- */
+.cta-section {
+  text-align: center;
+  padding: var(--space-xl) var(--space-md);
+  margin: var(--space-xl) 0;
+  background: linear-gradient(135deg, #eff6ff, #e0e7ff);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-primary-light);
+}
+.cta-section h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 1rem;
+}
+
+/* --- Social Proof (M63) --- */
+.social-proof-text {
+  font-size: var(--font-md);
+  color: var(--text-muted);
+  font-weight: 500;
+  font-style: italic;
+  margin: 0;
+}
+
+/* --- Share Card (M65) --- */
+.share-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  margin-bottom: var(--space-xl);
+}
+.share-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem;
+}
+.share-role {
+  font-size: var(--font-md);
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin: 0 0 1rem;
+}
+.share-score {
+  margin: 1rem 0;
+}
+.share-summary {
+  font-size: var(--font-md);
+  color: var(--text-body);
+  line-height: 1.6;
+  margin: 0.5rem 0 1rem;
+}
+.share-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.5rem 0 1rem;
+}
+.share-meta {
+  font-size: var(--font-xs);
+  color: var(--text-faint);
+  margin: 1rem 0 0;
+}
+
+@media (max-width: 640px) {
+  .landing-hero { padding: var(--space-lg) var(--space-sm); }
+  .landing-hero h1 { font-size: 1.6rem; }
+  .feature-grid { grid-template-columns: 1fr; }
+}
