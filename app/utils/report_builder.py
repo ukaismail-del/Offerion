@@ -11,6 +11,7 @@ def build_report(
     rewrite=None,
     scorecard=None,
     tailored=None,
+    action_plan=None,
 ):
     """Build a plain-text analysis report from Offerion results.
 
@@ -313,6 +314,32 @@ def build_report(
         lines.append("Tailoring Notes:")
         for item in tailored.get("tailoring_notes", []):
             lines.append(f"  i {item}")
+        lines.append("")
+
+    # --- Action Plan ---
+    if action_plan:
+        lines.append(sub)
+        lines.append("ACTION PLAN")
+        lines.append(sub)
+        lines.append("")
+
+        lines.append(f"Top Priority: {action_plan.get('top_priority', 'N/A')}")
+        lines.append("")
+
+        lines.append("Quick Wins:")
+        for item in action_plan.get("quick_wins", []):
+            lines.append(f"  > {item}")
+        lines.append("")
+
+        lines.append("Next Revision Steps:")
+        for item in action_plan.get("next_revision_steps", []):
+            lines.append(f"  * {item}")
+        lines.append("")
+
+        lines.append("Final Checklist:")
+        for check in action_plan.get("final_checklist", []):
+            status = "DONE" if check.get("done") else "TODO"
+            lines.append(f"  [{status}] {check.get('label', '')}")
         lines.append("")
 
     lines.append(sep)

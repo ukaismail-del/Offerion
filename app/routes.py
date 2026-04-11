@@ -27,6 +27,7 @@ from app.utils.scorecard import generate_scorecard
 from app.utils.tailored_resume import generate_tailored_resume
 from app.utils.storage import save_file, delete_file
 from app.utils.tailored_brief import build_tailored_brief
+from app.utils.action_plan import generate_action_plan
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,7 @@ def index():
     rewrite = None
     scorecard = None
     tailored = None
+    action_plan = None
 
     if request.method == "POST":
         if "resume" not in request.files:
@@ -129,6 +131,14 @@ def index():
                                 scorecard,
                             )
 
+                            action_plan = generate_action_plan(
+                                scorecard=scorecard,
+                                feedback=feedback,
+                                rewrite=rewrite,
+                                tailored=tailored,
+                                jd_comparison=jd_comparison,
+                            )
+
                             session["report_data"] = {
                                 "result": result,
                                 "profile": profile,
@@ -139,6 +149,7 @@ def index():
                                 "rewrite": rewrite,
                                 "scorecard": scorecard,
                                 "tailored": tailored,
+                                "action_plan": action_plan,
                             }
 
                             history = session.get("history", [])
@@ -175,6 +186,7 @@ def index():
         rewrite=rewrite,
         scorecard=scorecard,
         tailored=tailored,
+        action_plan=action_plan,
         history=history,
     )
 
@@ -195,6 +207,7 @@ def download_report():
         rewrite=report_data.get("rewrite"),
         scorecard=report_data.get("scorecard"),
         tailored=report_data.get("tailored"),
+        action_plan=report_data.get("action_plan"),
     )
 
     return Response(
@@ -208,14 +221,19 @@ def download_report():
 def download_tailored_brief():
     report_data = session.get("report_data")
     if not report_data or not report_data.get("tailored"):
-        return "No tailored data available. Please upload a resume with a target role or job description first.", 400
+        return (
+            "No tailored data available. Please upload a resume with a target role or job description first.",
+            400,
+        )
 
     brief_text = build_tailored_brief(report_data["tailored"])
 
     return Response(
         brief_text,
         mimetype="text/plain",
-        headers={"Content-Disposition": "attachment; filename=offerion_tailored_brief.txt"},
+        headers={
+            "Content-Disposition": "attachment; filename=offerion_tailored_brief.txt"
+        },
     )
 
 

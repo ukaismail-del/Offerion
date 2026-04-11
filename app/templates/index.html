@@ -739,7 +739,9 @@
         <p class="msg-success">{{ message }}</p>
         <a href="/download-report" class="download-btn">Download Report</a>
         {% if tailored %}
-        <a href="/download-tailored-brief" class="download-btn download-btn-alt">Download Tailored Brief</a>
+        <a href="/download-tailored-brief" class="download-btn download-btn-alt"
+          >Download Tailored Brief</a
+        >
         {% endif %}
       </div>
       {% endif %} {% if error %}
@@ -899,6 +901,53 @@
         <ul class="sc-highlights">
           {% for item in scorecard.highlights %}
           <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Action Plan -->
+      {% if action_plan %}
+      <div class="card">
+        <h2 class="card-title">Action Plan</h2>
+        <hr class="card-divider" />
+
+        <div style="background:#fff3e0;border-left:4px solid #ff9800;padding:12px 16px;border-radius:6px;margin-bottom:18px;">
+          <strong style="color:#e65100;">Top Priority:</strong>
+          <span>{{ action_plan.top_priority }}</span>
+        </div>
+
+        {% if action_plan.quick_wins %}
+        <h3>Quick Wins</h3>
+        <ul class="fb-list fb-strength">
+          {% for item in action_plan.quick_wins %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if action_plan.next_revision_steps %}
+        <h3>Next Revision Steps</h3>
+        <ul class="fb-list">
+          {% for item in action_plan.next_revision_steps %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if action_plan.final_checklist %}
+        <h3>Final Checklist</h3>
+        <ul style="list-style:none;padding-left:0;">
+          {% for item in action_plan.final_checklist %}
+          <li style="padding:6px 0;font-size:0.97rem;">
+            {% if item.done %}
+              <span style="color:#388e3c;">&#10003;</span>
+            {% else %}
+              <span style="color:#b71c1c;">&#10007;</span>
+            {% endif %}
+            {{ item.label }}
+          </li>
           {% endfor %}
         </ul>
         {% endif %}

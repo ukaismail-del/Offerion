@@ -39,8 +39,7 @@ def build_tailored_brief(tailored):
         lines.append(sub)
         for kw in keywords:
             lines.append(
-                f"  [{kw['status'].upper()}] {kw['keyword']} "
-                f"\u2014 {kw['action']}"
+                f"  [{kw['status'].upper()}] {kw['keyword']} " f"\u2014 {kw['action']}"
             )
         lines.append("")
 
@@ -60,8 +59,7 @@ def build_tailored_brief(tailored):
         lines.append(sub)
         for sf in skills:
             lines.append(
-                f"  [{sf['priority'].upper()}] {sf['skill']} "
-                f"\u2014 {sf['reason']}"
+                f"  [{sf['priority'].upper()}] {sf['skill']} " f"\u2014 {sf['reason']}"
             )
         lines.append("")
 

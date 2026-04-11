@@ -220,6 +220,37 @@ A focused plain-text export containing only the tailored resume guidance:
 
 All logic is rule-based and local. No AI or external APIs are used.
 
+---
+
+### Module 19 — Action Plan Panel
+
+Generates a prioritized next-step checklist so users know exactly what to fix first.
+
+**File:** `app/utils/action_plan.py`
+
+**Function:** `generate_action_plan(scorecard, feedback, rewrite, tailored, jd_comparison)`
+
+**Returns a dict with:**
+
+- **top_priority** — single sentence identifying the most urgent fix
+- **quick_wins** — 3–5 easy improvements to make right away
+- **next_revision_steps** — 3–5 deeper revisions for the next draft
+- **final_checklist** — 4–6 items with done/todo status
+
+**UI:**
+
+- Displayed as a card between the Scorecard and Resume Improvement Guidance sections
+- Top Priority shown in an orange highlight banner
+- Quick Wins and Next Revision Steps rendered as bullet lists
+- Final Checklist uses ✓/✗ indicators
+
+**Report:**
+
+- ACTION PLAN section added to the downloadable report (between Tailored and End of Report)
+- Includes Top Priority, Quick Wins, Next Revision Steps, and Final Checklist with [DONE]/[TODO] markers
+
+All logic is rule-based and local. No AI or external APIs are used.
+
 ## Run Locally
 
 ```
