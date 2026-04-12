@@ -2284,3 +2284,156 @@ input[type="password"]:focus {
   font-size: var(--font-xs);
   font-weight: 500;
 }
+
+/* Bundle U: Activation Checklist */
+.activation-checklist-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  box-shadow: var(--shadow-xs);
+}
+.activation-checklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+.activation-checklist-count {
+  display: block;
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+}
+.activation-progress-bar-bg {
+  flex: 0 0 160px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  overflow: hidden;
+}
+.activation-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), #3b82f6);
+  border-radius: var(--radius-full);
+}
+.activation-checklist-items {
+  display: grid;
+  gap: var(--space-sm);
+}
+.activation-checklist-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-sm);
+  align-items: center;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.activation-checklist-item.done {
+  background: var(--color-success-light);
+  border-color: #bbf7d0;
+}
+.activation-item-icon {
+  font-size: 1rem;
+}
+.activation-item-content {
+  min-width: 0;
+}
+.activation-item-label {
+  display: block;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.activation-item-desc {
+  display: block;
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+}
+.activation-item-done-badge {
+  font-size: var(--font-xs);
+  font-weight: 700;
+  color: var(--color-success);
+}
+.activation-complete {
+  background: var(--color-success-light);
+  border-color: #bbf7d0;
+  text-align: center;
+}
+.activation-complete-sub {
+  display: block;
+  font-size: var(--font-sm);
+  color: #166534;
+}
+
+/* Bundle U: Empty/alert states */
+.empty-state-card {
+  background: var(--bg-subtle);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  text-align: left;
+}
+.empty-state-title {
+  margin: 0 0 0.3rem;
+  font-size: var(--font-md);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.empty-state-text {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+}
+.alert-badge-count {
+  display: inline-block;
+  margin-left: 0.4rem;
+  font-size: var(--font-xs);
+  font-weight: 700;
+  color: #92400e;
+  background: var(--color-warning-light);
+  border: 1px solid #fbbf24;
+  border-radius: var(--radius-full);
+  padding: 0.08rem 0.45rem;
+  vertical-align: middle;
+}
+.alert-row.alert-overdue {
+  background: var(--color-danger-light);
+  border-radius: var(--radius-sm);
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
+}
+.alert-overdue-badge {
+  margin-left: 0.25rem;
+  font-size: var(--font-xs);
+  font-weight: 700;
+  color: #b91c1c;
+}
+
+/* Bundle U: Founder metrics extras */
+.funnel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-sm);
+  margin-bottom: var(--space-md);
+}
+.funnel-table th,
+.funnel-table td {
+  padding: 0.55rem 0.6rem;
+  border-bottom: 1px solid var(--border-default);
+  text-align: left;
+}
+.funnel-pct-good {
+  color: var(--color-success);
+  font-weight: 700;
+}
+.funnel-pct-warn {
+  color: var(--color-warning);
+  font-weight: 700;
+}
+.funnel-pct-risk {
+  color: var(--color-danger);
+  font-weight: 700;
+}

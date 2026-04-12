@@ -61,7 +61,73 @@
           <div class="metric-value">{{ events_7d }}</div>
           <div class="metric-label">Events (7d)</div>
         </div>
+        <div class="metric-card">
+          <div class="metric-value">{{ users_with_saved_jobs }}</div>
+          <div class="metric-label">Users With Saved Jobs</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">{{ users_with_packages }}</div>
+          <div class="metric-label">Users With Packages</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">{{ total_alerts }}</div>
+          <div class="metric-label">Total Alerts</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">{{ active_trials }}</div>
+          <div class="metric-label">Active Trials</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">{{ paid_users }}</div>
+          <div class="metric-label">Paid Users</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">{{ logins_7d }}</div>
+          <div class="metric-label">Logins (7d)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">{{ resume_pct }}%</div>
+          <div class="metric-label">Signup→Resume Rate</div>
+        </div>
       </div>
+
+      <h2 style="margin-bottom: var(--space-md)">Activation Funnel</h2>
+      {% if funnel %}
+      <table class="funnel-table">
+        <thead>
+          <tr>
+            <th>Step</th>
+            <th>Users</th>
+            <th>Conversion</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in funnel %}
+          <tr>
+            <td>{{ row.label }}</td>
+            <td>{{ row.count }}</td>
+            <td>
+              <span
+                class="{% if row.pct >= 70 %}funnel-pct-good{% elif row.pct >= 40 %}funnel-pct-warn{% else %}funnel-pct-risk{% endif %}"
+              >
+                {{ row.pct }}%
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p
+        style="
+          margin: 0 0 var(--space-lg);
+          font-size: var(--font-sm);
+          color: var(--text-muted);
+        "
+      >
+        Focus drops below 40% first; that is where onboarding friction is likely
+        highest.
+      </p>
+      {% endif %}
 
       <h2 style="margin-bottom: var(--space-md)">Recent Activity</h2>
 

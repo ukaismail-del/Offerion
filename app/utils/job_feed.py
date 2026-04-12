@@ -89,10 +89,15 @@ def get_unified_jobs(
     """
     # ── Build smart query ────────────────────────────────────────
     api_query = query
+    query_source = "manual"
     if not api_query and target_role:
         api_query = build_search_query(target_role, resume_text or "")
+        query_source = "target_role"
     if not api_query and resume_skills:
         api_query = build_resume_query(resume_skills)
+        query_source = "resume_skills"
+    if not api_query:
+        query_source = "broad"
 
     logger.info("Job feed query: %s", api_query or "(none)")
 
@@ -102,6 +107,7 @@ def get_unified_jobs(
     # ── Fetch external with fallback ─────────────────────────────
     external = []
     used_fallback = False
+    fallback_query_used = None
     fetch_limit = max(limit, 50)
 
     # Clean location — avoid sending empty strings
@@ -143,6 +149,7 @@ def get_unified_jobs(
                 continue
             if external:
                 used_fallback = True
+                fallback_query_used = fq
                 logger.info("Fallback '%s' returned %d jobs", fq, len(external))
                 break
 
@@ -177,6 +184,9 @@ def get_unified_jobs(
     # Attach fallback flag so callers can show a banner
     result = _TaggedList(result)
     result.used_fallback = used_fallback
+    result.primary_query = api_query
+    result.fallback_query = fallback_query_used
+    result.query_source = query_source
     return result
 
 

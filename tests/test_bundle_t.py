@@ -473,9 +473,12 @@ class TestBT02UserStatePersistence(unittest.TestCase):
 
         app, _ = _make_client()
         with app.app_context():
-            save_user_state("test-user-t", {
-                "report_data": {"profile": _PROFILE, "match": _MATCH},
-            })
+            save_user_state(
+                "test-user-t",
+                {
+                    "report_data": {"profile": _PROFILE, "match": _MATCH},
+                },
+            )
 
             target = {"report_data": {"custom": "data"}}
             load_user_state("test-user-t", target)
@@ -486,10 +489,13 @@ class TestBT02UserStatePersistence(unittest.TestCase):
 
         app, client = _make_client()
         with app.app_context():
-            save_user_state("test-user-t", {
-                "report_data": {"profile": _PROFILE, "match": _MATCH},
-                "resume_text": "Persisted resume text",
-            })
+            save_user_state(
+                "test-user-t",
+                {
+                    "report_data": {"profile": _PROFILE, "match": _MATCH},
+                    "resume_text": "Persisted resume text",
+                },
+            )
 
         with client.session_transaction() as sess:
             sess["user_id"] = "test-user-t"

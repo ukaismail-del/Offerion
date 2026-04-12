@@ -64,9 +64,46 @@
           </div>
         </div>
       </div>
-      {% elif onboarding_progress and onboarding_progress.complete %}
+      {% endif %}
+      {% if onboarding_progress and onboarding_progress.complete %}
       <div class="onboarding-progress-card onboarding-complete">
         <strong>&#x2705; Onboarding Complete</strong> — You're all set!
+      </div>
+      {% endif %}
+
+      <!-- Bundle U: Activation Checklist -->
+      {% if activation_checklist and not activation_checklist.all_done %}
+      <div class="activation-checklist-card">
+        <div class="activation-checklist-header">
+          <div>
+            <strong>Your Activation Progress</strong>
+            <span class="activation-checklist-count">{{ activation_checklist.done_count }} of {{ activation_checklist.total }} complete</span>
+          </div>
+          <div class="activation-progress-bar-bg">
+            <div class="activation-progress-bar" style="width: {{ activation_checklist.pct }}%"></div>
+          </div>
+        </div>
+        <div class="activation-checklist-items">
+          {% for item in activation_checklist["items"] %}
+          <div class="activation-checklist-item {% if item.done %}done{% endif %}">
+            <span class="activation-item-icon">{% if item.done %}&#x2705;{% else %}{{ item.icon }}{% endif %}</span>
+            <div class="activation-item-content">
+              <span class="activation-item-label">{{ item.label }}</span>
+              <span class="activation-item-desc">{{ item.description }}</span>
+            </div>
+            {% if not item.done %}
+            <a href="{{ item.route }}" class="btn btn-primary btn-sm">Start</a>
+            {% else %}
+            <span class="activation-item-done-badge">Done</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% elif activation_checklist and activation_checklist.all_done %}
+      <div class="activation-checklist-card activation-complete">
+        <strong>&#x1F389; You've completed all activation steps!</strong>
+        <span class="activation-complete-sub">You're getting the most out of Offerion.</span>
       </div>
       {% endif %}
 
@@ -132,6 +169,18 @@
         {% endfor %}
       </div>
       {% endif %}
+
+      {% if journey_state %}
+      <div class="guidance-banner {% if journey_state.tone == 'warning' %}guidance-warning{% endif %}">
+        <p class="guidance-text"><strong>{{ journey_state.title }}</strong> {{ journey_state.description }}</p>
+        {% if journey_state.cta_route %}
+        <div style="margin-top:0.6rem">
+          <a href="{{ journey_state.cta_route }}" class="btn btn-primary btn-sm">{{ journey_state.cta_label }}</a>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
       <!-- ═══════════════════════════════════════════
      SECTION 1 — HERO + PRIMARY ACTIONS (M50)
      ═══════════════════════════════════════════ -->
@@ -158,7 +207,12 @@
         <!-- How It Works (show only when no analysis exists) -->
         {% if not report_data_exists %}
         <div class="guidance-banner" id="first-run-guidance">
-          <p class="guidance-text">Upload your resume below to get started. You'll receive a match score, tailored guidance, and a ready-to-use application package.</p>
+          <p class="guidance-text"><strong>Welcome to Offerion!</strong> Start by uploading your resume below. In seconds, you'll receive:</p>
+          <ul style="margin:0.5rem 0 0;padding-left:1.2rem;font-size:var(--font-sm);color:var(--text-secondary)">
+            <li>A match score for your target role</li>
+            <li>Tailored guidance and keyword gap analysis</li>
+            <li>A ready-to-use application package</li>
+          </ul>
         </div>
         <div class="how-strip">
           <div class="how-step">
@@ -432,9 +486,19 @@
 
         {% if recommended_jobs %}
         {% if jobs_used_fallback %}
-        <div class="fallback-banner" style="background: var(--bg-card); border-left: 4px solid var(--accent); padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 6px; color: var(--text-muted); font-size: 0.9rem;">
-          Showing broader matches to help you get started
+        <div class="fallback-banner" style="background: var(--bg-card); border-left: 4px solid var(--color-warning); padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 6px; font-size: 0.9rem;">
+          <strong style="color: var(--text-secondary)">Showing broader matches</strong>
+          <span style="color: var(--text-muted)">
+            — We couldn't find enough results for
+            "{{ jobs_primary_query or (job_query if job_query else 'your current profile') }}"
+            {% if jobs_fallback_query %} so Offerion broadened to "{{ jobs_fallback_query }}".{% else %} so Offerion broadened your search criteria.{% endif %}
+            {% if jobs_query_source == 'target_role' %} This query came from your target role.{% elif jobs_query_source == 'resume_skills' %} This query came from your resume skills.{% endif %}
+          </span>
         </div>
+        {% else %}
+        <p style="color: var(--text-muted); font-size: var(--font-sm); margin-bottom: var(--space-md);">
+          These jobs were matched based on your resume skills{% if job_query %} and search query{% endif %}. Higher scores mean better skill alignment.
+        </p>
         {% endif %}
         <div class="job-grid">
           {% for rj in recommended_jobs %}
@@ -483,16 +547,19 @@
               <span class="tag tag-missing">{{ sk }}</span>
               {% endfor %}
             </div>
+            <p class="job-action-copy" style="margin:0.2rem 0 0;color:var(--text-muted);font-size:var(--font-xs)">
+              Next action: save this role, review fit details, then prepare your application package.
+            </p>
             <div class="job-action-row">
               {% if has_access('prepare_application') %}
               <a href="/job-match/{{ rj.id }}" class="btn btn-primary btn-sm btn-loading-trigger"
+                data-loading-label="Preparing…"
                 >Prepare Application</a
               >
               {% else %}
-              <span
-                class="btn btn-primary btn-sm btn-locked"
-                title="Upgrade to access this feature"
-                >Prepare Application</span
+              <a href="/pricing" class="btn btn-primary btn-sm btn-locked"
+                title="Upgrade to Operator to prepare applications"
+                >&#x1F512; Prepare Application</a
               >
               {% endif %} {% if rj.apply_url or rj.url %}
               <a
@@ -504,7 +571,14 @@
               >
               {% endif %} {% if has_access('save_job') %}
               <a href="/job-match/{{ rj.id }}" class="btn btn-secondary btn-sm"
-                >Save Job</a
+                title="Save this job to your tracker"
+                >Save &amp; View Fit</a
+              >
+              {% else %}
+              <a href="/pricing" class="btn btn-secondary btn-sm btn-locked"
+                title="Upgrade to Operator to save jobs"
+                style="opacity:0.7"
+                >&#x1F512; Save Job</a
               >
               {% endif %} {% if rj.url %}
               <a
@@ -528,11 +602,23 @@
           <a href="/pricing" class="btn btn-primary btn-sm">Upgrade to continue</a>
         </div>
         {% else %}
-        <p
-          style="text-align: center; color: var(--text-muted); padding: 1rem 0"
-        >
-          No jobs match your filters. Try broadening your search.
-        </p>
+        <div class="empty-state-card">
+          <p class="empty-state-title">No matching jobs found</p>
+          <p class="empty-state-text">
+            {% if job_query or job_location or job_remote or job_source %}
+            Your filters didn&rsquo;t match any jobs. Try broadening your search or clear the filters above.
+            {% elif not report_data_exists %}
+            Upload your resume first to get personalized job recommendations based on your skills.
+            {% else %}
+            We couldn&rsquo;t find jobs matching your profile right now. Try adding a more specific target role when you analyze your resume.
+            {% endif %}
+          </p>
+          {% if job_query or job_location or job_remote or job_source %}
+          <a href="/#section-jobs" class="btn btn-secondary btn-sm">Clear Filters</a>
+          {% elif not report_data_exists %}
+          <a href="#section-actions" class="btn btn-primary btn-sm">Upload Resume</a>
+          {% endif %}
+        </div>
         {% endif %}
         {% endif %}
       </div>
@@ -905,9 +991,15 @@
             </div>
           </div>
           {% endfor %} {% else %}
-          <p class="empty-state">
-            No saved jobs yet. Save a job after analyzing your resume.
-          </p>
+          <div class="empty-state-card" style="border:none;box-shadow:none;margin:0;padding:0.5rem 0">
+            <p class="empty-state-text" style="margin:0">
+              {% if report_data_exists %}
+              No saved jobs yet. Browse the recommended jobs above and save one to start tracking your applications.
+              {% else %}
+              Upload your resume to get job recommendations, then save jobs to track here.
+              {% endif %}
+            </p>
+          </div>
           {% endif %} {% if report_data_exists %}
           <div style="margin-top: var(--space-md)">
             {% if has_access('save_job') %}
@@ -931,13 +1023,29 @@
 
         <!-- Upcoming Alerts (M36) -->
         <div class="card">
-          <h2 class="card-title">Upcoming Alerts</h2>
+          <h2 class="card-title">
+            Upcoming Alerts
+            {% if alert_due_soon_count %}
+            <span class="alert-badge-count">{{ alert_due_soon_count }} due</span>
+            {% endif %}
+          </h2>
           <hr class="card-divider" />
+          {% if alert_overdue_count or alert_due_soon_count %}
+          <p class="empty-state-text" style="margin:0 0 0.6rem;color:var(--text-secondary)">
+            {% if alert_overdue_count %}<strong>{{ alert_overdue_count }}</strong> overdue{% if alert_due_soon_count %} and {% endif %}{% endif %}
+            {% if alert_due_soon_count %}<strong>{{ alert_due_soon_count }}</strong> due in the next 3 days{% endif %}.
+          </p>
+          {% endif %}
           {% if alerts %} {% for a in alerts %}
-          <div class="alert-row">
+          <div class="alert-row{% if a.due_at <= now_date %} alert-overdue{% endif %}">
             <div>
               <span class="alert-msg">{{ a.message }}</span>
-              <span class="alert-due">Due: {{ a.due_at }}</span>
+              <span class="alert-due">
+                Due: {{ a.due_at }}
+                {% if a.due_at <= now_date %}
+                <span class="alert-overdue-badge">Overdue</span>
+                {% endif %}
+              </span>
             </div>
             <div class="alert-actions">
               <a href="/complete-alert/{{ a.id }}" class="link-success"
@@ -947,10 +1055,22 @@
             </div>
           </div>
           {% endfor %} {% else %}
-          <p class="empty-state">
-            No alerts yet. Create a follow-up reminder from a saved job.
-          </p>
+          <div class="empty-state-card" style="border:none;box-shadow:none;margin:0;padding:0.5rem 0">
+            <p class="empty-state-text" style="margin:0">
+              No alerts yet. Save a job and create a follow-up reminder to stay on top of your applications.
+              {% if saved_jobs %}
+              <br><a href="/job/{{ saved_jobs[0].id }}" class="btn btn-secondary btn-sm" style="margin-top:0.5rem">Create alert for {{ saved_jobs[0].title }}</a>
+              {% endif %}
+            </p>
+          </div>
           {% endif %}
+          <p class="empty-state-text" style="margin:0.6rem 0 0">
+            {% if email_reminders_enabled %}
+            Email reminders are enabled and will send when alerts are due.
+            {% else %}
+            In-app reminders are live. Email reminders are coming soon.
+            {% endif %}
+          </p>
         </div>
       </div>
       <!-- /section-outputs -->

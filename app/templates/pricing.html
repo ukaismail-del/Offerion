@@ -117,6 +117,23 @@
             style="pointer-events: none; opacity: 0.6"
             >Current Plan</span
           >
+          {% else %} {% if is_authenticated and stripe_enabled %}
+          <form
+            method="POST"
+            action="/checkout/{{ tier_key }}"
+            style="width: 100%"
+          >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button
+              type="submit"
+              class="btn {% if tier_key == 'operator' %}btn-primary{% else %}btn-outline{% endif %} pricing-btn"
+            >
+              {% if is_trial %} Keep {{ tier.label }} After Trial {% elif
+              full_tier_order.index(tier_key) > full_tier_order.index(user_tier)
+              %} Checkout {{ tier.label }} {% else %} Switch to {{ tier.label }}
+              {% endif %}
+            </button>
+          </form>
           {% else %}
           <a
             href="/upgrade/{{ tier_key }}{% if gate_return_to %}?return_to={{ gate_return_to }}{% endif %}"
@@ -127,10 +144,36 @@
             %} Upgrade to {{ tier.label }} {% else %} Switch to {{ tier.label }}
             {% endif %}
           </a>
-          {% endif %}
+          {% endif %} {% endif %}
         </div>
         {% endfor %}
       </div>
+
+      {% if is_authenticated and stripe_enabled %}
+      <p
+        style="
+          text-align: center;
+          margin-top: var(--space-md);
+          font-size: var(--font-sm);
+          color: var(--text-muted);
+        "
+      >
+        Secure checkout is enabled. Plan changes take effect after payment
+        confirmation.
+      </p>
+      {% elif is_authenticated and not stripe_enabled %}
+      <p
+        style="
+          text-align: center;
+          margin-top: var(--space-md);
+          font-size: var(--font-sm);
+          color: var(--text-muted);
+        "
+      >
+        Payments are disabled in this beta environment. Upgrades are applied
+        instantly for testing.
+      </p>
+      {% endif %}
 
       <p
         style="

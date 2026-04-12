@@ -1,6 +1,6 @@
 ﻿import logging
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import (
     Blueprint,
@@ -68,6 +68,8 @@ from app.utils.session_memory import (
     set_last_action,
     is_empty,
 )
+from app.utils.activation_checklist import get_checklist_state
+from app.utils.email_notifications import email_service
 from app.utils.activity_timeline import record_event, get_timeline
 from app.utils.provenance import build_provenance, get_source_label
 from app.utils.next_best_action import get_next_action
@@ -296,6 +298,13 @@ def _gate(feature_key):
     if has_access(_user_tier(), feature_key):
         return None
     needed = required_tier_for(feature_key)
+    session["_has_hit_gate"] = True
+    _log_db_activity(
+        session.get("user_id"),
+        "feature_gated",
+        "Feature gated: %s" % feature_key,
+        {"feature": feature_key, "required_tier": needed, "path": request.path},
+    )
     # Feature-specific gate messages for conversion clarity (M118)
     gate_messages = {
         "enhance_resume": (
@@ -678,6 +687,9 @@ def dashboard():
     )
 
     jobs_used_fallback = False
+    jobs_primary_query = None
+    jobs_fallback_query = None
+    jobs_query_source = ""
     if report_data:
         # Extract resume skills to drive API query (different resumes → different jobs)
         _resume_skills_for_query = []
@@ -706,6 +718,9 @@ def dashboard():
             resume_text=_resume_text if not job_query else None,
         )
         jobs_used_fallback = getattr(filtered_jobs, "used_fallback", False)
+        jobs_primary_query = getattr(filtered_jobs, "primary_query", None)
+        jobs_fallback_query = getattr(filtered_jobs, "fallback_query", None)
+        jobs_query_source = getattr(filtered_jobs, "query_source", "")
         recommended_jobs = match_jobs(report_data, jobs=filtered_jobs)
 
         # Bundle W — job view enforcement
@@ -758,6 +773,99 @@ def dashboard():
         except Exception:
             pass
 
+    # Bundle U: activation checklist
+    _checklist_user = None
+    if user_id:
+        try:
+            _checklist_user = UserIdentity.query.get(user_id)
+        except Exception:
+            pass
+    activation_checklist = get_checklist_state(user=_checklist_user, session=session)
+
+    # Bundle U: first-session activation clarity panel.
+    if not report_data:
+        journey_state = {
+            "title": "Start here: Upload your resume",
+            "description": (
+                "Offerion will extract your resume, score role fit, and generate"
+                " tailored next steps in one run."
+            ),
+            "cta_label": "Upload and analyze now",
+            "cta_route": "#section-actions",
+            "tone": "info",
+        }
+    elif report_data and not saved_jobs:
+        _score = (report_data.get("match") or {}).get("score")
+        _score_line = f" Current fit score: {_score}/100." if _score is not None else ""
+        journey_state = {
+            "title": "Report ready: pick your first target job",
+            "description": (
+                "Your analysis is complete."
+                + _score_line
+                + " Save one recommended job to unlock focused prep and tracking."
+            ),
+            "cta_label": "Review jobs",
+            "cta_route": "#section-jobs",
+            "tone": "success",
+        }
+    elif saved_jobs and not (
+        session.get("cover_letter_draft") or session.get("enhanced_cover_letter")
+    ):
+        journey_state = {
+            "title": "Nice momentum: generate your first cover letter",
+            "description": (
+                "You have a saved job. Next, generate a targeted cover letter "
+                "to complete your first application package."
+            ),
+            "cta_label": "Generate cover letter",
+            "cta_route": (
+                "/generate-cover-letter"
+                if has_access(_user_tier(), "generate_cover_letter")
+                else "/pricing"
+            ),
+            "tone": "info",
+        }
+    elif saved_jobs and not alerts:
+        journey_state = {
+            "title": "Stay consistent: add a reminder",
+            "description": (
+                "Set one follow-up reminder so Offerion can help you close the loop"
+                " after applying."
+            ),
+            "cta_label": "Open saved job",
+            "cta_route": (
+                "/job/%s" % saved_jobs[0].get("id", "") if saved_jobs else "/dashboard"
+            ),
+            "tone": "warning",
+        }
+    else:
+        journey_state = {
+            "title": "Activation rolling",
+            "description": "You have analysis, saved jobs, and reminders in progress. Keep following your next best action.",
+            "cta_label": "Continue workflow",
+            "cta_route": (
+                "/resume-preview" if session.get("report_data") else "/dashboard"
+            ),
+            "tone": "success",
+        }
+
+    # Bundle U: count overdue + due-soon alerts for dashboard badges.
+    alert_due_soon_count = 0
+    alert_overdue_count = 0
+    _today = datetime.now().date()
+    for _a in alerts:
+        try:
+            _due_raw = _a.get("due_at", "")
+            if not _due_raw:
+                continue
+            _due = datetime.strptime(_due_raw, "%Y-%m-%d").date()
+            if _due < _today:
+                alert_overdue_count += 1
+            elif _due <= (_today + timedelta(days=3)):
+                alert_due_soon_count += 1
+        except Exception:
+            pass
+
     return render_template(
         "index.html",
         message=message,
@@ -792,6 +900,9 @@ def dashboard():
         upgrade_nudge_message=_upgrade_nudge(),
         recommended_jobs=recommended_jobs,
         jobs_used_fallback=jobs_used_fallback,
+        jobs_primary_query=jobs_primary_query,
+        jobs_fallback_query=jobs_fallback_query,
+        jobs_query_source=jobs_query_source,
         job_query=job_query,
         job_location=job_location,
         job_remote=job_remote,
@@ -809,6 +920,15 @@ def dashboard():
         onboarding_progress=onboarding_progress,
         jobs_capped=jobs_capped,
         billing=_billing_ctx(user_id),
+        activation_checklist=activation_checklist,
+        alert_due_soon_count=alert_due_soon_count,
+        alert_overdue_count=alert_overdue_count,
+        journey_state=journey_state,
+        email_reminders_enabled=email_service.enabled,
+        now_date=datetime.now().strftime("%Y-%m-%d"),
+        current_user_email=session.get("current_user_email"),
+        is_admin=session.get("is_admin", False),
+        is_authenticated=session.get("is_authenticated", False),
         **_tier_ctx(),
         **_onboarding_ctx(),
     )
@@ -1918,8 +2038,15 @@ def prepare_application():
 @main_bp.route("/pricing")
 def pricing():
     _log_event("upgrade_clicked")
+    session["_visited_pricing"] = True
     gate_message = session.pop("gate_message", None)
     gate_return_to = session.pop("gate_return_to", None)
+    try:
+        from app.utils.stripe_billing import get_stripe_config
+
+        stripe_enabled = bool(get_stripe_config().get("has_secret_key"))
+    except Exception:
+        stripe_enabled = False
     # Don't show trial or elite as purchasable plans
     display_order = [t for t in TIER_ORDER if t not in ("trial", "elite")]
     return render_template(
@@ -1929,6 +2056,9 @@ def pricing():
         full_tier_order=TIER_ORDER,
         gate_message=gate_message,
         gate_return_to=gate_return_to,
+        stripe_enabled=stripe_enabled,
+        is_authenticated=session.get("is_authenticated", False),
+        is_admin=session.get("is_admin", False),
         **_tier_ctx(),
     )
 
@@ -1966,9 +2096,16 @@ def checkout(tier_name):
     if not user_id:
         return redirect(url_for("main.login_page"))
 
+    if tier_name not in TIER_ORDER or tier_name == "trial":
+        return redirect(url_for("main.pricing"))
+
     conf = get_stripe_config()
     if not conf["has_secret_key"]:
         # Stripe not configured — fall back to direct upgrade
+        session["gate_message"] = (
+            "Payments are not enabled in this environment. "
+            "Your upgrade is applied immediately for beta testing."
+        )
         return redirect(url_for("main.upgrade", tier_name=tier_name))
 
     user = UserIdentity.query.get(user_id)
@@ -1994,7 +2131,14 @@ def checkout(tier_name):
 def checkout_success():
     """Return page after successful Stripe checkout."""
     session["gate_message"] = (
-        "Payment received! Your plan will activate shortly."
+        "Payment received! Your plan is now active. "
+        "New features are unlocked and ready on your dashboard."
+    )
+    session["dashboard_notice_message"] = (
+        "Payment confirmed and your plan is active. Continue your workflow below."
+    )
+    _log_db_activity(
+        session.get("user_id"), "checkout_success", "Stripe checkout completed"
     )
     return redirect(url_for("main.pricing"))
 
@@ -2094,6 +2238,54 @@ def founder_metrics():
         .all()
     )
 
+    # Bundle U: additional beta activation signals
+    from app.models import SavedJob, ApplicationPackage, Alert
+
+    users_with_saved_jobs = (
+        app_db.session.query(func.count(func.distinct(SavedJob.user_id))).scalar() or 0
+    )
+    users_with_packages = (
+        app_db.session.query(
+            func.count(func.distinct(ApplicationPackage.user_id))
+        ).scalar()
+        or 0
+    )
+    total_alerts = Alert.query.count()
+    active_trials = UserIdentity.query.filter(UserIdentity.tier == "trial").count()
+    paid_users = UserIdentity.query.filter(
+        UserIdentity.subscription_status == "active"
+    ).count()
+    logins_7d = ActivityEvent.query.filter(
+        ActivityEvent.event_type == "login_completed",
+        ActivityEvent.created_at >= seven_days_ago,
+    ).count()
+    resume_pct = round(users_with_resume / total_users * 100, 1) if total_users else 0
+
+    # Activation funnel: signup → resume → matches → save_job → package
+    funnel = [
+        {"label": "Signed Up", "count": total_signups, "pct": 100},
+        {
+            "label": "Uploaded Resume",
+            "count": users_with_resume,
+            "pct": round(users_with_resume / max(total_signups, 1) * 100, 1),
+        },
+        {
+            "label": "Generated Matches",
+            "count": users_with_matches,
+            "pct": round(users_with_matches / max(total_signups, 1) * 100, 1),
+        },
+        {
+            "label": "Saved a Job",
+            "count": users_with_saved_jobs,
+            "pct": round(users_with_saved_jobs / max(total_signups, 1) * 100, 1),
+        },
+        {
+            "label": "Created Package",
+            "count": users_with_packages,
+            "pct": round(users_with_packages / max(total_signups, 1) * 100, 1),
+        },
+    ]
+
     return render_template(
         "founder_metrics.html",
         total_users=total_users,
@@ -2105,6 +2297,14 @@ def founder_metrics():
         signups_7d=signups_7d,
         events_7d=events_7d,
         recent_events=recent_events,
+        users_with_saved_jobs=users_with_saved_jobs,
+        users_with_packages=users_with_packages,
+        total_alerts=total_alerts,
+        active_trials=active_trials,
+        paid_users=paid_users,
+        logins_7d=logins_7d,
+        resume_pct=resume_pct,
+        funnel=funnel,
     )
 
 
@@ -2326,6 +2526,8 @@ def landing():
         "landing.html",
         referrer=session.get("referrer"),
         email_capture_status=email_status,
+        is_authenticated=session.get("is_authenticated", False),
+        is_admin=session.get("is_admin", False),
     )
 
 

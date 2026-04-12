@@ -3,6 +3,8 @@
 import os
 import sys
 import unittest
+from datetime import datetime, timedelta
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -490,6 +492,222 @@ class TestFullAuthFlow(unittest.TestCase):
         resp = client.get("/dashboard")
         self.assertEqual(resp.status_code, 200)
         self.assertIn(b"flow@test.com", resp.data)
+
+
+class TestBundleUChecklist(unittest.TestCase):
+    """Bundle U checklist state and persistence behavior."""
+
+    def test_checklist_uses_persisted_db_state(self):
+        app, client = _make_client()
+        _signup(client, email="checklist@test.com", password="secret123")
+
+        with app.app_context():
+            from app.db import db
+            from app.models import (
+                ActivityEvent,
+                ApplicationPackage,
+                SavedJob,
+                UserIdentity,
+            )
+            from app.utils.activation_checklist import get_checklist_state
+
+            user = UserIdentity.query.filter_by(email="checklist@test.com").first()
+            user.has_uploaded_resume = True
+            user.has_generated_matches = True
+
+            db.session.add(SavedJob(user_id=user.id, title="Backend Engineer"))
+            db.session.add(ApplicationPackage(user_id=user.id, label="Pkg 1"))
+            db.session.add(
+                ActivityEvent(
+                    user_id=user.id,
+                    event_type="cover_letter_generated",
+                    label="Generated CL",
+                )
+            )
+            db.session.add(
+                ActivityEvent(
+                    user_id=user.id,
+                    event_type="feature_gated",
+                    label="Blocked action",
+                )
+            )
+            db.session.commit()
+
+            state = get_checklist_state(user=user, session={"user_tier": "free"})
+            done_by_key = {item["key"]: item["done"] for item in state["items"]}
+
+            self.assertTrue(done_by_key.get("upload_resume"))
+            self.assertTrue(done_by_key.get("review_report"))
+            self.assertTrue(done_by_key.get("save_job"))
+            self.assertTrue(done_by_key.get("generate_cover_letter"))
+            self.assertTrue(done_by_key.get("prepare_package"))
+            self.assertTrue(done_by_key.get("explore_upgrade"))
+
+    def test_upgrade_checklist_item_hidden_until_gate_hit(self):
+        app, client = _make_client()
+        _signup(client, email="nogate@test.com", password="secret123")
+
+        with app.app_context():
+            from app.models import UserIdentity
+            from app.utils.activation_checklist import get_checklist_state
+
+            user = UserIdentity.query.filter_by(email="nogate@test.com").first()
+            state = get_checklist_state(user=user, session={"user_tier": "free"})
+            keys = [item["key"] for item in state["items"]]
+            self.assertNotIn("explore_upgrade", keys)
+
+            state_after_gate = get_checklist_state(
+                user=user,
+                session={"user_tier": "free", "_has_hit_gate": True},
+            )
+            keys_after_gate = [item["key"] for item in state_after_gate["items"]]
+            self.assertIn("explore_upgrade", keys_after_gate)
+
+
+class TestBundleUOnboardingAndEmptyStates(unittest.TestCase):
+    """Bundle U onboarding clarity and first-run guidance."""
+
+    def test_dashboard_first_run_guidance_is_clear(self):
+        app, client = _make_client()
+        _signup(client, email="firstrun@test.com", password="secret123")
+        resp = client.get("/dashboard")
+        html = resp.data.decode()
+        self.assertIn("Welcome to Offerion", html)
+        self.assertIn("Start here: Upload your resume", html)
+
+    def test_dashboard_no_jobs_empty_state(self):
+        app, client = _make_client()
+        _signup(client, email="nojobs@test.com", password="secret123")
+        with client.session_transaction() as s:
+            s["report_data"] = {
+                "profile": {"skills": ["python"]},
+                "match": {"target_role": "Engineer", "score": 64},
+            }
+
+        with patch("app.routes.get_unified_jobs", return_value=[]), patch(
+            "app.routes.match_jobs", return_value=[]
+        ):
+            resp = client.get("/dashboard")
+            html = resp.data.decode()
+            self.assertIn("No matching jobs found", html)
+
+
+class TestBundleUAlertsAndJobsUX(unittest.TestCase):
+    """Bundle U alert visibility and fallback messaging."""
+
+    def test_alert_summary_shows_overdue_and_due_soon(self):
+        app, client = _make_client()
+        _signup(client, email="alerts@test.com", password="secret123")
+        overdue = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
+        soon = (datetime.utcnow() + timedelta(days=2)).strftime("%Y-%m-%d")
+
+        with client.session_transaction() as s:
+            s["report_data"] = {"profile": {"skills": ["python"]}}
+            s["alerts"] = [
+                {
+                    "id": "a1",
+                    "job_id": "j1",
+                    "type": "follow_up",
+                    "message": "Overdue alert",
+                    "due_at": overdue,
+                    "is_complete": False,
+                },
+                {
+                    "id": "a2",
+                    "job_id": "j2",
+                    "type": "follow_up",
+                    "message": "Due soon alert",
+                    "due_at": soon,
+                    "is_complete": False,
+                },
+            ]
+
+        resp = client.get("/dashboard")
+        html = resp.data.decode()
+        self.assertIn("Overdue", html)
+        self.assertIn("due in the next 3 days", html)
+
+    def test_fallback_job_message_explains_query_broadening(self):
+        app, client = _make_client()
+        _signup(client, email="fallback@test.com", password="secret123")
+
+        class _FakeJobs(list):
+            used_fallback = True
+            primary_query = "python backend"
+            fallback_query = "developer"
+            query_source = "resume_skills"
+
+        fake_jobs = _FakeJobs(
+            [
+                {
+                    "id": "job1",
+                    "title": "Backend Developer",
+                    "company": "Acme",
+                    "location": "Remote",
+                    "skills": ["python"],
+                    "matched_skills": ["python"],
+                    "missing_skills": [],
+                    "score": 0.9,
+                    "match_level": "Strong",
+                }
+            ]
+        )
+
+        with client.session_transaction() as s:
+            s["report_data"] = {
+                "profile": {"skills": ["python"]},
+                "match": {"target_role": "Backend Engineer", "score": 78},
+            }
+
+        with patch("app.routes.get_unified_jobs", return_value=fake_jobs), patch(
+            "app.routes.match_jobs", return_value=fake_jobs
+        ):
+            resp = client.get("/dashboard")
+            html = resp.data.decode()
+            self.assertIn("Showing broader matches", html)
+            self.assertIn("python backend", html)
+            self.assertIn("developer", html)
+
+
+class TestBundleUUpgradeClarity(unittest.TestCase):
+    """Bundle U gated flow and conversion messaging checks."""
+
+    def test_gated_route_sets_gate_tracking_flag(self):
+        app, client = _make_client()
+        _signup(client, email="gateflag@test.com", password="secret123")
+        with app.app_context():
+            from app.db import db
+            from app.models import UserIdentity
+
+            user = UserIdentity.query.filter_by(email="gateflag@test.com").first()
+            user.tier = "free"
+            db.session.commit()
+        with client.session_transaction() as s:
+            s["user_tier"] = "free"
+
+        resp = client.get("/create-followup-alert/job-1", follow_redirects=True)
+        html = resp.data.decode()
+        self.assertIn("Follow-up alerts are a Professional feature", html)
+        with client.session_transaction() as s:
+            self.assertTrue(s.get("_has_hit_gate"))
+
+    def test_checkout_success_returns_to_dashboard_with_notice(self):
+        app, client = _make_client()
+        _signup(client, email="checkoutmsg@test.com", password="secret123")
+        resp = client.get("/checkout/success", follow_redirects=False)
+        self.assertIn(resp.status_code, (302, 303))
+        self.assertIn("/pricing", resp.headers.get("Location", ""))
+
+        resp = client.get("/pricing")
+        html = resp.data.decode()
+        self.assertIn("New features are unlocked", html)
+
+    def test_pricing_shows_stripe_disabled_beta_message(self):
+        app, client = _make_client()
+        _signup(client, email="pricingmsg@test.com", password="secret123")
+        resp = client.get("/pricing")
+        html = resp.data.decode()
+        self.assertIn("Payments are disabled in this beta environment", html)
 
 
 if __name__ == "__main__":
