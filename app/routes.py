@@ -599,7 +599,7 @@ def dashboard():
                                 "status": "failed",
                             }
                         else:
-                            message = f"Upload successful: {filename}"
+                            message = "Profile initialized — system ready"
                             result = {
                                 "filename": filename,
                                 "filetype": f".{ext}",
@@ -1884,6 +1884,7 @@ def save_job_route():
         active_company=job.get("company", ""),
     )
     _record_activity(user_id, "job_saved", "Saved job: %s" % job["title"])
+    session["dashboard_notice_message"] = "Target locked into system"
     _increment_usage("save_job")
     _log_event("save_job_clicked", {"title": job["title"]})
     return redirect(url_for("main.dashboard"))
@@ -1996,14 +1997,15 @@ def create_followup_alert(job_id):
     alert = create_alert(
         job_id=job_id,
         alert_type="follow_up",
-        message=f"Follow up on {job['title']}" if job else "Follow up on application",
+        message=f"Signal follow-up: {job['title']}" if job else "Signal follow-up",
     )
     alerts = session.get("alerts", [])
     alerts.append(alert)
     session["alerts"] = alerts
     persist_alert(user_id, alert)
-    set_last_action(session, "Follow-up alert created")
-    _record_activity(user_id, "alert_created", "Created follow-up alert")
+    set_last_action(session, "Signal scheduled")
+    _record_activity(user_id, "alert_created", "Signal scheduled")
+    session["dashboard_notice_message"] = "Signal scheduled — tracking active"
     return redirect(url_for("main.open_job", job_id=job_id))
 
 
@@ -2230,7 +2232,11 @@ def checkout(tier_name):
         user_id,
         "upgrade_attempted",
         f"Checkout requested: {tier_name}",
-        {"tier": tier_name, "mode": "stripe", "checkout_ready": conf.get("checkout_ready")},
+        {
+            "tier": tier_name,
+            "mode": "stripe",
+            "checkout_ready": conf.get("checkout_ready"),
+        },
     )
     if not conf.get("checkout_ready"):
         # Stripe not configured — fall back to direct upgrade

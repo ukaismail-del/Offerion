@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pricing — Offerion</title>
+    <title>Access Levels — Offerion</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -19,12 +19,12 @@
         <a href="/" class="top-nav-brand">Offerion</a>
         <div class="top-nav-links">
           {% if is_authenticated %}
-          <a href="/dashboard">Dashboard</a>
-          <a href="/pricing" class="active">Pricing</a>
+          <a href="/dashboard">Command Center</a>
+          <a href="/pricing" class="active">Access Levels</a>
           {% if is_admin %}<a href="/founder/metrics">Metrics</a>{% endif %}
           <a href="/logout">Log Out</a>
           {% else %}
-          <a href="/pricing" class="active">Pricing</a>
+          <a href="/pricing" class="active">Access Levels</a>
           <a href="/login">Log In</a>
           <a href="/signup">Sign Up</a>
           {% endif %}
@@ -51,13 +51,13 @@
       </div>
       {% endif %}
 
-      <!-- Trial Banner -->
+      <!-- System Trial Banner -->
       {% if is_trial and trial_days_left is not none %}
       <div class="trial-banner">
         <span class="trial-icon">🚀</span>
         <span
-          >You're in your <strong>7-day free trial</strong> — all features
-          unlocked.</span
+          >You're in your <strong>7-day system trial</strong> (7-day free trial)
+          — all features unlocked.</span
         >
         <span
           >{{ trial_days_left }} day{{ 's' if trial_days_left != 1 else '' }}
@@ -66,7 +66,7 @@
       </div>
       {% endif %}
 
-      <!-- Pricing Header -->
+      <!-- Access Levels Header -->
       <div style="text-align: center; margin-bottom: var(--space-2xl)">
         <h1
           style="
@@ -76,8 +76,17 @@
             color: var(--text-primary);
           "
         >
-          Choose Your Plan
+          Select Access Level
         </h1>
+        <p
+          style="
+            margin: 0 0 0.5rem;
+            font-size: var(--font-sm);
+            color: var(--text-faint);
+          "
+        >
+          Choose Your Plan
+        </p>
         <p
           style="
             font-size: var(--font-md);
@@ -91,7 +100,14 @@
         </p>
       </div>
 
-      <!-- Pricing Grid -->
+      <!-- Access Levels Grid -->
+      {% set access_labels = { "free": "Observer", "comet": "Builder",
+      "operator": "Operator", "professional": "Commander" } %} {% set
+      designed_for = { "free": "Designed for: getting started and exploring core
+      signals.", "comet": "Designed for: focused builders tailoring resumes and
+      cover letters.", "operator": "Designed for: active applicants running full
+      target workflows.", "professional": "Designed for: high-volume applicants
+      managing advanced operations." } %}
       <div class="pricing-grid">
         {% for tier_key in tier_order %} {% set tier = tiers[tier_key] %}
         <div
@@ -101,10 +117,20 @@
           <div class="pricing-featured-badge">Most Popular</div>
           {% endif %} {% if is_trial and tier_key in ('operator',
           'professional') %}
-          <span class="badge badge-trial-unlock">Unlocked in Trial</span>
+          <span class="badge badge-trial-unlock"
+            >Unlocked in System Trial (Unlocked in Trial)</span
+          >
           {% endif %}
-          <h3 class="pricing-tier-name">{{ tier.label }}</h3>
+          <h3 class="pricing-tier-name">
+            {{ access_labels.get(tier_key, tier.label) }}
+          </h3>
           <p class="pricing-tagline">{{ tier.tagline }}</p>
+          <p
+            class="pricing-tagline"
+            style="font-size: var(--font-xs); margin-top: -0.2rem"
+          >
+            {{ designed_for.get(tier_key, "Designed for: advanced users.") }}
+          </p>
           <div class="pricing-price">{{ tier.price }}</div>
           <ul class="pricing-features">
             {% for feat in tier.features %}
@@ -128,10 +154,11 @@
               type="submit"
               class="btn {% if tier_key == 'operator' %}btn-primary{% else %}btn-outline{% endif %} pricing-btn"
             >
-              {% if is_trial %} Keep {{ tier.label }} After Trial {% elif
-              full_tier_order.index(tier_key) > full_tier_order.index(user_tier)
-              %} Checkout {{ tier.label }} {% else %} Switch to {{ tier.label }}
-              {% endif %}
+              {% if is_trial %} Keep {{ access_labels.get(tier_key, tier.label)
+              }} After System Trial {% elif full_tier_order.index(tier_key) >
+              full_tier_order.index(user_tier) %} Checkout {{
+              access_labels.get(tier_key, tier.label) }} {% else %} Switch to {{
+              access_labels.get(tier_key, tier.label) }} {% endif %}
             </button>
           </form>
           {% else %}
@@ -139,10 +166,11 @@
             href="/upgrade/{{ tier_key }}{% if gate_return_to %}?return_to={{ gate_return_to }}{% endif %}"
             class="btn {% if tier_key == 'operator' %}btn-primary{% else %}btn-outline{% endif %} pricing-btn"
           >
-            {% if is_trial %} Choose {{ tier.label }} {% elif
-            full_tier_order.index(tier_key) > full_tier_order.index(user_tier)
-            %} Upgrade to {{ tier.label }} {% else %} Switch to {{ tier.label }}
-            {% endif %}
+            {% if is_trial %} Choose {{ access_labels.get(tier_key, tier.label)
+            }} {% elif full_tier_order.index(tier_key) >
+            full_tier_order.index(user_tier) %} Upgrade to {{
+            access_labels.get(tier_key, tier.label) }} {% else %} Switch to {{
+            access_labels.get(tier_key, tier.label) }} {% endif %}
           </a>
           {% endif %} {% endif %}
         </div>
@@ -170,10 +198,10 @@
           color: var(--text-faint);
         "
       >
-        Checkout is configured for {{ stripe_config.configured_tiers|join(', ') }}.
+        Checkout is configured for {{ stripe_config.configured_tiers|join(', ')
+        }}.
       </p>
-      {% endif %}
-      {% elif is_authenticated and not stripe_enabled %}
+      {% endif %} {% elif is_authenticated and not stripe_enabled %}
       <p
         style="
           text-align: center;
@@ -196,8 +224,7 @@
       >
         {{ stripe_config.reason }}
       </p>
-      {% endif %}
-      {% endif %}
+      {% endif %} {% endif %}
 
       <p
         style="
@@ -236,9 +263,9 @@
         <p
           style="margin: 0; font-size: var(--font-xs); color: var(--text-muted)"
         >
-          Free: 2 analyses &amp; 10 job views/month. Trial: 10 analyses &amp; 50
-          job views for 7 days. Paid plans unlock unlimited access. Enforcement
-          is tied to your account access level.
+          Free: 2 analyses &amp; 10 job views/month. System Trial: 10 analyses
+          &amp; 50 job views for 7 days. Paid plans unlock unlimited access.
+          Enforcement is tied to your account access level.
         </p>
       </div>
 

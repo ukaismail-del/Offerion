@@ -20,14 +20,14 @@
       <div class="top-nav-inner">
         <a href="/" class="top-nav-brand">Offerion</a>
         <div class="top-nav-links">
-          <a href="/dashboard#section-actions">Control Panel</a>
+          <a href="/dashboard#section-actions">Command Center</a>
           {% if report_data_exists %}<a href="/resume-preview">Resume</a>{%
           endif %}
-          <a href="#section-outputs">Tracked</a>
+          <a href="#section-outputs">Active Targets</a>
           {% if match or match_explanation %}<a href="#section-intel"
             >Intelligence</a
           >{% endif %}
-          <a href="/pricing">Pricing</a>
+          <a href="/pricing">Access Levels</a>
           {% if is_admin %}<a href="/founder/metrics">Metrics</a>{% endif %}
           <a href="/logout">Log Out</a>
         </div>
@@ -40,6 +40,25 @@
     <div class="container">
       {% if current_user_email %}
       <p class="welcome-line">Welcome, {{ current_user_email }}</p>
+      {% endif %}
+
+      <div class="system-header">
+        <h2>Command Center</h2>
+        <div class="system-status">
+          System Status: Active<br>
+          Targets Tracked: {{ saved_jobs|length }}<br>
+          Signals Active: {{ alerts|length }}
+        </div>
+      </div>
+
+      {% if activation_checklist %}
+      {% set activation_percent = activation_checklist.percent if activation_checklist.percent is defined else activation_checklist.pct %}
+      <div class="system-progress">
+        <p>System Activation: {{ activation_percent }}%</p>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: {{ activation_percent }}%"></div>
+        </div>
+      </div>
       {% endif %}
 
       <!-- Bundle V: Onboarding Progress Card -->
@@ -116,11 +135,11 @@
         </div>
         {% if is_trial and trial_days_left is not none %}
         <p style="margin:0 0 0.4rem;color:var(--text-muted);font-size:var(--font-sm)">
-          Trial ends in {{ trial_days_left }} day{{ 's' if trial_days_left != 1 else '' }}
+          System trial ends in {{ trial_days_left }} day{{ 's' if trial_days_left != 1 else '' }}
           {% if trial_days_left <= 2 %}<span style="color:var(--color-warning);font-weight:600"> — expiring soon!</span>{% endif %}
         </p>
         {% elif billing.plan == 'free' and is_trial == false %}
-        <p style="margin:0 0 0.4rem;color:var(--text-muted);font-size:var(--font-sm)">Trial expired — upgrade to unlock premium features</p>
+        <p style="margin:0 0 0.4rem;color:var(--text-muted);font-size:var(--font-sm)">System trial expired — upgrade to unlock premium features</p>
         {% endif %}
         <div style="display:flex;flex-wrap:wrap;gap:1rem;font-size:var(--font-sm);color:var(--text-secondary)">
           <span>Analyses: {{ billing.analyses_used }}/{% if billing.analyses_limit %}{{ billing.analyses_limit }}{% else %}&infin;{% endif %}</span>
@@ -135,17 +154,17 @@
       </div>
       {% endif %}
 
-      <!-- Trial Banner (M-Bundle Pricing) -->
+      <!-- System Trial Banner (M-Bundle Pricing) -->
       {% if is_trial and trial_days_left is not none %}
       <div class="trial-banner">
         <span class="trial-icon">🚀</span>
-        <span>You're in your <strong>7-day free trial</strong> — all features unlocked.</span>
+        <span>You're in your <strong>7-day system trial</strong> (7-day free trial) — all features unlocked.</span>
         {% if trial_days_left <= 2 %}
         <span class="trial-urgent">Only {{ trial_days_left }} day{{ 's' if trial_days_left != 1 else '' }} left!</span>
         {% else %}
         <span>{{ trial_days_left }} days remaining.</span>
         {% endif %}
-        <a href="/pricing" class="btn btn-primary btn-sm" style="margin-left:auto">View Plans</a>
+        <a href="/pricing" class="btn btn-primary btn-sm" style="margin-left:auto">View Access Levels</a>
       </div>
       {% endif %}
 
@@ -217,7 +236,7 @@
         <div class="how-strip">
           <div class="how-step">
             <div class="how-num">1</div>
-            <h3>Upload resume</h3>
+            <h3>Initialize profile</h3>
             <p>PDF or DOCX &mdash; we extract the text automatically</p>
           </div>
           <div class="how-step">
@@ -245,7 +264,7 @@
               class="onboarding-step {% if onboarding_step >= 1 %}onboarding-step-active{% endif %} {% if onboarding_step > 1 %}onboarding-step-done{% endif %}"
             >
               <div class="onboarding-num">1</div>
-              <span>Upload your resume</span>
+              <span>Initialize your profile</span>
             </div>
             <div
               class="onboarding-step {% if onboarding_step >= 2 %}onboarding-step-active{% endif %} {% if onboarding_step > 2 %}onboarding-step-done{% endif %}"
@@ -279,7 +298,7 @@
         {% if upgrade_nudge_message %}
         <div class="upgrade-nudge">
           <span>{{ upgrade_nudge_message }}</span>
-          <a href="/pricing" class="btn btn-primary btn-sm">View Plans</a>
+          <a href="/pricing" class="btn btn-primary btn-sm">View Access Levels</a>
         </div>
         {% endif %}
 
@@ -344,19 +363,19 @@
         {% if report_data_exists and not selected_job_context %}
         <div class="guidance-banner guidance-warning">
           <p class="guidance-text">
-            Next step: choose a recommended or saved job to turn your draft into
+            Next step: choose a recommended or active target to turn your draft into
             a targeted application with fit analysis and clearer positioning.
           </p>
         </div>
         {% endif %}
 
-        <!-- Upload & Analyze Form -->
+        <!-- Initialize Profile Form -->
         <div class="card">
-          <h2 class="card-title">Upload &amp; Analyze</h2>
+          <h2 class="card-title">Initialize Profile</h2>
           <hr class="card-divider" />
           <p class="form-hint">
-            {% if report_data_exists %} Upload another resume to start a new
-            analysis, or use the actions above. {% else %} Start by uploading a
+            {% if report_data_exists %} Initialize another profile to start a new
+            analysis cycle, or use the actions above. {% else %} Start by uploading a
             PDF or DOCX. Add a target role and job description for deeper
             tailoring. {% endif %}
           </p>
@@ -404,7 +423,7 @@
                 class="btn btn-primary btn-lg btn-action btn-loading-trigger"
                 data-loading-label="Analyzing…"
               >
-                Upload &amp; Analyze
+                Initialize Profile
               </button>
             </div>
             <p class="trust-note">
@@ -452,7 +471,7 @@
      ═══════════════════════════════════════════ -->
       {% if recommended_jobs or report_data_exists %}
       <div class="section" id="section-jobs">
-        <h2 class="section-heading">Recommended Jobs For You</h2>
+        <h2 class="section-heading">Recommended Opportunities For You</h2>
 
         <!-- Filter bar (M77) -->
         <form class="job-filters" method="get" action="/#section-jobs">
@@ -489,12 +508,12 @@
         {% if recommended_jobs %}
         {% if jobs_used_fallback %}
         <div class="fallback-banner" style="background: var(--bg-card); border-left: 4px solid var(--color-warning); padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 6px; font-size: 0.9rem;">
-          <strong style="color: var(--text-secondary)">Showing broader matches</strong>
+          <strong style="color: var(--text-secondary)">System expanded search scope</strong>
+          <span style="display:block;font-size:var(--font-xs);color:var(--text-faint)">Showing broader matches</span>
           <span style="color: var(--text-muted)">
-            — We couldn't find enough results for
-            "{{ jobs_primary_query or (job_query if job_query else 'your current profile') }}"
-            {% if jobs_fallback_query %} so Offerion broadened to "{{ jobs_fallback_query }}".{% else %} so Offerion broadened your search criteria.{% endif %}
-            {% if jobs_query_source == 'target_role' %} This query came from your target role.{% elif jobs_query_source == 'resume_skills' %} This query came from your resume skills.{% endif %}
+            System expanded search from: "{{ jobs_primary_query or (job_query if job_query else 'your current profile') }}"
+            {% if jobs_fallback_query %}&rarr; "{{ jobs_fallback_query }}".{% else %}&rarr; broader criteria.{% endif %}
+            {% if jobs_query_source == 'target_role' %} Source: target role.{% elif jobs_query_source == 'resume_skills' %} Source: profile skills.{% endif %}
           </span>
         </div>
         {% else %}
@@ -613,20 +632,21 @@
         </div>
         {% else %}
         <div class="empty-state-card">
-          <p class="empty-state-title">No matching jobs found</p>
+          <p class="empty-state-title">No targets detected</p>
+          <p class="empty-state-text" style="margin-top:0.35rem">No matching jobs found.</p>
           <p class="empty-state-text">
             {% if job_query or job_location or job_remote or job_source %}
-            Your filters didn&rsquo;t match any jobs. Try broadening your search or clear the filters above.
+            No targets detected<br />Expanding search parameters recommended.
             {% elif not report_data_exists %}
-            Upload your resume first to get personalized job recommendations based on your skills.
+            Initialize your profile first to get personalized opportunities based on your skills.
             {% else %}
-            We couldn&rsquo;t find jobs matching your profile right now. Try adding a more specific target role when you analyze your resume.
+            No targets detected<br />Expanding search parameters recommended.
             {% endif %}
           </p>
           {% if job_query or job_location or job_remote or job_source %}
           <a href="/#section-jobs" class="btn btn-secondary btn-sm">Clear Filters</a>
           {% elif not report_data_exists %}
-          <a href="#section-actions" class="btn btn-primary btn-sm">Upload Resume</a>
+          <a href="#section-actions" class="btn btn-primary btn-sm">Initialize Profile</a>
           {% endif %}
         </div>
         {% endif %}
@@ -846,10 +866,10 @@
         </div>
         {% endif %}
 
-        <!-- Recent Activity (M39) -->
+        <!-- System Log (M39) -->
         {% if activity_timeline %}
         <div class="card">
-          <h2 class="card-title">Recent Activity</h2>
+          <h2 class="card-title">System Log</h2>
           <hr class="card-divider" />
           <ul class="timeline-list">
             {% for evt in activity_timeline %}
@@ -964,9 +984,9 @@
         </div>
         {% endif %}
 
-        <!-- Tracked Opportunities (M34) -->
+        <!-- Active Targets (M34) -->
         <div class="card">
-          <h2 class="card-title">Tracked Opportunities</h2>
+          <h2 class="card-title">Active Targets</h2>
           <hr class="card-divider" />
           {% if saved_jobs %} {% for job in saved_jobs %}
           <div class="item-row">
@@ -1004,9 +1024,9 @@
           <div class="empty-state-card" style="border:none;box-shadow:none;margin:0;padding:0.5rem 0">
             <p class="empty-state-text" style="margin:0">
               {% if report_data_exists %}
-              No tracked opportunities yet. Browse the recommended jobs above and save one to start tracking your applications.
+              No active targets yet. Browse recommended opportunities and lock your first target.
               {% else %}
-              Upload your resume to get job recommendations, then save jobs to track here.
+              Initialize your profile to get opportunity recommendations, then lock targets here.
               {% endif %}
             </p>
           </div>
@@ -1014,16 +1034,16 @@
           <div style="margin-top: var(--space-md)">
             {% if has_access('save_job') %}
             <a href="/save-job" class="btn btn-primary btn-sm"
-              >Save Current Job</a
+              >Lock Current Target</a
             >
             {% else %}
             <span
               class="btn btn-primary btn-sm btn-locked"
               title="Upgrade to access this feature"
-              >Save Current Job</span
+              >Lock Current Target</span
             >
             <span class="locked-hint"
-              >Operator tier includes job tracking, matching, and tracked opportunities &mdash;
+              >Operator tier includes target tracking, matching, and active targets &mdash;
               <a href="/pricing">see plans</a></span
             >
             {% endif %}
@@ -1067,7 +1087,7 @@
           {% endfor %} {% else %}
           <div class="empty-state-card" style="border:none;box-shadow:none;margin:0;padding:0.5rem 0">
             <p class="empty-state-text" style="margin:0">
-              No signals yet. Save a job and create a follow-up reminder to get real-time notifications on your applications.
+              No signals active<br />Create a follow-up signal to begin tracking.
               {% if saved_jobs %}
               <br><a href="/job/{{ saved_jobs[0].id }}" class="btn btn-secondary btn-sm" style="margin-top:0.5rem">Create signal for {{ saved_jobs[0].title }}</a>
               {% endif %}

@@ -18,14 +18,14 @@
       <div class="top-nav-inner">
         <a href="/" class="top-nav-brand">Offerion</a>
         <div class="top-nav-links">
-          <a href="/dashboard">Dashboard</a>
+          <a href="/dashboard">Command Center</a>
           <a href="#resume-section">Resume</a>
           {% if cover_letter_draft or enhanced_cover_letter %}<a
             href="#cover-letter-section"
             >Cover Letter</a
           >{% endif %}
           <a href="#actions-section">Actions</a>
-          <a href="/pricing">Pricing</a>
+          <a href="/pricing">Access Levels</a>
           <a href="/logout">Log Out</a>
         </div>
         <span class="tier-badge tier-badge-{{ user_tier }}"
@@ -35,14 +35,15 @@
     </nav>
 
     <div class="container">
-      <a href="/dashboard" class="back-link">&larr; Back to Dashboard</a>
+      <a href="/dashboard" class="back-link">&larr; Back to Command Center</a>
 
       <!-- M111: Empty state guidance when no report -->
       {% if no_report %}
       <div class="guidance-banner">
         <p class="guidance-text">
-          No resume analyzed yet. <a href="/dashboard">Upload your resume</a> to
-          see your enhanced preview, cover letter, and application package here.
+          No profile initialized yet. No resume analyzed yet.
+          <a href="/dashboard">Initialize your profile</a> to see your enhanced
+          preview, cover letter, and application package here.
         </p>
       </div>
       {% endif %} {% if preview_notice_message %}
@@ -67,7 +68,7 @@
         {% if no_report %}
         <p class="form-hint">
           Actions are available after you analyze a resume from the
-          <a href="/dashboard">dashboard</a>.
+          <a href="/dashboard">command center</a>.
         </p>
         {% else %}
         <p class="form-hint">
@@ -77,8 +78,8 @@
         {% endif %}
         <div class="btn-row">
           {% if no_report %}
-          <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
-          <a href="/pricing" class="btn btn-outline">View Plans</a>
+          <a href="/dashboard" class="btn btn-primary">Go to Command Center</a>
+          <a href="/pricing" class="btn btn-outline">View Access Levels</a>
           {% else %}
           <a href="/download-resume-draft" class="btn btn-success"
             >Download Resume Draft</a
@@ -179,7 +180,7 @@
       {% if upgrade_nudge_message %}
       <div class="upgrade-nudge">
         <span>{{ upgrade_nudge_message }}</span>
-        <a href="/pricing" class="btn btn-primary btn-sm">View Plans</a>
+        <a href="/pricing" class="btn btn-primary btn-sm">View Access Levels</a>
       </div>
       {% endif %}
 
@@ -307,8 +308,8 @@
         <div class="guidance-banner guidance-warning">
           <p class="guidance-text">
             This draft is usable, but it is not tied to a selected job yet.
-            Choose a job from the dashboard to add targeting, skill matching,
-            and a clearer application story.
+            Choose a target from the command center to add targeting, skill
+            matching, and a clearer application story.
           </p>
         </div>
         {% endif %} {% if enhanced and enhanced.target_title %}
@@ -476,8 +477,8 @@
         <hr class="card-divider" />
         <p class="form-hint">
           This resume was enhanced without a specific job target. Select a job
-          from the dashboard to get a tailored version with skill matching and
-          gap analysis.
+          from the command center to get a tailored version with skill matching
+          and gap analysis.
         </p>
         {% endif %}
       </div>
@@ -500,7 +501,7 @@
         {% else %}
         <p class="form-hint" style="margin: 0">
           <strong>Cover letter</strong> uses generic positioning. Select a job
-          on the dashboard for a targeted version.
+          in the command center for a targeted version.
         </p>
         {% endif %}
       </div>
@@ -672,10 +673,10 @@
       </div>
       {% endif %}
 
-      <!-- Saved Jobs -->
+      <!-- Active Targets -->
       {% if saved_jobs %}
       <div class="card">
-        <h2 class="card-title">Saved Jobs</h2>
+        <h2 class="card-title">Active Targets</h2>
         <hr class="card-divider" />
         {% for job in saved_jobs %}
         <div class="item-row">
@@ -853,7 +854,9 @@
 
       <!-- Secondary nav -->
       <div style="text-align: center; margin-top: var(--space-xl)">
-        <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+        <a href="/dashboard" class="btn btn-secondary"
+          >Back to Command Center</a
+        >
       </div>
     </div>
     <!-- /container -->

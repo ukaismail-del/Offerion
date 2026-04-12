@@ -63,12 +63,16 @@ class EmailNotificationService:
                 ]
             )
 
-        env_enabled = os.environ.get("OFFERION_EMAIL_ENABLED", "1").strip().lower() not in (
+        env_enabled = os.environ.get(
+            "OFFERION_EMAIL_ENABLED", "1"
+        ).strip().lower() not in (
             "0",
             "false",
             "no",
         )
-        enabled = self.enabled_override if self.enabled_override is not None else env_enabled
+        enabled = (
+            self.enabled_override if self.enabled_override is not None else env_enabled
+        )
         configured = enabled and not missing
 
         return {
@@ -82,10 +86,14 @@ class EmailNotificationService:
             "sender": sender,
             "use_tls": use_tls,
             "missing": missing,
-            "reason": None if configured else (
-                "email disabled by configuration"
-                if not enabled
-                else "missing SMTP configuration"
+            "reason": (
+                None
+                if configured
+                else (
+                    "email disabled by configuration"
+                    if not enabled
+                    else "missing SMTP configuration"
+                )
             ),
         }
 
@@ -137,7 +145,9 @@ class EmailNotificationService:
             logger.info("Email sent: to=%s subject=%s", to, subject)
             return {"success": True, "status": "sent", "mode": config["mode"]}
         except Exception as exc:
-            logger.warning("Email send failed: to=%s subject=%s error=%s", to, subject, exc)
+            logger.warning(
+                "Email send failed: to=%s subject=%s error=%s", to, subject, exc
+            )
             return {
                 "success": False,
                 "status": "failed",

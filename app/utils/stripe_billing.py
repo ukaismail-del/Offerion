@@ -73,12 +73,14 @@ def get_stripe_config():
         "webhook_ready": webhook_ready,
         "mode": "live-checkout" if checkout_ready else "beta-fallback",
         "missing": missing,
-        "reason": None
-        if checkout_ready
-        else (
-            "Stripe secret key is missing."
-            if not has_secret_key
-            else "Stripe prices are missing for all paid tiers."
+        "reason": (
+            None
+            if checkout_ready
+            else (
+                "Stripe secret key is missing."
+                if not has_secret_key
+                else "Stripe prices are missing for all paid tiers."
+            )
         ),
     }
 

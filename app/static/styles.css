@@ -85,6 +85,7 @@ body {
   margin: 0;
   padding: 0;
   background-color: var(--bg-page);
+  background-image: radial-gradient(circle at top, #0f172a 0%, #020617 70%);
   color: var(--text-secondary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -2478,6 +2479,84 @@ input[type="password"]:focus {
 .funnel-pct-risk {
   color: var(--color-danger);
   font-weight: 700;
+}
+
+/* Bundle W: System Layer */
+.system-header {
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #e2e8f0;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.system-header h2 {
+  margin: 0 0 8px 0;
+  font-size: var(--font-xl);
+  color: #f8fafc;
+}
+
+.system-status {
+  font-size: 13px;
+  opacity: 0.8;
+  line-height: 1.45;
+}
+
+.system-progress {
+  margin-bottom: 20px;
+}
+
+.system-progress p {
+  margin: 0 0 8px;
+  color: #cbd5e1;
+  font-size: var(--font-sm);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #1e293b;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 6px;
+  transition: width 0.6s ease;
+}
+
+.system-panel {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.system-panel p {
+  margin: 0 0 10px;
+  font-weight: 700;
+}
+
+.system-panel ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.system-panel li {
+  margin-bottom: 6px;
+}
+
+button {
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: scale(1.05);
 }
 
 /* ==========================================================================

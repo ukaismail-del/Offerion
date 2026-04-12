@@ -4,14 +4,20 @@ from collections import defaultdict
 from datetime import datetime
 
 
-def build_activation_funnel(total_signups, users_with_resume, users_with_saved_jobs, users_with_packages):
+def build_activation_funnel(
+    total_signups, users_with_resume, users_with_saved_jobs, users_with_packages
+):
     """Return a simple activation funnel summary."""
     base = max(total_signups, 1)
     upload_pct = round(users_with_resume / base * 100, 1) if total_signups else 0
     saved_job_pct = round(users_with_saved_jobs / base * 100, 1) if total_signups else 0
     package_pct = round(users_with_packages / base * 100, 1) if total_signups else 0
     return [
-        {"label": "Signed Up", "count": total_signups, "pct": 100 if total_signups else 0},
+        {
+            "label": "Signed Up",
+            "count": total_signups,
+            "pct": 100 if total_signups else 0,
+        },
         {"label": "Uploaded Resume", "count": users_with_resume, "pct": upload_pct},
         {"label": "Saved a Job", "count": users_with_saved_jobs, "pct": saved_job_pct},
         {"label": "Created Package", "count": users_with_packages, "pct": package_pct},
@@ -20,7 +26,9 @@ def build_activation_funnel(total_signups, users_with_resume, users_with_saved_j
 
 def build_signup_cohorts(users, max_rows=8):
     """Group users by ISO signup week and summarize activation progress."""
-    buckets = defaultdict(lambda: {"signups": 0, "uploaded": 0, "saved_job": 0, "packaged": 0})
+    buckets = defaultdict(
+        lambda: {"signups": 0, "uploaded": 0, "saved_job": 0, "packaged": 0}
+    )
     for user in users:
         created_at = getattr(user, "created_at", None)
         if not created_at:
@@ -44,9 +52,15 @@ def build_signup_cohorts(users, max_rows=8):
             {
                 "label": label,
                 "signups": signups,
-                "uploaded_pct": round(bucket["uploaded"] / signups * 100, 1) if signups else 0,
-                "saved_job_pct": round(bucket["saved_job"] / signups * 100, 1) if signups else 0,
-                "packaged_pct": round(bucket["packaged"] / signups * 100, 1) if signups else 0,
+                "uploaded_pct": (
+                    round(bucket["uploaded"] / signups * 100, 1) if signups else 0
+                ),
+                "saved_job_pct": (
+                    round(bucket["saved_job"] / signups * 100, 1) if signups else 0
+                ),
+                "packaged_pct": (
+                    round(bucket["packaged"] / signups * 100, 1) if signups else 0
+                ),
             }
         )
     return rows

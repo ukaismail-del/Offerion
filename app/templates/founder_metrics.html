@@ -17,8 +17,8 @@
       <div class="top-nav-inner">
         <a href="/" class="top-nav-brand">Offerion</a>
         <div class="top-nav-links">
-          <a href="/dashboard">Dashboard</a>
-          <a href="/pricing">Pricing</a>
+          <a href="/dashboard">Command Center</a>
+          <a href="/pricing">Access Levels</a>
           <a href="/founder/metrics" class="active">Metrics</a>
           <a href="/logout">Log Out</a>
         </div>
@@ -27,7 +27,9 @@
 
     <div class="container">
       <h1 style="margin-bottom: var(--space-lg)">Founder Metrics</h1>
-      <p class="founder-generated-at">Generated {{ metrics_generated_at }} UTC</p>
+      <p class="founder-generated-at">
+        Generated {{ metrics_generated_at }} UTC
+      </p>
 
       <div class="metrics-grid">
         <div class="metric-card">
@@ -64,7 +66,7 @@
         </div>
         <div class="metric-card">
           <div class="metric-value">{{ users_with_saved_jobs }}</div>
-          <div class="metric-label">Users With Saved Jobs</div>
+          <div class="metric-label">Users With Active Targets</div>
         </div>
         <div class="metric-card">
           <div class="metric-value">{{ users_with_packages }}</div>
@@ -76,7 +78,7 @@
         </div>
         <div class="metric-card">
           <div class="metric-value">{{ active_trials }}</div>
-          <div class="metric-label">Active Trials</div>
+          <div class="metric-label">Active System Trials</div>
         </div>
         <div class="metric-card">
           <div class="metric-value">{{ paid_users }}</div>
@@ -101,10 +103,14 @@
           </div>
           <p class="command-card-copy">Sender: {{ email_health.sender }}</p>
           <p class="command-card-copy">
-            Sent {{ event_summary.email_sent }} | Failed {{ event_summary.email_failed }} | Skipped {{ event_summary.email_skipped }}
+            Sent {{ event_summary.email_sent }} | Failed {{
+            event_summary.email_failed }} | Skipped {{
+            event_summary.email_skipped }}
           </p>
           {% if email_health.missing %}
-          <p class="command-card-note">Missing: {{ email_health.missing|join(', ') }}</p>
+          <p class="command-card-note">
+            Missing: {{ email_health.missing|join(', ') }}
+          </p>
           {% endif %}
         </div>
         <div class="command-card">
@@ -113,13 +119,17 @@
             {{ 'Ready' if stripe_health.checkout_ready else 'Fallback mode' }}
           </div>
           <p class="command-card-copy">
-            Starts {{ event_summary.checkout_started }} | Completed {{ event_summary.checkout_completed }}
+            Starts {{ event_summary.checkout_started }} | Completed {{
+            event_summary.checkout_completed }}
           </p>
           <p class="command-card-copy">
-            Upgrade attempts {{ event_summary.upgrade_attempts }} | Gated hits {{ event_summary.gated_hits }}
+            Upgrade attempts {{ event_summary.upgrade_attempts }} | Gated hits
+            {{ event_summary.gated_hits }}
           </p>
           {% if stripe_health.missing %}
-          <p class="command-card-note">Missing: {{ stripe_health.missing|join(', ') }}</p>
+          <p class="command-card-note">
+            Missing: {{ stripe_health.missing|join(', ') }}
+          </p>
           {% endif %}
         </div>
         <div class="command-card">
@@ -127,7 +137,8 @@
           <div class="command-card-value">{{ due_today_alerts }} due today</div>
           <p class="command-card-copy">Overdue alerts: {{ overdue_alerts }}</p>
           <p class="command-card-copy">
-            Created {{ event_summary.alerts_created }} | Completed {{ event_summary.alerts_completed }}
+            Created {{ event_summary.alerts_created }} | Completed {{
+            event_summary.alerts_completed }}
           </p>
         </div>
       </div>
@@ -198,7 +209,9 @@
       <p style="color: var(--text-muted)">No cohort data available yet.</p>
       {% endif %}
 
-      <h2 style="margin-bottom: var(--space-md)">Recent Activity</h2>
+      <h2 style="margin-bottom: var(--space-md)">
+        System Log (Recent Activity)
+      </h2>
 
       {% if recent_events %}
       <table class="events-table">

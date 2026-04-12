@@ -38,12 +38,12 @@
         <a href="/" class="top-nav-brand">Offerion</a>
         <div class="top-nav-links">
           {% if is_authenticated %}
-          <a href="/dashboard">Control Panel</a>
-          <a href="/pricing">Pricing</a>
+          <a href="/dashboard">Command Center</a>
+          <a href="/pricing">Access Levels</a>
           {% if is_admin %}<a href="/founder/metrics">Metrics</a>{% endif %}
           <a href="/logout">Log Out</a>
           {% else %}
-          <a href="/pricing">Pricing</a>
+          <a href="/pricing">Access Levels</a>
           <a href="/login">Log In</a>
           <a href="/signup">Sign Up</a>
           {% endif %}
@@ -63,13 +63,25 @@
         <div class="landing-hero-actions">
           {% if is_authenticated %}
           <a href="/dashboard" class="btn btn-primary btn-lg"
-            >Go to Dashboard</a
+            >Go to Command Center (Go to Dashboard)</a
           >
           {% else %}
           <a href="/signup" class="btn btn-primary btn-lg">Get Started Free</a>
           {% endif %}
-          <a href="/pricing" class="btn btn-secondary btn-lg">View Pricing</a>
+          <a href="/pricing" class="btn btn-secondary btn-lg"
+            >View Access Levels</a
+          >
         </div>
+      </div>
+
+      <div class="system-panel">
+        <p>System Status</p>
+        <ul>
+          <li>Profile Engine: Ready</li>
+          <li>Matching Engine: Online</li>
+          <li>Application Builder: Active</li>
+          <li>Tracking System: Monitoring</li>
+        </ul>
       </div>
 
       <!-- Referral message (M66) -->
@@ -96,7 +108,7 @@
         <div class="how-strip">
           <div class="how-step">
             <div class="how-num">1</div>
-            <h3>Upload resume</h3>
+            <h3>Initialize profile</h3>
             <p>PDF or DOCX &mdash; we extract the text automatically</p>
           </div>
           <div class="how-step">
@@ -194,7 +206,9 @@
       <div class="cta-section">
         <h2>Start your first application in minutes</h2>
         {% if is_authenticated %}
-        <a href="/dashboard" class="btn btn-primary btn-lg">Go to Dashboard</a>
+        <a href="/dashboard" class="btn btn-primary btn-lg"
+          >Go to Command Center (Go to Dashboard)</a
+        >
         {% else %}
         <a href="/signup" class="btn btn-primary btn-lg">Get Started Free</a>
         {% endif %}
