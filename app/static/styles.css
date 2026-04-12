@@ -3479,6 +3479,73 @@ h3 {
   padding: 0.25rem 0.6rem;
 }
 
+.pricing-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  max-width: 1040px;
+}
+
+.pricing-card {
+  align-items: flex-start;
+  text-align: left;
+  padding: 1.4rem;
+  gap: 0;
+}
+
+.pricing-card-active {
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.pricing-card-featured {
+  border-color: #bfdbfe;
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.08);
+}
+
+.pricing-featured-badge {
+  top: 1rem;
+  right: 1rem;
+  left: auto;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 0.18rem 0.55rem;
+}
+
+.pricing-tier-name {
+  margin: 0 0 0.45rem;
+  font-size: 1.15rem;
+}
+
+.pricing-plan-summary {
+  margin: 0 0 0.9rem;
+  font-size: var(--font-sm);
+  color: #475569;
+  min-height: 2.6em;
+}
+
+.pricing-price {
+  margin-bottom: 0.9rem;
+}
+
+.pricing-features {
+  margin: 0 0 1rem;
+}
+
+.pricing-features li {
+  padding: 0.3rem 0 0.3rem 1.25rem;
+  color: #334155;
+}
+
+.pricing-btn {
+  margin-top: auto;
+}
+
+.trial-banner {
+  justify-content: center;
+  gap: 0.6rem;
+}
+
 .command-grid-layout {
   display: grid;
   grid-template-columns: minmax(240px, 0.9fr) minmax(0, 1.65fr) minmax(260px, 1fr);

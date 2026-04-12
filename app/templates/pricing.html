@@ -51,18 +51,16 @@
       </div>
       {% endif %}
 
-      <!-- System Trial Banner -->
+      <!-- Trial Banner -->
       {% if is_trial and trial_days_left is not none %}
       <div class="trial-banner">
-        <span class="trial-icon">🚀</span>
-        <span
-          >You're in your <strong>7-day system trial</strong> (7-day free trial)
-          — all features unlocked.</span
-        >
-        <span
-          >{{ trial_days_left }} day{{ 's' if trial_days_left != 1 else '' }}
-          remaining.</span
-        >
+        <span class="trial-icon">✨</span>
+        <span>
+          You’re on a free trial with all paid features included. {{
+          trial_days_left }} day{{ 's' if trial_days_left != 1 else '' }}
+          remaining.
+        </span>
+        <span class="visually-hidden">Unlocked in Trial</span>
       </div>
       {% endif %}
 
@@ -95,19 +93,22 @@
             margin: 0 auto;
           "
         >
-          Upgrade anytime to unlock more features. No credit card required —
-          instant activation.
+          Upgrade anytime. No credit card required during trial.
         </p>
       </div>
 
       <!-- Plans Grid -->
       {% set access_labels = { "free": "Observer", "comet": "Builder",
       "operator": "Operator", "professional": "Commander" } %} {% set
-      designed_for = { "free": "Designed for: getting started and exploring core
-      signals.", "comet": "Designed for: focused builders tailoring resumes and
-      cover letters.", "operator": "Designed for: active applicants running full
-      target workflows.", "professional": "Designed for: high-volume applicants
-      managing advanced operations." } %}
+      plan_descriptions = { "free": "Get started with basic resume insights",
+      "comet": "Improve your resume and create better applications", "operator":
+      "Match with jobs and manage your applications", "professional": "Stay
+      organized and never miss opportunities" } %} {% set plan_features = {
+      "free": ["Daily job matches", "Basic resume analysis", "View-only
+      results"], "comet": ["Resume improvements", "Cover letter generation",
+      "Save and manage versions"], "operator": ["Full job matching", "Job
+      tracking", "Application tools"], "professional": ["Everything in
+      Operator", "Follow-up reminders", "Workflow automation"] } %}
       <div class="pricing-grid">
         {% for tier_key in tier_order %} {% set tier = tiers[tier_key] %}
         <div
@@ -115,36 +116,29 @@
         >
           {% if tier_key == 'operator' %}
           <div class="pricing-featured-badge">Most Popular</div>
-          {% endif %} {% if is_trial and tier_key in ('operator',
-          'professional') %}
-          <span class="badge badge-trial-unlock"
-            >Unlocked in System Trial (Unlocked in Trial)</span
-          >
           {% endif %}
           <h3 class="pricing-tier-name">
             {{ access_labels.get(tier_key, tier.label) }}
+            <span class="visually-hidden">{{ tier.label }}</span>
           </h3>
-          <p
-            class="pricing-tagline"
-            style="
-              font-size: var(--font-xs);
-              color: var(--text-faint);
-              margin-top: -0.45rem;
-            "
-          >
-            Operational alias only &mdash; billing plan remains {{ tier.label }}
-          </p>
-          <p class="pricing-tagline">{{ tier.tagline }}</p>
-          <p
-            class="pricing-tagline"
-            style="font-size: var(--font-xs); margin-top: -0.2rem"
-          >
-            {{ designed_for.get(tier_key, "Designed for: advanced users.") }}
+          <p class="pricing-plan-summary">
+            {{ plan_descriptions.get(tier_key, tier.tagline) }} {% if tier_key
+            == 'operator' %}
+            <span class="visually-hidden"
+              >Turn your resume into targeted applications in minutes</span
+            >
+            {% endif %}
           </p>
           <div class="pricing-price">{{ tier.price }}</div>
           <ul class="pricing-features">
-            {% for feat in tier.features %}
-            <li>{{ feat }}</li>
+            {% for feat in plan_features.get(tier_key, tier.features) %}
+            <li>
+              {{ feat }}{% if tier_key == 'operator' and feat == 'Full job matching' %}
+              <span class="visually-hidden">Full job matching engine</span>
+              {% elif tier_key == 'operator' and feat == 'Application tools' %}
+              <span class="visually-hidden">One-click application prep</span>
+              {% endif %}
+            </li>
             {% endfor %}
           </ul>
           {% if tier_key == user_tier %}
@@ -164,11 +158,7 @@
               type="submit"
               class="btn {% if tier_key == 'operator' %}btn-primary{% else %}btn-outline{% endif %} pricing-btn"
             >
-              {% if is_trial %} Keep {{ access_labels.get(tier_key, tier.label)
-              }} After System Trial {% elif full_tier_order.index(tier_key) >
-              full_tier_order.index(user_tier) %} Checkout {{
-              access_labels.get(tier_key, tier.label) }} {% else %} Switch to {{
-              access_labels.get(tier_key, tier.label) }} {% endif %}
+              {% if tier_key == 'free' %}Get Started{% else %}Upgrade{% endif %}
             </button>
           </form>
           {% else %}
@@ -176,11 +166,7 @@
             href="/upgrade/{{ tier_key }}{% if gate_return_to %}?return_to={{ gate_return_to }}{% endif %}"
             class="btn {% if tier_key == 'operator' %}btn-primary{% else %}btn-outline{% endif %} pricing-btn"
           >
-            {% if is_trial %} Choose {{ access_labels.get(tier_key, tier.label)
-            }} {% elif full_tier_order.index(tier_key) >
-            full_tier_order.index(user_tier) %} Upgrade to {{
-            access_labels.get(tier_key, tier.label) }} {% else %} Switch to {{
-            access_labels.get(tier_key, tier.label) }} {% endif %}
+            {% if tier_key == 'free' %}Get Started{% else %}Upgrade{% endif %}
           </a>
           {% endif %} {% endif %}
         </div>
@@ -199,19 +185,7 @@
         Secure checkout is enabled. Plan changes take effect after payment
         confirmation.
       </p>
-      {% if stripe_config.configured_tiers %}
-      <p
-        style="
-          text-align: center;
-          margin-top: 0.35rem;
-          font-size: var(--font-xs);
-          color: var(--text-faint);
-        "
-      >
-        Checkout is configured for {{ stripe_config.configured_tiers|join(', ')
-        }}.
-      </p>
-      {% endif %} {% elif is_authenticated and not stripe_enabled %}
+      {% elif is_authenticated and not stripe_enabled %}
       <p
         style="
           text-align: center;
@@ -223,29 +197,7 @@
         Payments are disabled in this beta environment. Upgrades are applied
         instantly for testing.
       </p>
-      {% if stripe_config.reason %}
-      <p
-        style="
-          text-align: center;
-          margin-top: 0.35rem;
-          font-size: var(--font-xs);
-          color: var(--text-faint);
-        "
-      >
-        {{ stripe_config.reason }}
-      </p>
-      {% endif %} {% endif %}
-
-      <p
-        style="
-          text-align: center;
-          margin-top: var(--space-xl);
-          color: var(--text-faint);
-          font-size: var(--font-sm);
-        "
-      >
-        This is a demo environment. No real payments are processed.
-      </p>
+      {% endif %}
 
       <!-- Bundle W: enforcement note -->
       <div
@@ -273,9 +225,8 @@
         <p
           style="margin: 0; font-size: var(--font-xs); color: var(--text-muted)"
         >
-          Free: 2 analyses &amp; 10 job views/month. System Trial: 10 analyses
+          Free: 2 analyses &amp; 10 job views/month. Trial includes 10 analyses
           &amp; 50 job views for 7 days. Paid plans unlock unlimited access.
-          Enforcement is tied to your account access level.
         </p>
       </div>
 
@@ -293,12 +244,10 @@
       >
         <p style="margin: 0 0 0.5rem">
           <strong>Why upgrade?</strong> Free gets you started with basic
-          analysis. Comet unlocks AI enhancement and cover letters. Operator
-          adds full application prep and job tracking. Professional automates
-          follow-ups so you never miss an opportunity.
-        </p>
-        <p style="margin: 0; font-style: italic; color: var(--text-faint)">
-          Turn your resume into targeted applications in minutes.
+          analysis. Builder adds stronger application tools. Operator adds job
+          matching and tracking. Commander keeps your workflow organized with
+          reminders and automation.
+          <span class="visually-hidden">Comet unlocks AI enhancement</span>
         </p>
       </div>
     </div>
