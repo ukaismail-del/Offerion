@@ -98,9 +98,7 @@ class TestAdzunaAdapter(unittest.TestCase):
     def test_missing_credentials_returns_empty(self):
         from app.utils.job_sources import _fetch_adzuna
 
-        with patch("app.utils.job_sources._ADZUNA_APP_ID", ""), patch(
-            "app.utils.job_sources._ADZUNA_APP_KEY", ""
-        ):
+        with patch.dict(os.environ, {"ADZUNA_APP_ID": "", "ADZUNA_APP_KEY": ""}):
             result = _fetch_adzuna(query="python")
             self.assertEqual(result, [])
 
@@ -121,8 +119,8 @@ class TestAdzunaAdapter(unittest.TestCase):
                 }
             ]
         }
-        with patch("app.utils.job_sources._ADZUNA_APP_ID", "test_id"), patch(
-            "app.utils.job_sources._ADZUNA_APP_KEY", "test_key"
+        with patch.dict(
+            os.environ, {"ADZUNA_APP_ID": "test_id", "ADZUNA_APP_KEY": "test_key"}
         ):
             result = _fetch_adzuna(query="python")
             self.assertEqual(len(result), 1)
@@ -155,8 +153,8 @@ class TestAdzunaAdapter(unittest.TestCase):
                 },
             ]
         }
-        with patch("app.utils.job_sources._ADZUNA_APP_ID", "test_id"), patch(
-            "app.utils.job_sources._ADZUNA_APP_KEY", "test_key"
+        with patch.dict(
+            os.environ, {"ADZUNA_APP_ID": "test_id", "ADZUNA_APP_KEY": "test_key"}
         ):
             remote_only = _fetch_adzuna(query="dev", remote=True)
             self.assertTrue(all(j["remote"] for j in remote_only))
@@ -168,28 +166,31 @@ class TestProviderFallback(unittest.TestCase):
     def test_empty_provider_returns_empty(self):
         from app.utils.job_sources import fetch_external_jobs
 
-        with patch("app.utils.job_sources._PROVIDER", ""):
+        with patch.dict(
+            os.environ,
+            {"JOB_SOURCE_PROVIDER": "", "ADZUNA_APP_ID": "", "ADZUNA_APP_KEY": ""},
+        ):
             result = fetch_external_jobs()
             self.assertEqual(result, [])
 
     def test_none_provider_returns_empty(self):
         from app.utils.job_sources import fetch_external_jobs
 
-        with patch("app.utils.job_sources._PROVIDER", "none"):
+        with patch.dict(os.environ, {"JOB_SOURCE_PROVIDER": "none"}):
             result = fetch_external_jobs()
             self.assertEqual(result, [])
 
     def test_unknown_provider_returns_empty(self):
         from app.utils.job_sources import fetch_external_jobs
 
-        with patch("app.utils.job_sources._PROVIDER", "bogus_provider"):
+        with patch.dict(os.environ, {"JOB_SOURCE_PROVIDER": "bogus_provider"}):
             result = fetch_external_jobs()
             self.assertEqual(result, [])
 
     def test_mock_provider_returns_jobs(self):
         from app.utils.job_sources import fetch_external_jobs
 
-        with patch("app.utils.job_sources._PROVIDER", "mock"):
+        with patch.dict(os.environ, {"JOB_SOURCE_PROVIDER": "mock"}):
             result = fetch_external_jobs()
             self.assertTrue(len(result) > 0)
             for job in result:
@@ -202,7 +203,12 @@ class TestSourceFilter(unittest.TestCase):
     def test_filter_internal_only(self):
         from app.utils.job_feed import get_unified_jobs
 
-        with patch("app.utils.job_sources._PROVIDER", "mock"):
+        with patch.dict(
+            os.environ, {"JOB_SOURCE_PROVIDER": "mock", "USE_STATIC_JOBS": "true"}
+        ):
+            import importlib, app.utils.job_data as jd
+
+            importlib.reload(jd)
             internal = get_unified_jobs(source="internal", limit=100)
             for j in internal:
                 self.assertEqual(j.get("source"), "internal")
@@ -210,7 +216,7 @@ class TestSourceFilter(unittest.TestCase):
     def test_filter_external_only(self):
         from app.utils.job_feed import get_unified_jobs
 
-        with patch("app.utils.job_sources._PROVIDER", "mock"):
+        with patch.dict(os.environ, {"JOB_SOURCE_PROVIDER": "mock"}):
             external = get_unified_jobs(source="external", limit=100)
             for j in external:
                 self.assertEqual(j.get("source"), "external")
@@ -218,7 +224,12 @@ class TestSourceFilter(unittest.TestCase):
     def test_no_source_filter_returns_both(self):
         from app.utils.job_feed import get_unified_jobs
 
-        with patch("app.utils.job_sources._PROVIDER", "mock"):
+        with patch.dict(
+            os.environ, {"JOB_SOURCE_PROVIDER": "mock", "USE_STATIC_JOBS": "true"}
+        ):
+            import importlib, app.utils.job_data as jd
+
+            importlib.reload(jd)
             all_jobs = get_unified_jobs(source=None, limit=100)
             sources = {j.get("source") for j in all_jobs}
             self.assertIn("internal", sources)
@@ -245,7 +256,7 @@ class TestApplyRoute(unittest.TestCase):
 
     def test_apply_mock_job_redirects_to_url(self):
         """Mock job with apply_url should trigger external redirect."""
-        with patch("app.utils.job_sources._PROVIDER", "mock"):
+        with patch.dict(os.environ, {"JOB_SOURCE_PROVIDER": "mock"}):
             with self.client.session_transaction() as s:
                 s["user_id"] = "test-user"
             resp = self.client.get("/apply/ext_mock_1", follow_redirects=False)

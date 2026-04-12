@@ -540,10 +540,18 @@ def dashboard():
                                     if _user:
                                         if not _user.has_uploaded_resume:
                                             _user.has_uploaded_resume = True
-                                            _log_db_activity(user_id, "resume_uploaded", "Resume uploaded: %s" % filename)
+                                            _log_db_activity(
+                                                user_id,
+                                                "resume_uploaded",
+                                                "Resume uploaded: %s" % filename,
+                                            )
                                         if profile and not _user.has_generated_matches:
                                             _user.has_generated_matches = True
-                                            _log_db_activity(user_id, "match_generated", "Match/report generated")
+                                            _log_db_activity(
+                                                user_id,
+                                                "match_generated",
+                                                "Match/report generated",
+                                            )
                                         app_db.session.commit()
                                         _check_onboarding_complete(_user)
                                 except Exception:
@@ -597,26 +605,51 @@ def dashboard():
     )
 
     if report_data:
+        # Extract resume skills to drive API query (different resumes → different jobs)
+        _resume_skills_for_query = []
+        _profile = report_data.get("profile")
+        if _profile and _profile.get("skills"):
+            _resume_skills_for_query = [
+                s.lower().strip()
+                for s in _profile["skills"]
+                if s and s.strip().lower() != "not detected"
+            ]
+
         filtered_jobs = get_unified_jobs(
             query=job_query or None,
             location=job_location or None,
             remote=remote_flag,
             source=job_source or None,
+            resume_skills=_resume_skills_for_query if not job_query else None,
         )
         recommended_jobs = match_jobs(report_data, jobs=filtered_jobs)
     else:
         recommended_jobs = []
 
     # Bundle V: onboarding progress for dashboard
-    onboarding_progress = {"created": True, "resume": False, "matches": False, "complete": False, "count": 1}
+    onboarding_progress = {
+        "created": True,
+        "resume": False,
+        "matches": False,
+        "complete": False,
+        "count": 1,
+    }
     if user_id:
         try:
             _ob_user = UserIdentity.query.get(user_id)
             if _ob_user:
-                onboarding_progress["resume"] = bool(getattr(_ob_user, "has_uploaded_resume", False))
-                onboarding_progress["matches"] = bool(getattr(_ob_user, "has_generated_matches", False))
+                onboarding_progress["resume"] = bool(
+                    getattr(_ob_user, "has_uploaded_resume", False)
+                )
+                onboarding_progress["matches"] = bool(
+                    getattr(_ob_user, "has_generated_matches", False)
+                )
                 onboarding_progress["complete"] = bool(_ob_user.onboarding_completed_at)
-                onboarding_progress["count"] = 1 + int(onboarding_progress["resume"]) + int(onboarding_progress["matches"])
+                onboarding_progress["count"] = (
+                    1
+                    + int(onboarding_progress["resume"])
+                    + int(onboarding_progress["matches"])
+                )
         except Exception:
             pass
 
@@ -1908,7 +1941,9 @@ def signup_page():
             session["trial_days_left"] = days_left
 
         _log_event("signup", {"email": email})
-        _log_db_activity(user.id, "signup_completed", "User signed up", {"email": email})
+        _log_db_activity(
+            user.id, "signup_completed", "User signed up", {"email": email}
+        )
         return redirect(url_for("main.dashboard"))
     except Exception as exc:
         app_db.session.rollback()

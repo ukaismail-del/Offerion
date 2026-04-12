@@ -15,7 +15,11 @@ class TestJobSources(unittest.TestCase):
 
     def test_no_provider_returns_empty(self):
         """When JOB_SOURCE_PROVIDER is unset, fetch_external_jobs returns []."""
-        with patch.dict(os.environ, {"JOB_SOURCE_PROVIDER": ""}, clear=False):
+        with patch.dict(
+            os.environ,
+            {"JOB_SOURCE_PROVIDER": "", "ADZUNA_APP_ID": "", "ADZUNA_APP_KEY": ""},
+            clear=False,
+        ):
             # Re-import to pick up env change
             import importlib
             import app.utils.job_sources as src
@@ -68,8 +72,15 @@ class TestUnifiedFeed(unittest.TestCase):
     """M82/M86 — Unified feed merger."""
 
     def test_unified_returns_internal_when_no_external(self):
-        with patch.dict(os.environ, {"JOB_SOURCE_PROVIDER": ""}, clear=False):
+        with patch.dict(
+            os.environ,
+            {"JOB_SOURCE_PROVIDER": "", "USE_STATIC_JOBS": "true"},
+            clear=False,
+        ):
             import importlib
+            import app.utils.job_data as jd
+
+            importlib.reload(jd)
             import app.utils.job_sources as src
 
             importlib.reload(src)
@@ -83,8 +94,15 @@ class TestUnifiedFeed(unittest.TestCase):
             self.assertEqual(sources, {"internal"})
 
     def test_unified_includes_external_when_configured(self):
-        with patch.dict(os.environ, {"JOB_SOURCE_PROVIDER": "mock"}, clear=False):
+        with patch.dict(
+            os.environ,
+            {"JOB_SOURCE_PROVIDER": "mock", "USE_STATIC_JOBS": "true"},
+            clear=False,
+        ):
             import importlib
+            import app.utils.job_data as jd
+
+            importlib.reload(jd)
             import app.utils.job_sources as src
 
             importlib.reload(src)
@@ -179,13 +197,13 @@ class TestMatcherOutputShape(unittest.TestCase):
 
     def test_output_has_new_fields(self):
         from app.utils.job_matcher import match_jobs
-        from app.utils.job_data import get_all_jobs
+        from app.utils.job_data import get_static_jobs
 
         report_data = {
             "profile": {"skills": ["python", "sql"], "experience": ["2y at X"]},
             "match": {"target_role": "data analyst"},
         }
-        results = match_jobs(report_data, limit=3)
+        results = match_jobs(report_data, jobs=get_static_jobs(), limit=3)
         self.assertGreater(len(results), 0)
         for r in results:
             self.assertIn("freshness_score", r)
@@ -235,14 +253,10 @@ class TestExternalFailureFallback(unittest.TestCase):
 
         original = src._PROVIDERS.copy()
         src._PROVIDERS["explode"] = _exploding_adapter
-        old_provider = src._PROVIDER
-        src._PROVIDER = "explode"
-        try:
+        with patch.dict(os.environ, {"JOB_SOURCE_PROVIDER": "explode"}):
             result = src.fetch_external_jobs()
             self.assertEqual(result, [])
-        finally:
-            src._PROVIDER = old_provider
-            src._PROVIDERS = original
+        src._PROVIDERS = original
 
     def test_unified_works_when_external_fails(self):
         """Unified feed still returns internal jobs when external blows up."""
@@ -252,11 +266,15 @@ class TestExternalFailureFallback(unittest.TestCase):
         def _exploding(**kwargs):
             raise RuntimeError("API down")
 
-        with patch.object(
-            feed, "fetch_external_jobs", side_effect=RuntimeError("boom")
-        ):
-            jobs = feed.get_unified_jobs()
-            self.assertGreater(len(jobs), 0)
+        with patch.dict(os.environ, {"USE_STATIC_JOBS": "true"}):
+            import importlib, app.utils.job_data as jd
+
+            importlib.reload(jd)
+            with patch.object(
+                feed, "fetch_external_jobs", side_effect=RuntimeError("boom")
+            ):
+                jobs = feed.get_unified_jobs()
+                self.assertGreater(len(jobs), 0)
 
 
 if __name__ == "__main__":

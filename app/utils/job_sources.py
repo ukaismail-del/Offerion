@@ -24,6 +24,36 @@ _ADZUNA_APP_ID = os.environ.get("ADZUNA_APP_ID", "").strip()
 _ADZUNA_APP_KEY = os.environ.get("ADZUNA_APP_KEY", "").strip()
 
 
+def _get_provider():
+    """Determine the active job-source provider at call time.
+
+    If ``JOB_SOURCE_PROVIDER`` is explicitly set, honour it.
+    Otherwise auto-detect: use Adzuna when its credentials are present.
+    """
+    explicit = os.environ.get("JOB_SOURCE_PROVIDER", "").strip().lower()
+    if explicit and explicit != "none":
+        return explicit
+    # Auto-detect
+    if (
+        os.environ.get("ADZUNA_APP_ID", "").strip()
+        and os.environ.get("ADZUNA_APP_KEY", "").strip()
+    ):
+        return "adzuna"
+    return ""
+
+
+def build_resume_query(skills, max_terms=5):
+    """Build an API search query string from resume skills.
+
+    Picks up to *max_terms* skills to form a concise query so the API
+    returns relevant results for the user's background.
+    """
+    if not skills:
+        return ""
+    terms = [s for s in skills if s and s.lower() != "not detected"][:max_terms]
+    return " ".join(terms)
+
+
 # ── M88 — Skill extraction ───────────────────────────────────────
 
 SKILL_VOCABULARY = frozenset(
@@ -298,13 +328,15 @@ def _fetch_adzuna(query=None, location=None, remote=None, limit=25):
     Requires ``ADZUNA_APP_ID`` and ``ADZUNA_APP_KEY`` env vars.
     Returns raw dicts that ``_normalize`` will canonicalise.
     """
-    if not _ADZUNA_APP_ID or not _ADZUNA_APP_KEY:
+    app_id = os.environ.get("ADZUNA_APP_ID", "").strip()
+    app_key = os.environ.get("ADZUNA_APP_KEY", "").strip()
+    if not app_id or not app_key:
         logger.warning("Adzuna credentials missing — skipping provider")
         return []
 
     params = {
-        "app_id": _ADZUNA_APP_ID,
-        "app_key": _ADZUNA_APP_KEY,
+        "app_id": app_id,
+        "app_key": app_key,
         "results_per_page": min(limit, 50),
         "content-type": "application/json",
     }
@@ -370,24 +402,25 @@ def fetch_external_jobs(query=None, location=None, remote=None, limit=25):
     Falls back to an empty list when no source is configured or the
     provider raises an exception.
     """
-    if not _PROVIDER or _PROVIDER == "none":
+    provider = _get_provider()
+    if not provider or provider == "none":
         return []
 
-    if _PROVIDER not in _PROVIDERS:
-        logger.warning("Unknown job source provider '%s' — returning empty", _PROVIDER)
+    if provider not in _PROVIDERS:
+        logger.warning("Unknown job source provider '%s' — returning empty", provider)
         return []
 
-    adapter = _PROVIDERS[_PROVIDER]
+    adapter = _PROVIDERS[provider]
     try:
         raw_jobs = adapter(query=query, location=location, remote=remote, limit=limit)
     except Exception:
-        logger.exception("External job source '%s' failed", _PROVIDER)
+        logger.exception("External job source '%s' failed", provider)
         return []
 
     normalised = []
     for raw in raw_jobs:
         try:
-            item = _normalize(raw, _PROVIDER)
+            item = _normalize(raw, provider)
             if item:
                 normalised.append(item)
         except Exception:

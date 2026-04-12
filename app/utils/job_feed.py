@@ -2,13 +2,14 @@
 
 Provides a single entry-point for fetching jobs with optional filters.
 ``get_unified_jobs`` merges internal + external sources with deduplication.
-``fetch_jobs`` filters a given list (or the internal dataset) by query/location/remote.
+When resume skills are provided the API query is derived automatically
+so different resumes produce different job results.
 """
 
 import logging
 
 from app.utils.job_data import get_all_jobs
-from app.utils.job_sources import fetch_external_jobs
+from app.utils.job_sources import fetch_external_jobs, build_resume_query
 
 logger = logging.getLogger(__name__)
 
@@ -49,21 +50,32 @@ def _dedup_key(job):
     )
 
 
-def get_unified_jobs(query=None, location=None, remote=None, source=None, limit=25):
+def get_unified_jobs(
+    query=None, location=None, remote=None, source=None, limit=25, resume_skills=None
+):
     """Merge internal dataset + external jobs, deduplicate, filter, return.
+
+    When *resume_skills* are provided and no explicit *query*, a search
+    query is built from the user's skills so the API returns
+    personalised results — different resumes yield different jobs.
 
     When duplicates exist (same title+company+location), the external
     version is preferred because it typically has richer metadata
     (posted_at, url, source_name).
     """
+    # Derive API query from resume skills when no explicit query given
+    api_query = query
+    if not api_query and resume_skills:
+        api_query = build_resume_query(resume_skills)
+
     # Fetch from both sources
     internal = get_all_jobs()
     try:
         external = fetch_external_jobs(
-            query=query,
+            query=api_query or None,
             location=location,
             remote=remote,
-            limit=limit,
+            limit=max(limit, 50),  # fetch extra for scoring diversity
         )
     except Exception:
         logger.exception("External job fetch failed; using internal only")

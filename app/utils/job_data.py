@@ -1,4 +1,11 @@
-"""M69/M78 — Job Data Model. Static dataset of realistic job listings."""
+"""M69/M78 — Job Data Model. Static dataset of realistic job listings.
+
+Production mode (default): ``get_all_jobs()`` returns an empty list so the
+app is API-driven.  Set ``USE_STATIC_JOBS=true`` to re-enable the built-in
+dataset for local development or testing.
+"""
+
+import os
 
 JOBS = [
     # ── Software Engineering ──────────────────────────────────────
@@ -609,8 +616,19 @@ JOBS = [
 
 
 def get_all_jobs():
-    """Return the full list of job listings."""
-    return JOBS
+    """Return the full list of job listings.
+
+    Returns an empty list by default (API-first mode).
+    Set ``USE_STATIC_JOBS=true`` env var to enable the built-in dataset.
+    """
+    if os.environ.get("USE_STATIC_JOBS", "").strip().lower() in ("1", "true", "yes"):
+        return list(JOBS)
+    return []
+
+
+def get_static_jobs():
+    """Return the full static dataset unconditionally (for tests)."""
+    return list(JOBS)
 
 
 def find_job_by_id(job_id):

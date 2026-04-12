@@ -1,8 +1,11 @@
 """M76/M83 — Advanced Job Matching Engine.
 
 Weighted scoring:
-  skill overlap (0.5) + title similarity (0.25) +
-  experience signal (0.1) + freshness signal (0.15).
+  skill overlap (0.70) + title similarity (0.15) +
+  experience signal (0.05) + freshness signal (0.10).
+
+The core match factor is real skill overlap so different resumes
+produce meaningfully different results and match percentages.
 
 Returns match_level, missing_skills, freshness_score, and posted_at.
 """
@@ -64,7 +67,7 @@ def _match_level(score):
     return "Weak"
 
 
-def match_jobs(report_data, jobs=None, limit=10):
+def match_jobs(report_data, jobs=None, limit=20):
     """Return top *limit* jobs ranked by weighted match score.
 
     Parameters
@@ -120,10 +123,10 @@ def match_jobs(report_data, jobs=None, limit=10):
         fresh = _freshness_signal(job.get("posted_at"))
 
         score = (
-            (skill_score * 0.5)
-            + (title_score * 0.25)
-            + (exp_sig * 0.1)
-            + (fresh * 0.15)
+            (skill_score * 0.70)
+            + (title_score * 0.15)
+            + (exp_sig * 0.05)
+            + (fresh * 0.10)
         )
         score = min(round(score, 2), 1.0)
 

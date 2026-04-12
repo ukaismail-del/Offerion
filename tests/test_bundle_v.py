@@ -112,13 +112,13 @@ class TestSignupTracking(unittest.TestCase):
         with app.app_context():
             from app.models import ActivityEvent
 
-            events = ActivityEvent.query.filter_by(
-                event_type="signup_completed"
-            ).all()
+            events = ActivityEvent.query.filter_by(event_type="signup_completed").all()
             self.assertGreaterEqual(len(events), 1)
             evt = events[-1]
             # Email stored in event_label, label, or meta_json
-            combined = (evt.event_label or "") + (evt.label or "") + (evt.meta_json or "")
+            combined = (
+                (evt.event_label or "") + (evt.label or "") + (evt.meta_json or "")
+            )
             self.assertIn("track@test.com", combined)
 
     def test_signup_sets_last_login(self):
@@ -165,9 +165,7 @@ class TestLoginTracking(unittest.TestCase):
         with app.app_context():
             from app.models import ActivityEvent
 
-            events = ActivityEvent.query.filter_by(
-                event_type="login_completed"
-            ).all()
+            events = ActivityEvent.query.filter_by(event_type="login_completed").all()
             self.assertGreaterEqual(len(events), 1)
 
 
@@ -182,9 +180,7 @@ class TestLogoutTracking(unittest.TestCase):
         with app.app_context():
             from app.models import ActivityEvent
 
-            events = ActivityEvent.query.filter_by(
-                event_type="logout_completed"
-            ).all()
+            events = ActivityEvent.query.filter_by(event_type="logout_completed").all()
             self.assertGreaterEqual(len(events), 1)
 
 
