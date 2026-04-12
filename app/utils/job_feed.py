@@ -9,9 +9,21 @@ so different resumes produce different job results.
 import logging
 
 from app.utils.job_data import get_all_jobs
-from app.utils.job_sources import fetch_external_jobs, build_resume_query
+from app.utils.job_sources import (
+    fetch_external_jobs,
+    build_resume_query,
+    build_search_query,
+)
 
 logger = logging.getLogger(__name__)
+
+
+_FALLBACK_QUERIES = [
+    "software engineer",
+    "developer",
+    "engineer",
+    "analyst",
+]
 
 
 def _apply_filters(jobs, query=None, location=None, remote=None):
@@ -51,7 +63,14 @@ def _dedup_key(job):
 
 
 def get_unified_jobs(
-    query=None, location=None, remote=None, source=None, limit=25, resume_skills=None
+    query=None,
+    location=None,
+    remote=None,
+    source=None,
+    limit=25,
+    resume_skills=None,
+    target_role=None,
+    resume_text=None,
 ):
     """Merge internal dataset + external jobs, deduplicate, filter, return.
 
@@ -59,27 +78,77 @@ def get_unified_jobs(
     query is built from the user's skills so the API returns
     personalised results — different resumes yield different jobs.
 
+    **Fallback**: if the primary query returns zero external jobs, the
+    function retries with progressively broader queries so the user
+    always sees results.  ``used_fallback`` is set on the returned list
+    as an attribute when a fallback query was used.
+
     When duplicates exist (same title+company+location), the external
     version is preferred because it typically has richer metadata
     (posted_at, url, source_name).
     """
-    # Derive API query from resume skills when no explicit query given
+    # ── Build smart query ────────────────────────────────────────
     api_query = query
+    if not api_query and target_role:
+        api_query = build_search_query(target_role, resume_text or "")
     if not api_query and resume_skills:
         api_query = build_resume_query(resume_skills)
 
-    # Fetch from both sources
+    logger.info("Job feed query: %s", api_query or "(none)")
+
+    # ── Fetch internal ───────────────────────────────────────────
     internal = get_all_jobs()
+
+    # ── Fetch external with fallback ─────────────────────────────
+    external = []
+    used_fallback = False
+    fetch_limit = max(limit, 50)
+
+    # Clean location — avoid sending empty strings
+    clean_location = (location or "").strip() or None
+
     try:
         external = fetch_external_jobs(
             query=api_query or None,
-            location=location,
+            location=clean_location,
             remote=remote,
-            limit=max(limit, 50),  # fetch extra for scoring diversity
+            limit=fetch_limit,
         )
     except Exception:
-        logger.exception("External job fetch failed; using internal only")
-        external = []
+        logger.exception("External job source failed on primary query")
+
+    logger.info("Primary query returned %d external jobs", len(external))
+
+    # Fallback cascade when primary returns nothing
+    # Skip fallback when the caller supplied an explicit query — respect it.
+    if not external and not query:
+        fallback_attempts = []
+        if target_role:
+            fallback_attempts.append(target_role.strip())
+        fallback_attempts.extend(_FALLBACK_QUERIES)
+
+        for fq in fallback_attempts:
+            if fq == api_query:
+                continue  # skip if same as primary
+            try:
+                logger.info("Fallback query: %s", fq)
+                external = fetch_external_jobs(
+                    query=fq,
+                    location=clean_location,
+                    remote=remote,
+                    limit=fetch_limit,
+                )
+            except Exception:
+                logger.exception("Fallback query '%s' failed", fq)
+                continue
+            if external:
+                used_fallback = True
+                logger.info(
+                    "Fallback '%s' returned %d jobs", fq, len(external)
+                )
+                break
+
+    logger.info("Total external jobs: %d (fallback=%s)", len(external), used_fallback)
 
     # Tag internal jobs with source if not already present
     for j in internal:
@@ -105,7 +174,18 @@ def get_unified_jobs(
     # Apply filters on the merged list
     merged = _apply_filters(merged, query=query, location=location, remote=remote)
 
-    return merged[:limit]
+    result = merged[:limit]
+
+    # Attach fallback flag so callers can show a banner
+    result = _TaggedList(result)
+    result.used_fallback = used_fallback
+    return result
+
+
+class _TaggedList(list):
+    """List subclass that carries metadata attributes."""
+
+    used_fallback = False
 
 
 def fetch_jobs(query=None, location=None, remote=None, limit=25):

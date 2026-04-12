@@ -604,16 +604,24 @@ def dashboard():
         True if job_remote == "true" else (False if job_remote == "false" else None)
     )
 
+    jobs_used_fallback = False
     if report_data:
         # Extract resume skills to drive API query (different resumes → different jobs)
         _resume_skills_for_query = []
         _profile = report_data.get("profile")
+        _match_data = report_data.get("match")
+        _target_role = ""
+        _resume_text = ""
         if _profile and _profile.get("skills"):
             _resume_skills_for_query = [
                 s.lower().strip()
                 for s in _profile["skills"]
                 if s and s.strip().lower() != "not detected"
             ]
+        if _match_data and _match_data.get("target_role"):
+            _target_role = _match_data["target_role"]
+        if session.get("resume_text"):
+            _resume_text = session["resume_text"]
 
         filtered_jobs = get_unified_jobs(
             query=job_query or None,
@@ -621,7 +629,10 @@ def dashboard():
             remote=remote_flag,
             source=job_source or None,
             resume_skills=_resume_skills_for_query if not job_query else None,
+            target_role=_target_role if not job_query else None,
+            resume_text=_resume_text if not job_query else None,
         )
+        jobs_used_fallback = getattr(filtered_jobs, "used_fallback", False)
         recommended_jobs = match_jobs(report_data, jobs=filtered_jobs)
     else:
         recommended_jobs = []
@@ -686,6 +697,7 @@ def dashboard():
         report_data_exists=bool(session.get("report_data")),
         upgrade_nudge_message=_upgrade_nudge(),
         recommended_jobs=recommended_jobs,
+        jobs_used_fallback=jobs_used_fallback,
         job_query=job_query,
         job_location=job_location,
         job_remote=job_remote,

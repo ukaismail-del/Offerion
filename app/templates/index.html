@@ -398,6 +398,11 @@
         </form>
 
         {% if recommended_jobs %}
+        {% if jobs_used_fallback %}
+        <div class="fallback-banner" style="background: var(--bg-card); border-left: 4px solid var(--accent); padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 6px; color: var(--text-muted); font-size: 0.9rem;">
+          Showing broader matches to help you get started
+        </div>
+        {% endif %}
         <div class="job-grid">
           {% for rj in recommended_jobs %}
           <div class="job-card">

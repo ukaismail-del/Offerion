@@ -54,6 +54,35 @@ def build_resume_query(skills, max_terms=5):
     return " ".join(terms)
 
 
+def build_search_query(target_role, resume_text=""):
+    """Build a simple, effective search query from target role + resume.
+
+    Keeps the query concise — too many terms reduce API recall.
+    Extracts at most 2 strong keywords from the resume text.
+    """
+    base_query = (target_role or "").strip()
+
+    keywords = []
+    if resume_text:
+        text_lower = resume_text.lower()
+        # Extract strong, common keywords from resume
+        _STRONG_KEYWORDS = [
+            "python", "sql", "java", "javascript", "react", "node.js",
+            "aws", "docker", "kubernetes", "machine learning", "data",
+            "typescript", "flask", "django", "excel", "tableau",
+            "figma", "css", "html", "c++", "c#", "ruby", "go",
+            "marketing", "sales", "finance", "analytics", "devops",
+        ]
+        for kw in _STRONG_KEYWORDS:
+            if kw in text_lower:
+                keywords.append(kw)
+            if len(keywords) >= 2:
+                break
+
+    keyword_str = " ".join(keywords[:2])
+    return f"{base_query} {keyword_str}".strip()
+
+
 # ── M88 — Skill extraction ───────────────────────────────────────
 
 SKILL_VOCABULARY = frozenset(
