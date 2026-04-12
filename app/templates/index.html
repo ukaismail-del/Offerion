@@ -211,6 +211,14 @@
         <p class="guidance-text">{{ dashboard_notice_message }}</p>
       </div>
       {% endif %}
+      {% if verification_dev_link and not email_verified %}
+      <div class="card" style="border-left:4px solid var(--color-warning);margin-bottom:var(--space-md)">
+        <p class="msg-warning" style="margin:0">
+          Verification email is unavailable in this environment. Use your temporary
+          <a href="{{ verification_dev_link }}">verification link</a>.
+        </p>
+      </div>
+      {% endif %}
 
       <!-- M119: Usage visibility signals -->
       {% if usage_signals %}

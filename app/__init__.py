@@ -19,6 +19,11 @@ def create_app(testing=False):
     app.config["UPLOAD_FOLDER"] = UPLOAD_DIR
     app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB
     app.secret_key = os.environ.get("SECRET_KEY", "offerion-local-dev-key")
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["SESSION_COOKIE_SECURE"] = (
+        not testing and os.environ.get("OFFERION_SECURE_COOKIES", "1") != "0"
+    )
 
     if testing:
         app.config["TESTING"] = True
@@ -38,6 +43,7 @@ def create_app(testing=False):
 
     # Bundle T: Exempt Stripe webhook from CSRF
     from app.routes import stripe_webhook
+
     csrf.exempt(stripe_webhook)
 
     @app.context_processor

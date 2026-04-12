@@ -34,6 +34,13 @@ class UserIdentity(db.Model):
     password_hash = db.Column(db.String(256), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
     is_admin = db.Column(db.Boolean, default=False)
+    email_verified = db.Column(db.Boolean, default=False)
+    email_verification_token_hash = db.Column(db.String(255), nullable=True)
+    email_verification_expires_at = db.Column(db.DateTime, nullable=True)
+    email_verified_at = db.Column(db.DateTime, nullable=True)
+    password_reset_token_hash = db.Column(db.String(255), nullable=True)
+    password_reset_expires_at = db.Column(db.DateTime, nullable=True)
+    password_reset_requested_at = db.Column(db.DateTime, nullable=True)
 
     # Login tracking
     last_login_at = db.Column(db.DateTime, nullable=True)

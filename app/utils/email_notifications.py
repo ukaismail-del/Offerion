@@ -210,6 +210,33 @@ class EmailNotificationService:
             ),
         )
 
+    def send_password_reset(self, to_email, reset_url, expires_minutes=60):
+        """Send a password reset email with a signed reset URL."""
+        return self._send(
+            to=to_email,
+            subject="Reset your Offerion password",
+            body=(
+                "We received a request to reset your Offerion password.\n\n"
+                f"Reset link: {reset_url}\n\n"
+                f"This link expires in {int(expires_minutes)} minute(s). "
+                "If you did not request this, you can ignore this email.\n\n"
+                "— The Offerion Team"
+            ),
+        )
+
+    def send_email_verification(self, to_email, verify_url, expires_hours=48):
+        """Send an email verification link."""
+        return self._send(
+            to=to_email,
+            subject="Verify your Offerion email",
+            body=(
+                "Welcome to Offerion. Please verify your email address.\n\n"
+                f"Verification link: {verify_url}\n\n"
+                f"This link expires in {int(expires_hours)} hour(s).\n\n"
+                "— The Offerion Team"
+            ),
+        )
+
     def health_summary(self):
         """Return a compact founder-facing health summary."""
         config = self.get_config()

@@ -26,7 +26,9 @@
     <div class="container">
       <div class="auth-card">
         <h1 class="auth-title">Log In</h1>
-        {% if error %}
+        {% if message %}
+        <p class="msg-success" style="text-align: center">{{ message }}</p>
+        {% endif %} {% if error %}
         <p class="msg-error" style="text-align: center">{{ error }}</p>
         {% endif %}
         <form method="POST">
@@ -56,6 +58,9 @@
             </button>
           </div>
         </form>
+        <p class="auth-alt">
+          <a href="/forgot-password">Forgot your password?</a>
+        </p>
         <p class="auth-alt">
           Don't have an account? <a href="/signup">Sign up</a>
         </p>

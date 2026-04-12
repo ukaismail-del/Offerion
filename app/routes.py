@@ -1,6 +1,8 @@
 ﻿import json
 import logging
 import os
+import secrets
+import time
 from datetime import datetime, timedelta
 
 from flask import (
@@ -14,6 +16,7 @@ from flask import (
     Response,
 )
 from werkzeug.utils import secure_filename
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import ALLOWED_EXTENSIONS
 from app.utils.match_scorer import score_match
@@ -139,6 +142,7 @@ logger = logging.getLogger(__name__)
 main_bp = Blueprint("main", __name__)
 
 _RECOMMENDED_CACHE_MAX = 20
+_AUTH_RATE_LIMIT_BUCKETS = {}
 
 
 def allowed_file(filename):
@@ -578,11 +582,35 @@ def _bootstrap_persistence():
     # Public routes that don't require authentication
     path = request.path
     is_public = (
-        path in ("/", "/login", "/signup", "/pricing", "/capture-email")
+        path
+        in (
+            "/",
+            "/login",
+            "/signup",
+            "/pricing",
+            "/capture-email",
+            "/forgot-password",
+            "/reset-password",
+            "/verify-email",
+        )
         or path.startswith("/share/")
         or path.startswith("/static/")
+        or path.startswith("/reset-password/")
+        or path.startswith("/verify-email/")
         or path == "/stripe/webhook"
     )
+
+    if session.get("is_authenticated") and not session.get("user_id"):
+        session.clear()
+        if not is_public:
+            return redirect(url_for("main.login_page"))
+
+    if session.get("is_authenticated") and session.get("user_id"):
+        _auth_user = UserIdentity.query.filter_by(id=session.get("user_id")).first()
+        if not _auth_user or not _auth_user.email or _auth_user.is_active is False:
+            session.clear()
+            if not is_public:
+                return redirect(url_for("main.login_page"))
 
     if not is_public and not session.get("is_authenticated"):
         # In testing mode, allow session-seeded users through
@@ -617,6 +645,9 @@ def _bootstrap_persistence():
                 reset_monthly_usage_if_needed(_bw_user)
                 app_db.session.commit()
                 session["user_tier"] = _bw_user.tier or "free"
+                session["email_verified"] = bool(
+                    getattr(_bw_user, "email_verified", False)
+                )
                 days_left = trial_days_remaining(_bw_user)
                 session["trial_days_left"] = days_left
         except Exception:
@@ -1083,6 +1114,10 @@ def dashboard():
         except Exception:
             pass
 
+    _dashboard_notice = session.pop("dashboard_notice_message", None)
+    _verification_notice = session.pop("verification_notice", None)
+    dashboard_notice = _dashboard_notice or _verification_notice
+
     return render_template(
         "index.html",
         message=message,
@@ -1135,8 +1170,10 @@ def dashboard():
         and not session.get("application_packages"),
         show_enhance_cta=bool(session.get("report_data"))
         and not session.get("enhanced_resume"),
-        dashboard_notice_message=session.pop("dashboard_notice_message", None),
+        dashboard_notice_message=dashboard_notice,
         package_recovery_message=session.pop("package_recovery_message", None),
+        verification_dev_link=session.pop("verification_dev_link", None),
+        email_verified=bool(session.get("email_verified", False)),
         usage_signals=usage_signals,
         onboarding_progress=onboarding_progress,
         jobs_capped=jobs_capped,
@@ -2639,7 +2676,18 @@ def signup_page():
         return redirect(url_for("main.dashboard"))
 
     if request.method == "GET":
-        return render_template("signup.html")
+        notice = request.args.get("notice")
+        return render_template("signup.html", message=notice)
+
+    is_limited, retry_after = _auth_rate_limited("signup", limit=6, window_seconds=600)
+    if is_limited:
+        return render_template(
+            "signup.html",
+            error=(
+                "Too many signup attempts. Please wait "
+                f"{retry_after} second(s) and try again."
+            ),
+        )
 
     email = request.form.get("email", "").strip().lower()
     password = request.form.get("password", "").strip()
@@ -2675,7 +2723,17 @@ def signup_page():
 
         user.email = email
         user.set_password(password)
+        user.email_verified = False
         user.last_login_at = datetime.utcnow()
+
+        if not user.id:
+            app_db.session.flush()
+
+        verify_token, verify_nonce = _build_user_nonce_token(user.id)
+        user.email_verification_token_hash = generate_password_hash(verify_nonce)
+        user.email_verification_expires_at = datetime.utcnow() + timedelta(hours=48)
+        user.email_verified_at = None
+
         app_db.session.commit()
 
         _sync_admin_flag(user)
@@ -2686,15 +2744,25 @@ def signup_page():
         elif user.tier == "trial":
             _log_db_activity(user.id, "trial_started", "Trial started on signup")
 
-        session["user_id"] = user.id
-        session["is_authenticated"] = True
-        session["current_user_email"] = email
-        session["user_tier"] = user.tier or "free"
-        session["is_admin"] = bool(getattr(user, "is_admin", False))
+        _mark_authenticated_session(user)
 
-        days_left = trial_days_remaining(user)
-        if days_left is not None:
-            session["trial_days_left"] = days_left
+        verify_url = url_for("main.verify_email", token=verify_token, _external=True)
+        verify_send_result = email_service.send_email_verification(
+            user.email,
+            verify_url=verify_url,
+            expires_hours=48,
+        )
+        if verify_send_result.get("status") != "sent":
+            session["verification_dev_link"] = verify_url
+            session["verification_notice"] = (
+                "We could not send a verification email in this environment. "
+                "Use the temporary verification link shown in your dashboard banner."
+            )
+        else:
+            session.pop("verification_dev_link", None)
+            session["verification_notice"] = (
+                "Check your inbox for a verification link to confirm your email."
+            )
 
         _log_event("signup", {"email": email})
         _log_db_activity(
@@ -2717,7 +2785,28 @@ def login_page():
         return redirect(url_for("main.dashboard"))
 
     if request.method == "GET":
-        return render_template("login.html")
+        message = None
+        reset_state = request.args.get("reset")
+        verify_state = request.args.get("verified")
+        if reset_state == "success":
+            message = "Password reset successful. You can now log in."
+        elif reset_state == "invalid":
+            message = "Reset link is invalid or expired. Please request a new link."
+        elif verify_state == "1":
+            message = "Email verified. Your account is now confirmed."
+        elif verify_state == "invalid":
+            message = "Verification link is invalid or expired."
+        return render_template("login.html", message=message)
+
+    is_limited, retry_after = _auth_rate_limited("login", limit=8, window_seconds=600)
+    if is_limited:
+        return render_template(
+            "login.html",
+            error=(
+                "Too many login attempts. Please wait "
+                f"{retry_after} second(s) and try again."
+            ),
+        )
 
     email = request.form.get("email", "").strip().lower()
     password = request.form.get("password", "").strip()
@@ -2757,17 +2846,7 @@ def login_page():
         app_db.session.commit()
 
         # Clear session and set authenticated user
-        session.clear()
-        session.permanent = True
-        session["user_id"] = user.id
-        session["is_authenticated"] = True
-        session["current_user_email"] = email
-        session["user_tier"] = user.tier or "free"
-        session["is_admin"] = bool(getattr(user, "is_admin", False))
-
-        days_left = trial_days_remaining(user)
-        if days_left is not None:
-            session["trial_days_left"] = days_left
+        _mark_authenticated_session(user)
 
         _log_event("login", {"email": email})
         _log_db_activity(user.id, "login_completed", "User logged in", {"email": email})
@@ -2791,6 +2870,134 @@ def logout():
     return redirect(url_for("main.landing"))
 
 
+@main_bp.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "GET":
+        return render_template("forgot_password.html")
+
+    is_limited, retry_after = _auth_rate_limited(
+        "forgot_password", limit=5, window_seconds=600
+    )
+    if is_limited:
+        return render_template(
+            "forgot_password.html",
+            error=(
+                "Too many reset requests. Please wait "
+                f"{retry_after} second(s) and try again."
+            ),
+        )
+
+    email = request.form.get("email", "").strip().lower()
+    if not email:
+        return render_template(
+            "forgot_password.html", error="Please enter the email for your account."
+        )
+
+    message = (
+        "If an account exists for that email, a password reset link has been sent."
+    )
+    dev_link = None
+
+    user = UserIdentity.query.filter_by(email=email).first()
+    if user and user.is_active is not False:
+        token, nonce = _build_user_nonce_token(user.id)
+        user.password_reset_token_hash = generate_password_hash(nonce)
+        user.password_reset_expires_at = datetime.utcnow() + timedelta(minutes=60)
+        user.password_reset_requested_at = datetime.utcnow()
+        app_db.session.commit()
+
+        reset_url = url_for("main.reset_password", token=token, _external=True)
+        send_result = email_service.send_password_reset(
+            user.email, reset_url=reset_url, expires_minutes=60
+        )
+        if send_result.get("status") != "sent":
+            dev_link = reset_url
+
+    return render_template("forgot_password.html", message=message, dev_link=dev_link)
+
+
+@main_bp.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    user_id, nonce = _parse_user_nonce_token(token)
+    user = UserIdentity.query.filter_by(id=user_id).first() if user_id else None
+    token_valid = bool(
+        user
+        and user.password_reset_token_hash
+        and not _token_expired(user.password_reset_expires_at)
+        and check_password_hash(user.password_reset_token_hash, nonce or "")
+    )
+
+    if request.method == "GET":
+        if not token_valid:
+            return render_template(
+                "reset_password.html",
+                token_valid=False,
+                error="This password reset link is invalid or has expired.",
+            )
+        return render_template("reset_password.html", token_valid=True)
+
+    if not token_valid:
+        return render_template(
+            "reset_password.html",
+            token_valid=False,
+            error="This password reset link is invalid or has expired.",
+        )
+
+    password = request.form.get("password", "").strip()
+    confirm_password = request.form.get("confirm_password", "").strip()
+
+    if len(password) < 6:
+        return render_template(
+            "reset_password.html",
+            token_valid=True,
+            error="Password must be at least 6 characters.",
+        )
+    if password != confirm_password:
+        return render_template(
+            "reset_password.html",
+            token_valid=True,
+            error="Passwords do not match.",
+        )
+
+    user.set_password(password)
+    user.password_reset_token_hash = None
+    user.password_reset_expires_at = None
+    user.password_reset_requested_at = None
+    app_db.session.commit()
+    _log_db_activity(user.id, "password_reset_completed", "Password reset completed")
+
+    return redirect(url_for("main.login_page", reset="success"))
+
+
+@main_bp.route("/verify-email/<token>")
+def verify_email(token):
+    user_id, nonce = _parse_user_nonce_token(token)
+    user = UserIdentity.query.filter_by(id=user_id).first() if user_id else None
+    token_valid = bool(
+        user
+        and user.email_verification_token_hash
+        and not _token_expired(user.email_verification_expires_at)
+        and check_password_hash(user.email_verification_token_hash, nonce or "")
+    )
+
+    if not token_valid:
+        return redirect(url_for("main.login_page", verified="invalid"))
+
+    user.email_verified = True
+    user.email_verified_at = datetime.utcnow()
+    user.email_verification_token_hash = None
+    user.email_verification_expires_at = None
+    app_db.session.commit()
+
+    if session.get("user_id") == user.id:
+        session["email_verified"] = True
+        session.pop("verification_dev_link", None)
+        session["verification_notice"] = "Your email is verified."
+
+    _log_db_activity(user.id, "email_verified", "Email verified")
+    return redirect(url_for("main.login_page", verified="1"))
+
+
 # ------------------------------------------------------------------
 # M63 — Public Landing Page
 # ------------------------------------------------------------------
@@ -2807,6 +3014,71 @@ def _log_event(event_name, metadata=None):
         entry["meta"] = metadata
     events.append(entry)
     session["analytics_events"] = events
+
+
+def _token_expired(expiry_dt):
+    return not expiry_dt or datetime.utcnow() > expiry_dt
+
+
+def _build_user_nonce_token(user_id):
+    nonce = secrets.token_urlsafe(24)
+    return f"{user_id}.{nonce}", nonce
+
+
+def _parse_user_nonce_token(token):
+    if not token or "." not in token:
+        return None, None
+    user_id, nonce = token.split(".", 1)
+    if not user_id or not nonce:
+        return None, None
+    return user_id, nonce
+
+
+def _mark_authenticated_session(user):
+    """Rotate auth state into a clean session to reduce stale state leaks."""
+    keep_referrer = session.get("referrer")
+    session.clear()
+    if keep_referrer:
+        session["referrer"] = keep_referrer
+    session.permanent = True
+    session["user_id"] = user.id
+    session["is_authenticated"] = True
+    session["current_user_email"] = user.email
+    session["user_tier"] = user.tier or "free"
+    session["is_admin"] = bool(getattr(user, "is_admin", False))
+    session["email_verified"] = bool(getattr(user, "email_verified", False))
+    days_left = trial_days_remaining(user)
+    if days_left is not None:
+        session["trial_days_left"] = days_left
+
+
+def _auth_rate_limited(action, limit=8, window_seconds=600):
+    """Simple in-memory limiter for auth endpoints (IP + endpoint + email)."""
+    now = time.time()
+    ip = request.headers.get("X-Forwarded-For") or request.remote_addr or "unknown"
+    email = request.form.get("email", "").strip().lower()[:120]
+    bucket_key = f"{action}:{ip}:{email}"
+    window_start = now - float(window_seconds)
+
+    # Opportunistic global cleanup to keep memory bounded.
+    stale_keys = []
+    for key, stamps in _AUTH_RATE_LIMIT_BUCKETS.items():
+        fresh = [ts for ts in stamps if ts >= window_start]
+        if fresh:
+            _AUTH_RATE_LIMIT_BUCKETS[key] = fresh
+        else:
+            stale_keys.append(key)
+    for key in stale_keys:
+        _AUTH_RATE_LIMIT_BUCKETS.pop(key, None)
+
+    stamps = _AUTH_RATE_LIMIT_BUCKETS.get(bucket_key, [])
+    if len(stamps) >= int(limit):
+        retry_after = max(1, int(window_seconds - (now - stamps[0])))
+        return True, retry_after
+
+    stamps.append(now)
+    _AUTH_RATE_LIMIT_BUCKETS[bucket_key] = stamps
+    return False, 0
 
 
 @main_bp.route("/")
