@@ -2,6 +2,26 @@
 
 Standalone resume-to-offer engine.
 
+## Beta Operations Environment
+
+Offerion can run in limited beta mode without live payments or SMTP, but production-style verification now expects these environment variables when enabled:
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_COMET`
+- `STRIPE_PRICE_OPERATOR`
+- `STRIPE_PRICE_PROFESSIONAL`
+- `STRIPE_PRICE_ELITE`
+- `OFFERION_EMAIL_ENABLED`
+- `OFFERION_SMTP_HOST`
+- `OFFERION_SMTP_PORT`
+- `OFFERION_SMTP_USERNAME`
+- `OFFERION_SMTP_PASSWORD`
+- `OFFERION_SMTP_FROM_EMAIL`
+- `OFFERION_SMTP_USE_TLS`
+
+If Stripe or SMTP is not configured, Offerion degrades to beta-safe fallback behavior and exposes that state in founder metrics.
+
 ## Module 1 — Engine Foundation
 
 Clean Flask app structure with homepage route.

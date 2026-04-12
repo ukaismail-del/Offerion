@@ -2259,6 +2259,48 @@ input[type="password"]:focus {
   color: var(--text-muted);
   margin-top: var(--space-xs);
 }
+.founder-generated-at {
+  margin: -0.5rem 0 var(--space-lg);
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+}
+.command-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+.command-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-xs);
+}
+.command-card-title {
+  font-size: var(--font-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  margin-bottom: var(--space-sm);
+}
+.command-card-value {
+  font-size: var(--font-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.2rem;
+}
+.command-card-copy {
+  margin: 0.2rem 0;
+  font-size: var(--font-sm);
+  color: var(--text-body);
+}
+.command-card-note {
+  margin: 0.45rem 0 0;
+  font-size: var(--font-xs);
+  color: var(--color-danger);
+}
 .events-table {
   width: 100%;
   border-collapse: collapse;

@@ -48,7 +48,15 @@ _ENHANCED = {
 def _make_client(tier="elite"):
     from app import create_app
     from app.db import db
-    from app.models import UserIdentity
+    from app.models import (
+        Alert,
+        ApplicationPackage,
+        ActivityEvent,
+        ResumeVersion,
+        SavedJob,
+        UserIdentity,
+        UserState,
+    )
 
     app = create_app(testing=True)
     app.config["SECRET_KEY"] = "test-secret"
@@ -58,11 +66,16 @@ def _make_client(tier="elite"):
         existing = UserIdentity.query.filter_by(id="test-user-t").first()
         if existing:
             existing.tier = tier
-            db.session.commit()
         else:
             user = UserIdentity(id="test-user-t", tier=tier)
             db.session.add(user)
-            db.session.commit()
+        SavedJob.query.filter_by(user_id="test-user-t").delete()
+        ResumeVersion.query.filter_by(user_id="test-user-t").delete()
+        ApplicationPackage.query.filter_by(user_id="test-user-t").delete()
+        Alert.query.filter_by(user_id="test-user-t").delete()
+        ActivityEvent.query.filter_by(user_id="test-user-t").delete()
+        UserState.query.filter_by(user_id="test-user-t").delete()
+        db.session.commit()
 
     return app, client
 

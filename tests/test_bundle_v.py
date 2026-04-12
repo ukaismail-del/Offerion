@@ -3,6 +3,7 @@
 import os
 import sys
 import unittest
+from datetime import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -356,6 +357,7 @@ class TestFounderMetrics(unittest.TestCase):
         self.assertIn("Founder Metrics", html)
         self.assertIn("Total Users", html)
         self.assertIn("Total Signups", html)
+        self.assertIn("Beta Command View", html)
 
     def test_metrics_counts_correct(self):
         app, client = _make_client()
@@ -504,8 +506,8 @@ class TestBackwardCompat(unittest.TestCase):
         app = _make_app()
         client = app.test_client()
         with app.app_context():
-            from app.models import UserIdentity
             from app.db import db
+            from app.models import UserIdentity
 
             if not UserIdentity.query.filter_by(id="compat-v").first():
                 user = UserIdentity(id="compat-v", tier="elite")
@@ -516,6 +518,102 @@ class TestBackwardCompat(unittest.TestCase):
             s["user_tier"] = "elite"
         resp = client.get("/dashboard")
         self.assertEqual(resp.status_code, 200)
+
+
+class TestEmailReminderDelivery(unittest.TestCase):
+    def test_email_service_reports_log_only_without_smtp(self):
+        from app.utils.email_notifications import EmailNotificationService
+
+        previous = {
+            key: os.environ.get(key)
+            for key in (
+                "OFFERION_EMAIL_ENABLED",
+                "OFFERION_SMTP_HOST",
+                "OFFERION_SMTP_PORT",
+                "OFFERION_SMTP_USERNAME",
+                "OFFERION_SMTP_PASSWORD",
+                "OFFERION_SMTP_FROM_EMAIL",
+                "OFFERION_SMTP_USE_TLS",
+            )
+        }
+        try:
+            for key in previous:
+                os.environ.pop(key, None)
+            service = EmailNotificationService()
+            summary = service.health_summary()
+            self.assertFalse(summary["enabled"])
+            self.assertEqual(summary["mode"], "log-only")
+        finally:
+            for key, value in previous.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
+
+    def test_due_alert_logs_email_skip_event_once(self):
+        app, client = _make_client()
+        _signup(client, email="alerts@test.com", password="secret123")
+        with app.app_context():
+            from app.models import ActivityEvent, UserIdentity
+            from app.routes import _process_due_alert_reminders
+
+            user = UserIdentity.query.filter_by(email="alerts@test.com").first()
+            alerts = [
+                {
+                    "id": "alert-v-1",
+                    "message": "Follow up on Offerion role",
+                    "due_at": datetime.utcnow().strftime("%Y-%m-%d"),
+                    "is_complete": False,
+                }
+            ]
+
+            first = _process_due_alert_reminders(user, alerts=alerts)
+            second = _process_due_alert_reminders(user, alerts=alerts)
+
+            self.assertEqual(first["checked"], 1)
+            self.assertEqual(first["skipped"], 1)
+            self.assertEqual(second["skipped"], 0)
+
+            events = ActivityEvent.query.filter_by(
+                user_id=user.id, event_type="alert_email_skipped"
+            ).all()
+            self.assertEqual(len(events), 1)
+
+
+class TestStripeOperationalHealth(unittest.TestCase):
+    def test_stripe_config_reports_missing_prices(self):
+        from app.utils.stripe_billing import get_stripe_config
+
+        previous = {
+            key: os.environ.get(key)
+            for key in (
+                "STRIPE_SECRET_KEY",
+                "STRIPE_WEBHOOK_SECRET",
+                "STRIPE_PRICE_COMET",
+                "STRIPE_PRICE_OPERATOR",
+                "STRIPE_PRICE_PROFESSIONAL",
+                "STRIPE_PRICE_ELITE",
+            )
+        }
+        try:
+            os.environ["STRIPE_SECRET_KEY"] = "sk_test_123"
+            os.environ.pop("STRIPE_WEBHOOK_SECRET", None)
+            os.environ.pop("STRIPE_PRICE_COMET", None)
+            os.environ.pop("STRIPE_PRICE_OPERATOR", None)
+            os.environ.pop("STRIPE_PRICE_PROFESSIONAL", None)
+            os.environ.pop("STRIPE_PRICE_ELITE", None)
+
+            conf = get_stripe_config()
+            self.assertTrue(conf["has_secret_key"])
+            self.assertFalse(conf["checkout_ready"])
+            self.assertIn("STRIPE_WEBHOOK_SECRET", conf["missing"])
+            self.assertIn("STRIPE_PRICE_COMET", conf["missing"])
+        finally:
+            for key, value in previous.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
 
 
 if __name__ == "__main__":

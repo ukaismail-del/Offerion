@@ -161,6 +161,18 @@
         Secure checkout is enabled. Plan changes take effect after payment
         confirmation.
       </p>
+      {% if stripe_config.configured_tiers %}
+      <p
+        style="
+          text-align: center;
+          margin-top: 0.35rem;
+          font-size: var(--font-xs);
+          color: var(--text-faint);
+        "
+      >
+        Checkout is configured for {{ stripe_config.configured_tiers|join(', ') }}.
+      </p>
+      {% endif %}
       {% elif is_authenticated and not stripe_enabled %}
       <p
         style="
@@ -173,6 +185,18 @@
         Payments are disabled in this beta environment. Upgrades are applied
         instantly for testing.
       </p>
+      {% if stripe_config.reason %}
+      <p
+        style="
+          text-align: center;
+          margin-top: 0.35rem;
+          font-size: var(--font-xs);
+          color: var(--text-faint);
+        "
+      >
+        {{ stripe_config.reason }}
+      </p>
+      {% endif %}
       {% endif %}
 
       <p

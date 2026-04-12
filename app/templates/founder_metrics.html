@@ -27,6 +27,7 @@
 
     <div class="container">
       <h1 style="margin-bottom: var(--space-lg)">Founder Metrics</h1>
+      <p class="founder-generated-at">Generated {{ metrics_generated_at }} UTC</p>
 
       <div class="metrics-grid">
         <div class="metric-card">
@@ -91,6 +92,46 @@
         </div>
       </div>
 
+      <h2 style="margin-bottom: var(--space-md)">Beta Command View</h2>
+      <div class="command-grid">
+        <div class="command-card">
+          <div class="command-card-title">Email Delivery</div>
+          <div class="command-card-value">
+            {{ 'Live SMTP' if email_health.enabled else 'Log-only mode' }}
+          </div>
+          <p class="command-card-copy">Sender: {{ email_health.sender }}</p>
+          <p class="command-card-copy">
+            Sent {{ event_summary.email_sent }} | Failed {{ event_summary.email_failed }} | Skipped {{ event_summary.email_skipped }}
+          </p>
+          {% if email_health.missing %}
+          <p class="command-card-note">Missing: {{ email_health.missing|join(', ') }}</p>
+          {% endif %}
+        </div>
+        <div class="command-card">
+          <div class="command-card-title">Stripe Checkout</div>
+          <div class="command-card-value">
+            {{ 'Ready' if stripe_health.checkout_ready else 'Fallback mode' }}
+          </div>
+          <p class="command-card-copy">
+            Starts {{ event_summary.checkout_started }} | Completed {{ event_summary.checkout_completed }}
+          </p>
+          <p class="command-card-copy">
+            Upgrade attempts {{ event_summary.upgrade_attempts }} | Gated hits {{ event_summary.gated_hits }}
+          </p>
+          {% if stripe_health.missing %}
+          <p class="command-card-note">Missing: {{ stripe_health.missing|join(', ') }}</p>
+          {% endif %}
+        </div>
+        <div class="command-card">
+          <div class="command-card-title">Reminder Queue</div>
+          <div class="command-card-value">{{ due_today_alerts }} due today</div>
+          <p class="command-card-copy">Overdue alerts: {{ overdue_alerts }}</p>
+          <p class="command-card-copy">
+            Created {{ event_summary.alerts_created }} | Completed {{ event_summary.alerts_completed }}
+          </p>
+        </div>
+      </div>
+
       <h2 style="margin-bottom: var(--space-md)">Activation Funnel</h2>
       {% if funnel %}
       <table class="funnel-table">
@@ -127,6 +168,34 @@
         Focus drops below 40% first; that is where onboarding friction is likely
         highest.
       </p>
+      {% endif %}
+
+      <h2 style="margin-bottom: var(--space-md)">Signup Cohorts</h2>
+      {% if cohorts %}
+      <table class="events-table">
+        <thead>
+          <tr>
+            <th>Week</th>
+            <th>Signups</th>
+            <th>Resume %</th>
+            <th>Saved Job %</th>
+            <th>Package %</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in cohorts %}
+          <tr>
+            <td>{{ row.label }}</td>
+            <td>{{ row.signups }}</td>
+            <td>{{ row.uploaded_pct }}%</td>
+            <td>{{ row.saved_job_pct }}%</td>
+            <td>{{ row.packaged_pct }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p style="color: var(--text-muted)">No cohort data available yet.</p>
       {% endif %}
 
       <h2 style="margin-bottom: var(--space-md)">Recent Activity</h2>

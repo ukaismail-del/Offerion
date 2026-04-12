@@ -1,4 +1,5 @@
-﻿import logging
+﻿import json
+import logging
 import os
 from datetime import datetime, timedelta
 
@@ -71,6 +72,12 @@ from app.utils.session_memory import (
 from app.utils.activation_checklist import get_checklist_state
 from app.utils.email_notifications import email_service
 from app.utils.activity_timeline import record_event, get_timeline
+from app.utils.beta_analytics import (
+    build_activation_funnel,
+    build_signup_cohorts,
+    current_timestamp,
+    summarize_event_counts,
+)
 from app.utils.provenance import build_provenance, get_source_label
 from app.utils.next_best_action import get_next_action
 from app.utils.identity import get_or_create_user
@@ -269,6 +276,93 @@ def _record_activity(user_id, event_type, label, meta=None):
     event = record_event(session, event_type, label, meta=meta)
     _db_record_event(user_id, event)
     return event
+
+
+def _event_meta(event):
+    """Safely decode stored ActivityEvent metadata."""
+    try:
+        return json.loads(getattr(event, "meta_json", "") or "{}")
+    except Exception:
+        return {}
+
+
+def _process_due_alert_reminders(user, alerts=None, email_service_obj=None):
+    """Attempt reminder delivery for due alerts once per alert per UTC day."""
+    summary = {"checked": 0, "sent": 0, "failed": 0, "skipped": 0, "due_now": 0}
+    if not user:
+        return summary
+
+    alerts = alerts if alerts is not None else session.get("alerts", [])
+    if not alerts:
+        return summary
+
+    today = datetime.utcnow().date()
+    tomorrow = today + timedelta(days=1)
+    day_key = today.isoformat()
+    service = email_service_obj or email_service
+
+    processed_ids = set()
+    try:
+        recent_events = ActivityEvent.query.filter(
+            ActivityEvent.user_id == user.id,
+            ActivityEvent.event_type.in_(
+                ["alert_email_sent", "alert_email_failed", "alert_email_skipped"]
+            ),
+            ActivityEvent.created_at >= datetime.combine(today, datetime.min.time()),
+        ).all()
+        for event in recent_events:
+            meta = _event_meta(event)
+            if meta.get("day") == day_key and meta.get("alert_id"):
+                processed_ids.add(meta["alert_id"])
+    except Exception:
+        app_db.session.rollback()
+
+    for alert in alerts:
+        if alert.get("is_complete"):
+            continue
+        due_raw = alert.get("due_at", "")
+        if not due_raw:
+            continue
+        try:
+            due_date = datetime.strptime(due_raw, "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        if due_date > tomorrow:
+            continue
+
+        summary["checked"] += 1
+        summary["due_now"] += 1
+        alert_id = alert.get("id")
+        if alert_id in processed_ids:
+            continue
+
+        result = service.send_alert_reminder(getattr(user, "email", None), alert)
+        status = result.get("status", "skipped")
+        event_type = {
+            "sent": "alert_email_sent",
+            "failed": "alert_email_failed",
+            "skipped": "alert_email_skipped",
+        }.get(status, "alert_email_skipped")
+        if status in ("sent", "failed", "skipped"):
+            summary[status] += 1
+        else:
+            summary["skipped"] += 1
+        processed_ids.add(alert_id)
+        _log_db_activity(
+            user.id,
+            event_type,
+            f"Alert reminder {status}",
+            {
+                "alert_id": alert_id,
+                "day": day_key,
+                "due_at": due_raw,
+                "status": status,
+                "reason": result.get("reason"),
+                "mode": result.get("mode"),
+            },
+        )
+
+    return summary
 
 
 def _same_package(existing_pkg, new_pkg):
@@ -773,6 +867,21 @@ def dashboard():
         except Exception:
             pass
 
+    reminder_delivery_summary = {
+        "checked": 0,
+        "sent": 0,
+        "failed": 0,
+        "skipped": 0,
+        "due_now": 0,
+    }
+    email_health = email_service.health_summary()
+    if user_id:
+        try:
+            _reminder_user = UserIdentity.query.get(user_id)
+            reminder_delivery_summary = _process_due_alert_reminders(_reminder_user)
+        except Exception:
+            app_db.session.rollback()
+
     # Bundle U: activation checklist
     _checklist_user = None
     if user_id:
@@ -924,7 +1033,8 @@ def dashboard():
         alert_due_soon_count=alert_due_soon_count,
         alert_overdue_count=alert_overdue_count,
         journey_state=journey_state,
-        email_reminders_enabled=email_service.enabled,
+        email_reminders_enabled=email_health.get("enabled"),
+        reminder_delivery_summary=reminder_delivery_summary,
         now_date=datetime.now().strftime("%Y-%m-%d"),
         current_user_email=session.get("current_user_email"),
         is_admin=session.get("is_admin", False),
@@ -2044,8 +2154,16 @@ def pricing():
     try:
         from app.utils.stripe_billing import get_stripe_config
 
-        stripe_enabled = bool(get_stripe_config().get("has_secret_key"))
+        stripe_config = get_stripe_config()
+        stripe_enabled = bool(stripe_config.get("checkout_ready"))
     except Exception:
+        stripe_config = {
+            "checkout_ready": False,
+            "mode": "beta-fallback",
+            "configured_tiers": [],
+            "missing": ["STRIPE_SECRET_KEY"],
+            "reason": "Stripe configuration unavailable.",
+        }
         stripe_enabled = False
     # Don't show trial or elite as purchasable plans
     display_order = [t for t in TIER_ORDER if t not in ("trial", "elite")]
@@ -2057,6 +2175,7 @@ def pricing():
         gate_message=gate_message,
         gate_return_to=gate_return_to,
         stripe_enabled=stripe_enabled,
+        stripe_config=stripe_config,
         is_authenticated=session.get("is_authenticated", False),
         is_admin=session.get("is_admin", False),
         **_tier_ctx(),
@@ -2073,6 +2192,13 @@ def upgrade(tier_name):
             )
         return redirect(url_for("main.pricing"))
     user_id = session.get("user_id")
+    if user_id:
+        _log_db_activity(
+            user_id,
+            "upgrade_attempted",
+            f"Upgrade selected: {tier_name}",
+            {"tier": tier_name, "mode": "direct"},
+        )
     session["user_tier"] = tier_name
     persist_tier(user_id, tier_name)
     # M118: redirect back to where the user came from, if available
@@ -2100,11 +2226,24 @@ def checkout(tier_name):
         return redirect(url_for("main.pricing"))
 
     conf = get_stripe_config()
-    if not conf["has_secret_key"]:
+    _log_db_activity(
+        user_id,
+        "upgrade_attempted",
+        f"Checkout requested: {tier_name}",
+        {"tier": tier_name, "mode": "stripe", "checkout_ready": conf.get("checkout_ready")},
+    )
+    if not conf.get("checkout_ready"):
         # Stripe not configured — fall back to direct upgrade
         session["gate_message"] = (
-            "Payments are not enabled in this environment. "
+            conf.get("reason")
+            or "Payments are not enabled in this environment. "
             "Your upgrade is applied immediately for beta testing."
+        )
+        _log_db_activity(
+            user_id,
+            "checkout_bypassed",
+            "Checkout bypassed to direct upgrade",
+            {"tier": tier_name, "missing": conf.get("missing", [])},
         )
         return redirect(url_for("main.upgrade", tier_name=tier_name))
 
@@ -2120,10 +2259,22 @@ def checkout(tier_name):
     )
     if checkout_url:
         app_db.session.commit()  # persist stripe_customer_id
+        _log_db_activity(
+            user_id,
+            "checkout_started",
+            "Stripe checkout started",
+            {"tier": tier_name},
+        )
         return redirect(checkout_url)
 
     # Stripe call failed — fall back
     session["gate_message"] = "Payment processing is temporarily unavailable."
+    _log_db_activity(
+        user_id,
+        "checkout_failed",
+        "Stripe checkout failed to start",
+        {"tier": tier_name},
+    )
     return redirect(url_for("main.pricing"))
 
 
@@ -2160,8 +2311,9 @@ def stripe_webhook():
         return err, 400
 
     etype = event.get("type", "")
+    event_data = event.get("data", {})
     if etype == "checkout.session.completed":
-        result = process_checkout_completed(event.get("data", {}))
+        result = process_checkout_completed(event_data)
         if result:
             _user = UserIdentity.query.get(result["user_id"])
             if _user:
@@ -2171,12 +2323,21 @@ def stripe_webhook():
                     _user.stripe_customer_id = result["customer_id"]
                 _user.subscription_status = "active"
                 app_db.session.commit()
+                _log_db_activity(
+                    _user.id,
+                    "checkout_success",
+                    "Stripe webhook activated subscription",
+                    {
+                        "tier": result["tier"],
+                        "subscription_id": result.get("subscription_id"),
+                    },
+                )
 
     elif etype in (
         "customer.subscription.updated",
         "customer.subscription.deleted",
     ):
-        result = process_subscription_updated(event.get("data", {}))
+        result = process_subscription_updated(event_data)
         if result and result.get("customer_id"):
             _user = UserIdentity.query.filter_by(
                 stripe_customer_id=result["customer_id"]
@@ -2188,6 +2349,15 @@ def stripe_webhook():
                 elif result["status"] == "active":
                     _user.subscription_status = "active"
                 app_db.session.commit()
+                _log_db_activity(
+                    _user.id,
+                    "subscription_updated",
+                    "Stripe subscription state updated",
+                    {
+                        "status": result.get("status"),
+                        "subscription_id": result.get("subscription_id"),
+                    },
+                )
 
     return "ok", 200
 
@@ -2206,7 +2376,11 @@ def founder_metrics():
 
     from sqlalchemy import func
 
-    total_users = UserIdentity.query.count()
+    from app.models import SavedJob, ApplicationPackage, Alert
+    from app.utils.stripe_billing import get_stripe_config
+
+    users = UserIdentity.query.order_by(UserIdentity.created_at.desc()).all()
+    total_users = len(users)
     total_signups = ActivityEvent.query.filter_by(event_type="signup_completed").count()
     users_with_resume = UserIdentity.query.filter(
         UserIdentity.has_uploaded_resume == True  # noqa: E712
@@ -2234,12 +2408,9 @@ def founder_metrics():
         app_db.session.query(ActivityEvent, UserIdentity.email)
         .outerjoin(UserIdentity, ActivityEvent.user_id == UserIdentity.id)
         .order_by(ActivityEvent.created_at.desc())
-        .limit(10)
+        .limit(15)
         .all()
     )
-
-    # Bundle U: additional beta activation signals
-    from app.models import SavedJob, ApplicationPackage, Alert
 
     users_with_saved_jobs = (
         app_db.session.query(func.count(func.distinct(SavedJob.user_id))).scalar() or 0
@@ -2261,30 +2432,30 @@ def founder_metrics():
     ).count()
     resume_pct = round(users_with_resume / total_users * 100, 1) if total_users else 0
 
-    # Activation funnel: signup → resume → matches → save_job → package
-    funnel = [
-        {"label": "Signed Up", "count": total_signups, "pct": 100},
-        {
-            "label": "Uploaded Resume",
-            "count": users_with_resume,
-            "pct": round(users_with_resume / max(total_signups, 1) * 100, 1),
-        },
-        {
-            "label": "Generated Matches",
-            "count": users_with_matches,
-            "pct": round(users_with_matches / max(total_signups, 1) * 100, 1),
-        },
-        {
-            "label": "Saved a Job",
-            "count": users_with_saved_jobs,
-            "pct": round(users_with_saved_jobs / max(total_signups, 1) * 100, 1),
-        },
-        {
-            "label": "Created Package",
-            "count": users_with_packages,
-            "pct": round(users_with_packages / max(total_signups, 1) * 100, 1),
-        },
-    ]
+    grouped_event_counts = dict(
+        app_db.session.query(ActivityEvent.event_type, func.count(ActivityEvent.id))
+        .group_by(ActivityEvent.event_type)
+        .all()
+    )
+    funnel = build_activation_funnel(
+        total_signups,
+        users_with_resume,
+        users_with_saved_jobs,
+        users_with_packages,
+    )
+    cohorts = build_signup_cohorts(users)
+    event_summary = summarize_event_counts(grouped_event_counts)
+    email_health = email_service.health_summary()
+    stripe_health = get_stripe_config()
+    today_label = datetime.utcnow().strftime("%Y-%m-%d")
+    overdue_alerts = Alert.query.filter(
+        Alert.is_complete == False,  # noqa: E712
+        Alert.due_at < today_label,
+    ).count()
+    due_today_alerts = Alert.query.filter(
+        Alert.is_complete == False,  # noqa: E712
+        Alert.due_at == today_label,
+    ).count()
 
     return render_template(
         "founder_metrics.html",
@@ -2305,6 +2476,13 @@ def founder_metrics():
         logins_7d=logins_7d,
         resume_pct=resume_pct,
         funnel=funnel,
+        cohorts=cohorts,
+        event_summary=event_summary,
+        email_health=email_health,
+        stripe_health=stripe_health,
+        overdue_alerts=overdue_alerts,
+        due_today_alerts=due_today_alerts,
+        metrics_generated_at=current_timestamp(),
     )
 
 

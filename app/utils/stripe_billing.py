@@ -36,19 +36,50 @@ def _get_stripe():
 # Price map (tier name → Stripe price ID)
 # ------------------------------------------------------------------
 
-TIER_PRICE_MAP = {
-    "comet": os.environ.get("STRIPE_PRICE_COMET", ""),
-    "operator": os.environ.get("STRIPE_PRICE_OPERATOR", ""),
-    "professional": os.environ.get("STRIPE_PRICE_PROFESSIONAL", ""),
-    "elite": os.environ.get("STRIPE_PRICE_ELITE", ""),
-}
+
+def get_tier_price_map():
+    """Return the current Stripe price mapping from environment."""
+    return {
+        "comet": os.environ.get("STRIPE_PRICE_COMET", "").strip(),
+        "operator": os.environ.get("STRIPE_PRICE_OPERATOR", "").strip(),
+        "professional": os.environ.get("STRIPE_PRICE_PROFESSIONAL", "").strip(),
+        "elite": os.environ.get("STRIPE_PRICE_ELITE", "").strip(),
+    }
 
 
 def get_stripe_config():
     """Return non-secret config (publishable key, price IDs)."""
+    prices = get_tier_price_map()
+    missing_prices = [tier for tier, value in prices.items() if not value]
+    has_secret_key = bool(os.environ.get("STRIPE_SECRET_KEY", "").strip())
+    has_webhook_secret = bool(os.environ.get("STRIPE_WEBHOOK_SECRET", "").strip())
+    checkout_ready = has_secret_key and any(prices.values())
+    webhook_ready = has_secret_key and has_webhook_secret
+
+    missing = []
+    if not has_secret_key:
+        missing.append("STRIPE_SECRET_KEY")
+    if not has_webhook_secret:
+        missing.append("STRIPE_WEBHOOK_SECRET")
+    missing.extend(f"STRIPE_PRICE_{tier.upper()}" for tier in missing_prices)
+
     return {
-        "has_secret_key": bool(os.environ.get("STRIPE_SECRET_KEY")),
-        "prices": {k: v for k, v in TIER_PRICE_MAP.items() if v},
+        "has_secret_key": has_secret_key,
+        "has_webhook_secret": has_webhook_secret,
+        "prices": {k: v for k, v in prices.items() if v},
+        "configured_tiers": [tier for tier, value in prices.items() if value],
+        "missing_prices": missing_prices,
+        "checkout_ready": checkout_ready,
+        "webhook_ready": webhook_ready,
+        "mode": "live-checkout" if checkout_ready else "beta-fallback",
+        "missing": missing,
+        "reason": None
+        if checkout_ready
+        else (
+            "Stripe secret key is missing."
+            if not has_secret_key
+            else "Stripe prices are missing for all paid tiers."
+        ),
     }
 
 
@@ -64,7 +95,7 @@ def create_checkout_session(user, tier_name, success_url, cancel_url):
         logger.warning("Stripe not configured — skipping checkout")
         return None
 
-    price_id = TIER_PRICE_MAP.get(tier_name)
+    price_id = get_tier_price_map().get(tier_name)
     if not price_id:
         logger.warning("No Stripe price for tier %s", tier_name)
         return None
