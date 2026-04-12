@@ -3158,3 +3158,146 @@ button:hover {
     font-size: var(--font-xs);
   }
 }
+
+/* ==========================================================================
+   Bundle X.1 — Light System Interface Patch (Readability + Premium Feel)
+   ========================================================================== */
+
+body {
+  background: linear-gradient(180deg, #f5f7fb 0%, #eef2f7 100%);
+  color: #0f172a;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 20% 10%, rgba(59,130,246,0.08), transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.top-nav,
+.container,
+.main-container {
+  position: relative;
+  z-index: 1;
+}
+
+.main-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.system-panel,
+.system-header,
+.command-left-panel > .card,
+.command-right-panel > .card,
+.command-main-panel > .section > .card,
+.live-panel,
+.profile-console-card {
+  background: rgba(15, 23, 42, 0.88);
+  color: #e2e8f0;
+  border-radius: 14px;
+  padding: 18px;
+  border: 1px solid rgba(59,130,246,0.15);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.system-panel h2,
+.system-panel h3,
+.system-header h2,
+.profile-console-card h2,
+.live-panel h2,
+.command-left-panel .card-title,
+.command-right-panel .card-title,
+.command-main-panel .card-title {
+  color: #e2e8f0;
+}
+
+.system-bar {
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.06);
+  padding: 10px 16px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+}
+
+.system-online {
+  color: #0f172a;
+}
+
+.system-meta {
+  color: #334155;
+}
+
+h1, h2, h3 {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+p, span {
+  color: #334155;
+}
+
+.system-panel p,
+.system-panel span,
+.system-header p,
+.system-header span,
+.profile-console-card p,
+.profile-console-card span,
+.live-panel p,
+.live-panel span,
+.sync-markers span,
+.system-status,
+.system-progress p {
+  color: #cbd5f5;
+}
+
+.progress-bar {
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+  height: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  box-shadow: 0 0 10px rgba(59,130,246,0.6);
+  transition: width 0.4s ease;
+}
+
+button,
+.btn-primary {
+  background: #2563eb;
+  color: white;
+  border-radius: 10px;
+  padding: 10px 16px;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+button:hover,
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37,99,235,0.35);
+}
+
+input,
+textarea {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+  color: #0f172a;
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+}

@@ -35,7 +35,7 @@
       </div>
     </nav>
 
-    <div class="container">
+    <div class="container main-container">
       <!-- Gate message (shown when redirected from a locked feature) -->
       {% if gate_message %}
       <div class="gate-banner">
@@ -124,7 +124,14 @@
           <h3 class="pricing-tier-name">
             {{ access_labels.get(tier_key, tier.label) }}
           </h3>
-          <p class="pricing-tagline" style="font-size: var(--font-xs); color: var(--text-faint); margin-top: -0.45rem;">
+          <p
+            class="pricing-tagline"
+            style="
+              font-size: var(--font-xs);
+              color: var(--text-faint);
+              margin-top: -0.45rem;
+            "
+          >
             Operational alias only &mdash; billing plan remains {{ tier.label }}
           </p>
           <p class="pricing-tagline">{{ tier.tagline }}</p>
