@@ -20,10 +20,10 @@
       <div class="top-nav-inner">
         <a href="/" class="top-nav-brand">Offerion</a>
         <div class="top-nav-links">
-          <a href="/dashboard#section-actions">Dashboard</a>
+          <a href="/dashboard#section-actions">Control Panel</a>
           {% if report_data_exists %}<a href="/resume-preview">Resume</a>{%
           endif %}
-          <a href="#section-outputs">Saved</a>
+          <a href="#section-outputs">Tracked</a>
           {% if match or match_explanation %}<a href="#section-intel"
             >Intelligence</a
           >{% endif %}
@@ -313,8 +313,8 @@
 
         <!-- Next Best Action (M42) -->
         {% if next_best_action %}
-        <div class="nba-card">
-          <p class="nba-label">Suggested Next Step</p>
+        <div class="nba-card has-action">
+          <p class="nba-label">System Recommendation</p>
           <a href="{{ next_best_action.route }}" class="nba-btn {% if next_best_action.route in ['/enhance-resume', '/generate-cover-letter', '/enhance-cover-letter', '/prepare-application'] %}btn-loading-trigger{% endif %}"
             >{{ next_best_action.label }}</a
           >
@@ -414,10 +414,12 @@
           </form>
         </div>
 
-        <!-- Status Messages -->
+        <!-- Status Messages (Bundle W+ Success Feedback) -->
         {% if message %}
+        <div class="success-toast">
+          <div class="toast-content">{{ message }}</div>
+        </div>
         <div class="card" style="text-align: center">
-          <p class="msg-success">{{ message }}</p>
           <div class="btn-row btn-row-center">
             <a href="/download-report" class="btn btn-success"
               >Download Report</a
@@ -502,13 +504,21 @@
         {% endif %}
         <div class="job-grid">
           {% for rj in recommended_jobs %}
-          <div class="job-card">
+          <div class="job-card signal-{{ 'high' if rj.score >= 0.7 else 'moderate' if rj.score >= 0.4 else 'low' }}">
             <div class="job-card-header">
               <h3 class="job-card-title">{{ rj.title }}</h3>
               <span class="job-score badge-{{ rj.match_level|lower }}"
                 >{{ (rj.score * 100)|int }}% · {{ rj.match_level }}</span
               >
             </div>
+            {% if rj.score >= 0.7 %}
+            <div class="job-signal-badge job-signal-high">⚡ High Alignment</div>
+            {% elif rj.score >= 0.4 %}
+            <div class="job-signal-badge job-signal-moderate">↗ Moderate Alignment</div>
+            {% else %}
+            <div class="job-signal-badge job-signal-low">◐ Developing Alignment</div>
+            {% endif %}
+            <p class="job-alignment-note">Aligned with your skill profile</p>
             <div class="job-meta">
               <span>{{ rj.company }}</span>
               {% if rj.location %}<span>&middot; {{ rj.location }}</span>{%
@@ -548,13 +558,13 @@
               {% endfor %}
             </div>
             <p class="job-action-copy" style="margin:0.2rem 0 0;color:var(--text-muted);font-size:var(--font-xs)">
-              Next action: save this role, review fit details, then prepare your application package.
+              Next signal: save this role, analyze fit, then generate your application package.
             </p>
             <div class="job-action-row">
               {% if has_access('prepare_application') %}
               <a href="/job-match/{{ rj.id }}" class="btn btn-primary btn-sm btn-loading-trigger"
-                data-loading-label="Preparing…"
-                >Prepare Application</a
+                data-loading-label="Analyzing…"
+                >Analyze Fit</a
               >
               {% else %}
               <a href="/pricing" class="btn btn-primary btn-sm btn-locked"
@@ -954,9 +964,9 @@
         </div>
         {% endif %}
 
-        <!-- Saved Jobs (M34) -->
+        <!-- Tracked Opportunities (M34) -->
         <div class="card">
-          <h2 class="card-title">Saved Jobs</h2>
+          <h2 class="card-title">Tracked Opportunities</h2>
           <hr class="card-divider" />
           {% if saved_jobs %} {% for job in saved_jobs %}
           <div class="item-row">
@@ -994,7 +1004,7 @@
           <div class="empty-state-card" style="border:none;box-shadow:none;margin:0;padding:0.5rem 0">
             <p class="empty-state-text" style="margin:0">
               {% if report_data_exists %}
-              No saved jobs yet. Browse the recommended jobs above and save one to start tracking your applications.
+              No tracked opportunities yet. Browse the recommended jobs above and save one to start tracking your applications.
               {% else %}
               Upload your resume to get job recommendations, then save jobs to track here.
               {% endif %}
@@ -1013,7 +1023,7 @@
               >Save Current Job</span
             >
             <span class="locked-hint"
-              >Operator tier includes job tracking, matching, and saved jobs &mdash;
+              >Operator tier includes job tracking, matching, and tracked opportunities &mdash;
               <a href="/pricing">see plans</a></span
             >
             {% endif %}
@@ -1021,10 +1031,10 @@
           {% endif %}
         </div>
 
-        <!-- Upcoming Alerts (M36) -->
+        <!-- Upcoming Alerts / Signals (M36, Bundle W+) -->
         <div class="card">
           <h2 class="card-title">
-            Upcoming Alerts
+            Action Signals
             {% if alert_due_soon_count %}
             <span class="alert-badge-count">{{ alert_due_soon_count }} due</span>
             {% endif %}
@@ -1041,7 +1051,7 @@
             <div>
               <span class="alert-msg">{{ a.message }}</span>
               <span class="alert-due">
-                Due: {{ a.due_at }}
+                Next signal: {{ a.due_at }}
                 {% if a.due_at <= now_date %}
                 <span class="alert-overdue-badge">Overdue</span>
                 {% endif %}
@@ -1057,18 +1067,18 @@
           {% endfor %} {% else %}
           <div class="empty-state-card" style="border:none;box-shadow:none;margin:0;padding:0.5rem 0">
             <p class="empty-state-text" style="margin:0">
-              No alerts yet. Save a job and create a follow-up reminder to stay on top of your applications.
+              No signals yet. Save a job and create a follow-up reminder to get real-time notifications on your applications.
               {% if saved_jobs %}
-              <br><a href="/job/{{ saved_jobs[0].id }}" class="btn btn-secondary btn-sm" style="margin-top:0.5rem">Create alert for {{ saved_jobs[0].title }}</a>
+              <br><a href="/job/{{ saved_jobs[0].id }}" class="btn btn-secondary btn-sm" style="margin-top:0.5rem">Create signal for {{ saved_jobs[0].title }}</a>
               {% endif %}
             </p>
           </div>
           {% endif %}
           <p class="empty-state-text" style="margin:0.6rem 0 0">
             {% if email_reminders_enabled %}
-            Email reminders are enabled and will send when alerts are due.
+            Email signals are enabled and will send when reminders are due.
             {% else %}
-            In-app reminders are live. Email reminders are coming soon.
+            In-app signals are live. Email notifications are coming soon.
             {% endif %}
           </p>
         </div>

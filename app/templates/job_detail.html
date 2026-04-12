@@ -124,21 +124,28 @@
         </div>
       </div>
 
-      <!-- M74: Why This Job Fits You -->
+      <!-- M74: Why This Job Fits You (Bundle W+ Signal Strength) -->
       {% if job_match_info %}
       <div class="card">
-        <h2 class="card-title">Why This Job Fits You</h2>
-        <hr class="card-divider" />
+        <h2 class=\"card-title\">Why This Job Fits You</h2>
+        <hr class=\"card-divider\" />
         {% if job_match_info.score is not none %}
-        <p class="field">
-          <strong>Match Score:</strong>
+        <p class=\"field\">
+          <strong>Match Strength:</strong>
           <span
-            class="score-display {% if job_match_info.score >= 70 %}level-strong{% elif job_match_info.score >= 40 %}level-moderate{% else %}level-low{% endif %}"
-            style="display: inline; font-size: var(--font-md)"
+            class=\"score-display {% if job_match_info.score >= 70 %}level-strong{% elif job_match_info.score >= 40 %}level-moderate{% else %}level-low{% endif %}\"
+            style=\"display: inline; font-size: var(--font-md)\"
           >
             {{ job_match_info.score }}%
           </span>
         </p>
+        {% if job_match_info.score >= 70 %}
+        <p style=\"color: var(--color-success); font-weight: 500; margin: 0 0 var(--space-sm);\">⚡ High Alignment — This role is highly aligned with your profile</p>
+        {% elif job_match_info.score >= 40 %}
+        <p style=\"color: var(--color-warning); font-weight: 500; margin: 0 0 var(--space-sm);\">↗ Moderate Alignment — You have core skills for this role</p>
+        {% else %}
+        <p style=\"color: var(--color-danger); font-weight: 500; margin: 0 0 var(--space-sm);\">◐ Developing Alignment — Consider upskilling for better fit</p>
+        {% endif %}
         {% endif %} {% if job_match_info.matched_skills %}
         <h3>Matched Skills</h3>
         <div
