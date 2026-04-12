@@ -104,7 +104,7 @@ from app.utils.job_matcher import match_jobs
 from app.utils.job_intelligence import extract_job_intelligence
 from app.utils.job_gap_analyzer import analyze_job_gap
 from app.db import db as app_db
-from app.models import UserIdentity
+from app.models import UserIdentity, ActivityEvent
 
 logger = logging.getLogger(__name__)
 
@@ -197,6 +197,50 @@ def _db_record_event(user_id, event):
     """Persist a timeline event to the database."""
     if user_id and event:
         persist_event(user_id, event)
+
+
+def _log_db_activity(user_id, event_type, event_label=None, meta=None):
+    """Write a structured ActivityEvent row to the database."""
+    if not user_id:
+        return
+    try:
+        import json as _json
+
+        evt = ActivityEvent(
+            user_id=user_id,
+            event_type=event_type,
+            event_label=event_label or "",
+            label=event_label or "",
+            meta_json=_json.dumps(meta) if meta else "{}",
+        )
+        app_db.session.add(evt)
+        app_db.session.commit()
+    except Exception:
+        app_db.session.rollback()
+
+
+def _check_onboarding_complete(user):
+    """Mark onboarding complete if both flags are set and not already marked."""
+    if (
+        user
+        and getattr(user, "has_uploaded_resume", False)
+        and getattr(user, "has_generated_matches", False)
+        and not user.onboarding_completed_at
+    ):
+        user.onboarding_completed_at = datetime.utcnow()
+        app_db.session.commit()
+        _log_db_activity(user.id, "onboarding_completed", "Onboarding completed")
+
+
+def _sync_admin_flag(user):
+    """Promote user to admin if their email is in OFFERION_ADMIN_EMAILS env var."""
+    admin_emails = os.environ.get("OFFERION_ADMIN_EMAILS", "")
+    if not admin_emails or not user or not user.email:
+        return
+    admin_list = [e.strip().lower() for e in admin_emails.split(",") if e.strip()]
+    if user.email.lower() in admin_list:
+        user.is_admin = True
+        app_db.session.commit()
 
 
 def _record_activity(user_id, event_type, label, meta=None):
@@ -489,6 +533,22 @@ def dashboard():
                                 "Analyzed resume: %s" % filename,
                             )
 
+                            # Bundle V: onboarding tracking
+                            if user_id:
+                                try:
+                                    _user = UserIdentity.query.get(user_id)
+                                    if _user:
+                                        if not _user.has_uploaded_resume:
+                                            _user.has_uploaded_resume = True
+                                            _log_db_activity(user_id, "resume_uploaded", "Resume uploaded: %s" % filename)
+                                        if profile and not _user.has_generated_matches:
+                                            _user.has_generated_matches = True
+                                            _log_db_activity(user_id, "match_generated", "Match/report generated")
+                                        app_db.session.commit()
+                                        _check_onboarding_complete(_user)
+                                except Exception:
+                                    app_db.session.rollback()
+
                             logger.info("Analysis complete for: %s", filename)
                     except Exception as exc:
                         logger.error("Error processing %s: %s", filename, exc)
@@ -547,6 +607,19 @@ def dashboard():
     else:
         recommended_jobs = []
 
+    # Bundle V: onboarding progress for dashboard
+    onboarding_progress = {"created": True, "resume": False, "matches": False, "complete": False, "count": 1}
+    if user_id:
+        try:
+            _ob_user = UserIdentity.query.get(user_id)
+            if _ob_user:
+                onboarding_progress["resume"] = bool(getattr(_ob_user, "has_uploaded_resume", False))
+                onboarding_progress["matches"] = bool(getattr(_ob_user, "has_generated_matches", False))
+                onboarding_progress["complete"] = bool(_ob_user.onboarding_completed_at)
+                onboarding_progress["count"] = 1 + int(onboarding_progress["resume"]) + int(onboarding_progress["matches"])
+        except Exception:
+            pass
+
     return render_template(
         "index.html",
         message=message,
@@ -594,6 +667,7 @@ def dashboard():
         dashboard_notice_message=session.pop("dashboard_notice_message", None),
         package_recovery_message=session.pop("package_recovery_message", None),
         usage_signals=usage_signals,
+        onboarding_progress=onboarding_progress,
         **_tier_ctx(),
         **_onboarding_ctx(),
     )
@@ -1689,6 +1763,66 @@ def upgrade(tier_name):
 
 
 # ------------------------------------------------------------------
+# Bundle V — Founder Metrics
+# ------------------------------------------------------------------
+
+
+@main_bp.route("/founder/metrics")
+def founder_metrics():
+    if not session.get("is_authenticated"):
+        return redirect(url_for("main.login_page"))
+    if not session.get("is_admin"):
+        return "Forbidden", 403
+
+    from sqlalchemy import func
+
+    total_users = UserIdentity.query.count()
+    total_signups = ActivityEvent.query.filter_by(event_type="signup_completed").count()
+    users_with_resume = UserIdentity.query.filter(
+        UserIdentity.has_uploaded_resume == True  # noqa: E712
+    ).count()
+    users_with_matches = UserIdentity.query.filter(
+        UserIdentity.has_generated_matches == True  # noqa: E712
+    ).count()
+    onboarding_complete_count = UserIdentity.query.filter(
+        UserIdentity.onboarding_completed_at.isnot(None)
+    ).count()
+    onboarding_pct = (
+        round(onboarding_complete_count / total_users * 100, 1) if total_users else 0
+    )
+
+    seven_days_ago = datetime.utcnow() - __import__("datetime").timedelta(days=7)
+    signups_7d = ActivityEvent.query.filter(
+        ActivityEvent.event_type == "signup_completed",
+        ActivityEvent.created_at >= seven_days_ago,
+    ).count()
+    events_7d = ActivityEvent.query.filter(
+        ActivityEvent.created_at >= seven_days_ago,
+    ).count()
+
+    recent_events = (
+        app_db.session.query(ActivityEvent, UserIdentity.email)
+        .outerjoin(UserIdentity, ActivityEvent.user_id == UserIdentity.id)
+        .order_by(ActivityEvent.created_at.desc())
+        .limit(10)
+        .all()
+    )
+
+    return render_template(
+        "founder_metrics.html",
+        total_users=total_users,
+        total_signups=total_signups,
+        users_with_resume=users_with_resume,
+        users_with_matches=users_with_matches,
+        onboarding_complete_count=onboarding_complete_count,
+        onboarding_pct=onboarding_pct,
+        signups_7d=signups_7d,
+        events_7d=events_7d,
+        recent_events=recent_events,
+    )
+
+
+# ------------------------------------------------------------------
 # M58 â€” Onboarding Flow
 # ------------------------------------------------------------------
 
@@ -1758,18 +1892,23 @@ def signup_page():
 
         user.email = email
         user.set_password(password)
+        user.last_login_at = datetime.utcnow()
         app_db.session.commit()
+
+        _sync_admin_flag(user)
 
         session["user_id"] = user.id
         session["is_authenticated"] = True
         session["current_user_email"] = email
         session["user_tier"] = user.tier or "free"
+        session["is_admin"] = bool(getattr(user, "is_admin", False))
 
         days_left = trial_days_remaining(user)
         if days_left is not None:
             session["trial_days_left"] = days_left
 
         _log_event("signup", {"email": email})
+        _log_db_activity(user.id, "signup_completed", "User signed up", {"email": email})
         return redirect(url_for("main.dashboard"))
     except Exception as exc:
         app_db.session.rollback()
@@ -1815,6 +1954,12 @@ def login_page():
                 email_value=email,
             )
 
+        # Update last_login_at
+        user.last_login_at = datetime.utcnow()
+        app_db.session.commit()
+
+        _sync_admin_flag(user)
+
         # Clear session and set authenticated user
         session.clear()
         session.permanent = True
@@ -1822,12 +1967,14 @@ def login_page():
         session["is_authenticated"] = True
         session["current_user_email"] = email
         session["user_tier"] = user.tier or "free"
+        session["is_admin"] = bool(getattr(user, "is_admin", False))
 
         days_left = trial_days_remaining(user)
         if days_left is not None:
             session["trial_days_left"] = days_left
 
         _log_event("login", {"email": email})
+        _log_db_activity(user.id, "login_completed", "User logged in", {"email": email})
         return redirect(url_for("main.dashboard"))
     except Exception as exc:
         logger.error("Login error: %s", exc)
@@ -1841,6 +1988,9 @@ def login_page():
 @main_bp.route("/logout")
 def logout():
     _log_event("logout")
+    user_id = session.get("user_id")
+    if user_id:
+        _log_db_activity(user_id, "logout_completed", "User logged out")
     session.clear()
     return redirect(url_for("main.landing"))
 

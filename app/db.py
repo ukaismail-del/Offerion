@@ -56,6 +56,12 @@ def _migrate_add_columns(app):
         ("user_identity", "email", "VARCHAR(255)"),
         ("user_identity", "password_hash", "VARCHAR(256)"),
         ("user_identity", "is_active", "BOOLEAN DEFAULT 1"),
+        ("user_identity", "is_admin", "BOOLEAN DEFAULT 0"),
+        ("user_identity", "last_login_at", "DATETIME"),
+        ("user_identity", "has_uploaded_resume", "BOOLEAN DEFAULT 0"),
+        ("user_identity", "has_generated_matches", "BOOLEAN DEFAULT 0"),
+        ("user_identity", "onboarding_completed_at", "DATETIME"),
+        ("activity_event", "event_label", "VARCHAR(300)"),
     ]
     for table, column, col_type in migrations:
         try:

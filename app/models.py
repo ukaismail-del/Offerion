@@ -33,6 +33,15 @@ class UserIdentity(db.Model):
     email = db.Column(db.String(255), unique=True, nullable=True, index=True)
     password_hash = db.Column(db.String(256), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
+    is_admin = db.Column(db.Boolean, default=False)
+
+    # Login tracking
+    last_login_at = db.Column(db.DateTime, nullable=True)
+
+    # Onboarding tracking
+    has_uploaded_resume = db.Column(db.Boolean, default=False)
+    has_generated_matches = db.Column(db.Boolean, default=False)
+    onboarding_completed_at = db.Column(db.DateTime, nullable=True)
 
     # Trial tracking
     trial_start = db.Column(db.DateTime, nullable=True)
@@ -217,8 +226,9 @@ class ActivityEvent(db.Model):
     user_id = db.Column(
         db.String(36), db.ForeignKey("user_identity.id"), nullable=False
     )
-    event_type = db.Column(db.String(60), default="")
+    event_type = db.Column(db.String(60), default="", index=True)
     label = db.Column(db.String(300), default="")
+    event_label = db.Column(db.String(300), nullable=True)
     meta_json = db.Column(db.Text, default="{}")
     created_at = db.Column(db.DateTime, default=_now)
 

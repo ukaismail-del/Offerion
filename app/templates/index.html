@@ -28,6 +28,7 @@
             >Intelligence</a
           >{% endif %}
           <a href="/pricing">Pricing</a>
+          {% if is_admin %}<a href="/founder/metrics">Metrics</a>{% endif %}
           <a href="/logout">Log Out</a>
         </div>
         <span class="tier-badge tier-badge-{{ user_tier }}"
@@ -39,6 +40,34 @@
     <div class="container">
       {% if current_user_email %}
       <p class="welcome-line">Welcome, {{ current_user_email }}</p>
+      {% endif %}
+
+      <!-- Bundle V: Onboarding Progress Card -->
+      {% if onboarding_progress and not onboarding_progress.complete %}
+      <div class="onboarding-progress-card">
+        <div class="onboarding-progress-header">
+          <strong>Getting Started</strong>
+          <span class="onboarding-progress-count">{{ onboarding_progress.count }} of 3 complete</span>
+        </div>
+        <div class="onboarding-progress-steps">
+          <div class="onboarding-progress-step {% if onboarding_progress.created %}done{% endif %}">
+            <span class="onboarding-step-icon">{% if onboarding_progress.created %}&#x2705;{% else %}&#x23F3;{% endif %}</span>
+            <span>Account created</span>
+          </div>
+          <div class="onboarding-progress-step {% if onboarding_progress.resume %}done{% endif %}">
+            <span class="onboarding-step-icon">{% if onboarding_progress.resume %}&#x2705;{% else %}&#x23F3;{% endif %}</span>
+            <span>Resume uploaded</span>
+          </div>
+          <div class="onboarding-progress-step {% if onboarding_progress.matches %}done{% endif %}">
+            <span class="onboarding-step-icon">{% if onboarding_progress.matches %}&#x2705;{% else %}&#x23F3;{% endif %}</span>
+            <span>Matches generated</span>
+          </div>
+        </div>
+      </div>
+      {% elif onboarding_progress and onboarding_progress.complete %}
+      <div class="onboarding-progress-card onboarding-complete">
+        <strong>&#x2705; Onboarding Complete</strong> — You're all set!
+      </div>
       {% endif %}
 
       <!-- Trial Banner (M-Bundle Pricing) -->

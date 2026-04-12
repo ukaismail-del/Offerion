@@ -31,6 +31,7 @@ def create_app():
         return {
             "is_authenticated": flask_session.get("is_authenticated", False),
             "current_user_email": flask_session.get("current_user_email"),
+            "is_admin": flask_session.get("is_admin", False),
         }
 
     @app.errorhandler(404)

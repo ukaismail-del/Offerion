@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Founder Metrics — Offerion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <nav class="top-nav">
+      <div class="top-nav-inner">
+        <a href="/" class="top-nav-brand">Offerion</a>
+        <div class="top-nav-links">
+          <a href="/dashboard">Dashboard</a>
+          <a href="/pricing">Pricing</a>
+          <a href="/founder/metrics" class="active">Metrics</a>
+          <a href="/logout">Log Out</a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <h1 style="margin-bottom: var(--space-lg)">Founder Metrics</h1>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-value">{{ total_users }}</div>
+          <div class="metric-label">Total Users</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">{{ total_signups }}</div>
+          <div class="metric-label">Total Signups</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">{{ users_with_resume }}</div>
+          <div class="metric-label">Uploaded Resume</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">{{ users_with_matches }}</div>
+          <div class="metric-label">Generated Matches</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">{{ onboarding_complete_count }}</div>
+          <div class="metric-label">Onboarding Complete</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">{{ onboarding_pct }}%</div>
+          <div class="metric-label">Completion Rate</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">{{ signups_7d }}</div>
+          <div class="metric-label">Signups (7d)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">{{ events_7d }}</div>
+          <div class="metric-label">Events (7d)</div>
+        </div>
+      </div>
+
+      <h2 style="margin-bottom: var(--space-md)">Recent Activity</h2>
+
+      {% if recent_events %}
+      <table class="events-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>User</th>
+            <th>Event</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event, email in recent_events %}
+          <tr>
+            <td>{{ event.created_at.strftime('%Y-%m-%d %H:%M') if event.created_at else '—' }}</td>
+            <td>{{ email or '—' }}</td>
+            <td><span class="event-type-badge">{{ event.event_type }}</span></td>
+            <td>{{ event.event_label or event.label or '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p style="color: var(--text-muted)">No recent events recorded.</p>
+      {% endif %}
+    </div>
+  </body>
+</html>

@@ -21,6 +21,7 @@
           {% if is_authenticated %}
           <a href="/dashboard">Dashboard</a>
           <a href="/pricing" class="active">Pricing</a>
+          {% if is_admin %}<a href="/founder/metrics">Metrics</a>{% endif %}
           <a href="/logout">Log Out</a>
           {% else %}
           <a href="/pricing" class="active">Pricing</a>
