@@ -2135,3 +2135,59 @@ a.btn.is-loading {
   color: var(--color-success);
   font-weight: 700;
 }
+
+/* ── Auth pages ──────────────────────────────────────────────── */
+.auth-card {
+  max-width: 420px;
+  margin: var(--space-3xl) auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl) var(--space-lg);
+  box-shadow: var(--shadow-card);
+}
+.auth-title {
+  font-size: var(--font-2xl);
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 var(--space-lg);
+  color: var(--text-primary);
+}
+.auth-alt {
+  text-align: center;
+  margin-top: var(--space-md);
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+}
+.auth-alt a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+.auth-alt a:hover {
+  text-decoration: underline;
+}
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  font-size: var(--font-base);
+  border: 1.5px solid var(--border-input);
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input[type="email"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  background: #fff;
+}
+.welcome-line {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+  margin-bottom: var(--space-sm);
+}

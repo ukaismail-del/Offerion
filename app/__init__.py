@@ -1,7 +1,7 @@
 import logging
 import os
 
-from flask import Flask, redirect
+from flask import Flask, redirect, session as flask_session
 
 from app.utils.storage import UPLOAD_DIR
 
@@ -25,6 +25,13 @@ def create_app():
     from app.routes import main_bp
 
     app.register_blueprint(main_bp)
+
+    @app.context_processor
+    def inject_auth_context():
+        return {
+            "is_authenticated": flask_session.get("is_authenticated", False),
+            "current_user_email": flask_session.get("current_user_email"),
+        }
 
     @app.errorhandler(404)
     def not_found(e):

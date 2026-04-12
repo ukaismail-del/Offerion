@@ -53,6 +53,9 @@ def _migrate_add_columns(app):
         ("user_identity", "trial_end", "DATETIME"),
         ("user_identity", "daily_matches_used", "INTEGER DEFAULT 0"),
         ("user_identity", "last_usage_reset", "DATETIME"),
+        ("user_identity", "email", "VARCHAR(255)"),
+        ("user_identity", "password_hash", "VARCHAR(256)"),
+        ("user_identity", "is_active", "BOOLEAN DEFAULT 1"),
     ]
     for table, column, col_type in migrations:
         try:
@@ -63,3 +66,15 @@ def _migrate_add_columns(app):
             app.logger.info("Migrated: added %s.%s", table, column)
         except Exception:
             db.session.rollback()  # column already exists, ignore
+
+    # Unique index on email (safe migration for existing data)
+    try:
+        db.session.execute(
+            db.text(
+                "CREATE UNIQUE INDEX ix_user_identity_email " "ON user_identity (email)"
+            )
+        )
+        db.session.commit()
+        app.logger.info("Migrated: added unique index on user_identity.email")
+    except Exception:
+        db.session.rollback()  # index already exists

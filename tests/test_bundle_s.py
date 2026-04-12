@@ -421,9 +421,10 @@ class TestTrialEngine(unittest.TestCase):
                 db.session.delete(existing)
                 db.session.commit()
 
-        # Access dashboard to trigger user creation via a new session
+        # Seed user_id so TESTING backdoor allows dashboard access
         with client.session_transaction() as sess:
             sess.clear()
+            sess["user_id"] = fresh_id
         resp = client.get("/dashboard")
         self.assertEqual(resp.status_code, 200)
         with client.session_transaction() as sess:

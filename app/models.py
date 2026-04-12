@@ -7,6 +7,8 @@ import json
 import uuid
 from datetime import datetime
 
+from werkzeug.security import generate_password_hash, check_password_hash
+
 from app.db import db
 
 
@@ -19,13 +21,18 @@ def _now():
 
 
 class UserIdentity(db.Model):
-    """M48 — Anonymous persistent user identity."""
+    """M48 — Persistent user identity with optional authentication."""
 
     __tablename__ = "user_identity"
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: uuid.uuid4().hex)
     tier = db.Column(db.String(20), default="trial")
     created_at = db.Column(db.DateTime, default=_now)
+
+    # Auth fields
+    email = db.Column(db.String(255), unique=True, nullable=True, index=True)
+    password_hash = db.Column(db.String(256), nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
 
     # Trial tracking
     trial_start = db.Column(db.DateTime, nullable=True)
@@ -43,6 +50,16 @@ class UserIdentity(db.Model):
     )
     alerts = db.relationship("Alert", backref="user", lazy=True)
     activity_events = db.relationship("ActivityEvent", backref="user", lazy=True)
+
+    def set_password(self, password):
+        """Hash and store a password."""
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        """Verify a password against the stored hash."""
+        if not self.password_hash:
+            return False
+        return check_password_hash(self.password_hash, password)
 
 
 class SavedJob(db.Model):

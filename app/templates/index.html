@@ -28,6 +28,7 @@
             >Intelligence</a
           >{% endif %}
           <a href="/pricing">Pricing</a>
+          <a href="/logout">Log Out</a>
         </div>
         <span class="tier-badge tier-badge-{{ user_tier }}"
           >{{ tier_label }}</span
@@ -36,6 +37,10 @@
     </nav>
 
     <div class="container">
+      {% if current_user_email %}
+      <p class="welcome-line">Welcome, {{ current_user_email }}</p>
+      {% endif %}
+
       <!-- Trial Banner (M-Bundle Pricing) -->
       {% if is_trial and trial_days_left is not none %}
       <div class="trial-banner">

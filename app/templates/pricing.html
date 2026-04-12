@@ -18,8 +18,15 @@
       <div class="top-nav-inner">
         <a href="/" class="top-nav-brand">Offerion</a>
         <div class="top-nav-links">
+          {% if is_authenticated %}
           <a href="/dashboard">Dashboard</a>
           <a href="/pricing" class="active">Pricing</a>
+          <a href="/logout">Log Out</a>
+          {% else %}
+          <a href="/pricing" class="active">Pricing</a>
+          <a href="/login">Log In</a>
+          <a href="/signup">Sign Up</a>
+          {% endif %}
         </div>
         <span class="tier-badge tier-badge-{{ user_tier }}"
           >{{ tier_label }}</span

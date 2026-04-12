@@ -133,7 +133,8 @@ class TestDashboard200(unittest.TestCase):
 
     def test_empty_session(self):
         resp = self.client.get("/dashboard")
-        self.assertEqual(resp.status_code, 200)
+        # Auth now required — unauthenticated users redirect to /login
+        self.assertIn(resp.status_code, [302, 303])
 
     def test_user_only(self):
         with self.client.session_transaction() as s:

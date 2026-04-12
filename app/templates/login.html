@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Log In — Offerion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <nav class="top-nav">
+      <div class="top-nav-inner">
+        <a href="/" class="top-nav-brand">Offerion</a>
+        <div class="top-nav-links">
+          <a href="/login" class="active">Log In</a>
+          <a href="/signup">Sign Up</a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="auth-card">
+        <h1 class="auth-title">Log In</h1>
+        {% if error %}
+        <p class="msg-error" style="text-align: center">{{ error }}</p>
+        {% endif %}
+        <form method="POST">
+          <label class="form-label" for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            placeholder="you@example.com"
+            value="{{ email_value or '' }}"
+          />
+
+          <label class="form-label" for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            placeholder="Your password"
+          />
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg btn-action">
+              Log In
+            </button>
+          </div>
+        </form>
+        <p class="auth-alt">
+          Don't have an account? <a href="/signup">Sign up</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

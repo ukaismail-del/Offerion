@@ -37,8 +37,15 @@
       <div class="top-nav-inner">
         <a href="/" class="top-nav-brand">Offerion</a>
         <div class="top-nav-links">
+          {% if is_authenticated %}
           <a href="/dashboard">Dashboard</a>
           <a href="/pricing">Pricing</a>
+          <a href="/logout">Log Out</a>
+          {% else %}
+          <a href="/pricing">Pricing</a>
+          <a href="/login">Log In</a>
+          <a href="/signup">Sign Up</a>
+          {% endif %}
         </div>
       </div>
     </nav>
@@ -53,9 +60,13 @@
           From resume &rarr; application &rarr; follow-up &mdash; in minutes.
         </p>
         <div class="landing-hero-actions">
+          {% if is_authenticated %}
           <a href="/dashboard" class="btn btn-primary btn-lg"
-            >Get Started Free</a
+            >Go to Dashboard</a
           >
+          {% else %}
+          <a href="/signup" class="btn btn-primary btn-lg">Get Started Free</a>
+          {% endif %}
           <a href="/pricing" class="btn btn-secondary btn-lg">View Pricing</a>
         </div>
       </div>
@@ -180,7 +191,11 @@
        ═══════════════════════════════════════════ -->
       <div class="cta-section">
         <h2>Start your first application in minutes</h2>
-        <a href="/dashboard" class="btn btn-primary btn-lg">Get Started Free</a>
+        {% if is_authenticated %}
+        <a href="/dashboard" class="btn btn-primary btn-lg">Go to Dashboard</a>
+        {% else %}
+        <a href="/signup" class="btn btn-primary btn-lg">Get Started Free</a>
+        {% endif %}
       </div>
     </div>
     <!-- /container -->

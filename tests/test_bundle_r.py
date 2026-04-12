@@ -504,9 +504,9 @@ class TestTemplateRenderingSafety(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def test_dashboard_empty_state(self):
-        """Dashboard still 200 in empty state (no regression from Bundle Q)."""
+        """Dashboard redirects to login when no session (auth required)."""
         resp = self.client.get("/dashboard")
-        self.assertEqual(resp.status_code, 200)
+        self.assertIn(resp.status_code, [302, 303])
 
     def test_dashboard_report_only(self):
         """Dashboard 200 with report_data but no selected job."""

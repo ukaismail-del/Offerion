@@ -95,12 +95,16 @@ from app.utils.tier_config import (
     check_limit,
     TIER_CONFIG,
     TIER_ORDER,
+    start_trial,
+    trial_days_remaining,
 )
 from app.utils.job_data import find_job_by_id
 from app.utils.job_feed import get_unified_jobs
 from app.utils.job_matcher import match_jobs
 from app.utils.job_intelligence import extract_job_intelligence
 from app.utils.job_gap_analyzer import analyze_job_gap
+from app.db import db as app_db
+from app.models import UserIdentity
 
 logger = logging.getLogger(__name__)
 
@@ -319,9 +323,25 @@ def _upgrade_nudge():
 
 @main_bp.before_app_request
 def _bootstrap_persistence():
-    """Ensure anonymous identity exists and persisted records hydrate into session."""
+    """Ensure authenticated user's session is hydrated from DB."""
     session.permanent = True
-    _ensure_user()
+
+    # Public routes that don't require authentication
+    path = request.path
+    is_public = (
+        path in ("/", "/login", "/signup", "/pricing", "/capture-email")
+        or path.startswith("/share/")
+        or path.startswith("/static/")
+    )
+
+    if not is_public and not session.get("is_authenticated"):
+        # In testing mode, allow session-seeded users through
+        if not (current_app.config.get("TESTING") and session.get("user_id")):
+            return redirect(url_for("main.login_page"))
+
+    # Hydrate session for authenticated users (or test users with user_id)
+    if session.get("user_id"):
+        _ensure_user()
 
 
 @main_bp.route("/dashboard", methods=["GET", "POST"])
@@ -1689,6 +1709,140 @@ def onboarding_dismiss():
     session["has_seen_onboarding"] = True
     session.pop("onboarding_step", None)
     return redirect(url_for("main.dashboard"))
+
+
+# ------------------------------------------------------------------
+# Auth — Signup / Login / Logout
+# ------------------------------------------------------------------
+
+
+@main_bp.route("/signup", methods=["GET", "POST"])
+def signup_page():
+    if session.get("is_authenticated"):
+        return redirect(url_for("main.dashboard"))
+
+    if request.method == "GET":
+        return render_template("signup.html")
+
+    email = request.form.get("email", "").strip().lower()
+    password = request.form.get("password", "").strip()
+
+    error = None
+    if not email or not password:
+        error = "Email and password are required."
+    elif len(password) < 6:
+        error = "Password must be at least 6 characters."
+
+    if error:
+        return render_template("signup.html", error=error, email_value=email)
+
+    try:
+        existing = UserIdentity.query.filter_by(email=email).first()
+        if existing:
+            return render_template(
+                "signup.html",
+                error="An account with this email already exists.",
+                email_value=email,
+            )
+
+        # Upgrade current anonymous session user if present
+        user_id = session.get("user_id")
+        user = None
+        if user_id:
+            user = UserIdentity.query.filter_by(id=user_id).first()
+
+        if not user:
+            user = UserIdentity()
+            start_trial(user)
+            app_db.session.add(user)
+
+        user.email = email
+        user.set_password(password)
+        app_db.session.commit()
+
+        session["user_id"] = user.id
+        session["is_authenticated"] = True
+        session["current_user_email"] = email
+        session["user_tier"] = user.tier or "free"
+
+        days_left = trial_days_remaining(user)
+        if days_left is not None:
+            session["trial_days_left"] = days_left
+
+        _log_event("signup", {"email": email})
+        return redirect(url_for("main.dashboard"))
+    except Exception as exc:
+        app_db.session.rollback()
+        logger.error("Signup error: %s", exc)
+        return render_template(
+            "signup.html",
+            error="An error occurred. Please try again.",
+            email_value=email,
+        )
+
+
+@main_bp.route("/login", methods=["GET", "POST"])
+def login_page():
+    if session.get("is_authenticated"):
+        return redirect(url_for("main.dashboard"))
+
+    if request.method == "GET":
+        return render_template("login.html")
+
+    email = request.form.get("email", "").strip().lower()
+    password = request.form.get("password", "").strip()
+
+    if not email or not password:
+        return render_template(
+            "login.html",
+            error="Email and password are required.",
+            email_value=email,
+        )
+
+    try:
+        user = UserIdentity.query.filter_by(email=email).first()
+        if not user or not user.check_password(password):
+            return render_template(
+                "login.html",
+                error="Invalid email or password.",
+                email_value=email,
+            )
+
+        if hasattr(user, "is_active") and user.is_active is False:
+            return render_template(
+                "login.html",
+                error="This account has been deactivated.",
+                email_value=email,
+            )
+
+        # Clear session and set authenticated user
+        session.clear()
+        session.permanent = True
+        session["user_id"] = user.id
+        session["is_authenticated"] = True
+        session["current_user_email"] = email
+        session["user_tier"] = user.tier or "free"
+
+        days_left = trial_days_remaining(user)
+        if days_left is not None:
+            session["trial_days_left"] = days_left
+
+        _log_event("login", {"email": email})
+        return redirect(url_for("main.dashboard"))
+    except Exception as exc:
+        logger.error("Login error: %s", exc)
+        return render_template(
+            "login.html",
+            error="An error occurred. Please try again.",
+            email_value=email,
+        )
+
+
+@main_bp.route("/logout")
+def logout():
+    _log_event("logout")
+    session.clear()
+    return redirect(url_for("main.landing"))
 
 
 # ------------------------------------------------------------------
