@@ -97,6 +97,21 @@ from app.utils.tier_config import (
     TIER_ORDER,
     start_trial,
     trial_days_remaining,
+    check_trial_expiry,
+)
+from app.utils.billing import (
+    get_user_plan_state,
+    can_run_resume_analysis,
+    can_view_jobs,
+    can_download_tailored_resume,
+    can_download_report,
+    record_resume_analysis_usage,
+    record_job_view_usage,
+    record_resume_download_usage,
+    get_upgrade_reason,
+    get_usage_summary,
+    sync_paid_status,
+    reset_monthly_usage_if_needed,
 )
 from app.utils.job_data import find_job_by_id
 from app.utils.job_feed import get_unified_jobs
@@ -332,6 +347,17 @@ def _tier_ctx():
     }
 
 
+def _billing_ctx(user_id):
+    """Return billing/usage summary for template rendering."""
+    if not user_id:
+        return get_usage_summary(None)
+    try:
+        user = UserIdentity.query.get(user_id)
+        return get_usage_summary(user)
+    except Exception:
+        return get_usage_summary(None)
+
+
 def _onboarding_ctx():
     """Return onboarding-related template variables (M58)."""
     show = not session.get("has_seen_onboarding")
@@ -386,6 +412,19 @@ def _bootstrap_persistence():
     # Hydrate session for authenticated users (or test users with user_id)
     if session.get("user_id"):
         _ensure_user()
+        # Bundle W — plan state sync on each request
+        try:
+            _bw_user = UserIdentity.query.get(session["user_id"])
+            if _bw_user:
+                check_trial_expiry(_bw_user)
+                sync_paid_status(_bw_user)
+                reset_monthly_usage_if_needed(_bw_user)
+                app_db.session.commit()
+                session["user_tier"] = _bw_user.tier or "free"
+                days_left = trial_days_remaining(_bw_user)
+                session["trial_days_left"] = days_left
+        except Exception:
+            app_db.session.rollback()
 
 
 @main_bp.route("/dashboard", methods=["GET", "POST"])
@@ -407,7 +446,20 @@ def dashboard():
     _log_event("dashboard_view")
 
     if request.method == "POST":
-        if "resume" not in request.files:
+        # Bundle W — enforce resume analysis limit
+        _bw_analysis_user = UserIdentity.query.get(user_id) if user_id else None
+        if _bw_analysis_user and not can_run_resume_analysis(_bw_analysis_user):
+            _reason = get_upgrade_reason(_bw_analysis_user, "resume_analysis")
+            error = (
+                _reason or "You\u2019ve reached your analysis limit. Upgrade for more."
+            )
+            _log_db_activity(
+                user_id,
+                "usage_limit_hit",
+                "Resume analysis limit",
+                {"action": "resume_analysis"},
+            )
+        elif "resume" not in request.files:
             error = "No file selected."
         else:
             file = request.files["resume"]
@@ -557,6 +609,16 @@ def dashboard():
                                 except Exception:
                                     app_db.session.rollback()
 
+                            # Bundle W: record resume analysis usage
+                            if user_id:
+                                try:
+                                    _bw_u = UserIdentity.query.get(user_id)
+                                    if _bw_u:
+                                        record_resume_analysis_usage(_bw_u)
+                                        app_db.session.commit()
+                                except Exception:
+                                    app_db.session.rollback()
+
                             logger.info("Analysis complete for: %s", filename)
                     except Exception as exc:
                         logger.error("Error processing %s: %s", filename, exc)
@@ -634,8 +696,29 @@ def dashboard():
         )
         jobs_used_fallback = getattr(filtered_jobs, "used_fallback", False)
         recommended_jobs = match_jobs(report_data, jobs=filtered_jobs)
+
+        # Bundle W — job view enforcement
+        _bw_jv_user = UserIdentity.query.get(user_id) if user_id else None
+        jobs_capped = False
+        if _bw_jv_user:
+            if not can_view_jobs(_bw_jv_user):
+                jobs_capped = True
+                recommended_jobs = []
+                _log_db_activity(
+                    user_id,
+                    "usage_limit_hit",
+                    "Job view limit",
+                    {"action": "job_views"},
+                )
+            elif recommended_jobs:
+                record_job_view_usage(_bw_jv_user, count=len(recommended_jobs))
+                try:
+                    app_db.session.commit()
+                except Exception:
+                    app_db.session.rollback()
     else:
         recommended_jobs = []
+        jobs_capped = False
 
     # Bundle V: onboarding progress for dashboard
     onboarding_progress = {
@@ -713,6 +796,8 @@ def dashboard():
         package_recovery_message=session.pop("package_recovery_message", None),
         usage_signals=usage_signals,
         onboarding_progress=onboarding_progress,
+        jobs_capped=jobs_capped,
+        billing=_billing_ctx(user_id),
         **_tier_ctx(),
         **_onboarding_ctx(),
     )
@@ -720,9 +805,30 @@ def dashboard():
 
 @main_bp.route("/download-report")
 def download_report():
+    # Bundle W — enforce report download limit
+    user_id = session.get("user_id")
+    _bw_dl_user = UserIdentity.query.get(user_id) if user_id else None
+    if _bw_dl_user and not can_download_report(_bw_dl_user):
+        _reason = get_upgrade_reason(_bw_dl_user, "report")
+        session["gate_message"] = (
+            _reason or "Report download limit reached. Upgrade for more."
+        )
+        _log_db_activity(
+            user_id, "usage_limit_hit", "Report download limit", {"action": "report"}
+        )
+        return redirect(url_for("main.pricing"))
+
     report_data = session.get("report_data")
     if not report_data:
         return "No analysis data available. Please upload a resume first.", 400
+
+    # Record download usage
+    if _bw_dl_user:
+        record_resume_download_usage(_bw_dl_user)
+        try:
+            app_db.session.commit()
+        except Exception:
+            app_db.session.rollback()
 
     report_text = build_report(
         result=report_data.get("result"),
@@ -746,6 +852,21 @@ def download_report():
 
 @main_bp.route("/download-tailored-brief")
 def download_tailored_brief():
+    # Bundle W — free users cannot download tailored resume
+    user_id = session.get("user_id")
+    _bw_tb_user = UserIdentity.query.get(user_id) if user_id else None
+    if _bw_tb_user and not can_download_tailored_resume(_bw_tb_user):
+        session["gate_message"] = (
+            "Tailored resume downloads are available on Trial and Paid plans. Upgrade to unlock."
+        )
+        _log_db_activity(
+            user_id,
+            "usage_limit_hit",
+            "Tailored resume blocked",
+            {"action": "tailored_resume"},
+        )
+        return redirect(url_for("main.pricing"))
+
     report_data = session.get("report_data")
     if not report_data or not report_data.get("tailored"):
         return (
@@ -1941,6 +2062,12 @@ def signup_page():
         app_db.session.commit()
 
         _sync_admin_flag(user)
+        # Bundle W — sync paid status & log trial start
+        if sync_paid_status(user):
+            app_db.session.commit()
+            _log_db_activity(user.id, "paid_access_granted", "Paid via env config")
+        elif user.tier == "trial":
+            _log_db_activity(user.id, "trial_started", "Trial started on signup")
 
         session["user_id"] = user.id
         session["is_authenticated"] = True
@@ -2006,6 +2133,11 @@ def login_page():
         app_db.session.commit()
 
         _sync_admin_flag(user)
+        # Bundle W — check trial expiry + sync paid status on login
+        check_trial_expiry(user)
+        if sync_paid_status(user):
+            _log_db_activity(user.id, "paid_access_granted", "Paid via env config")
+        app_db.session.commit()
 
         # Clear session and set authenticated user
         session.clear()

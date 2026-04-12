@@ -62,6 +62,15 @@ def _migrate_add_columns(app):
         ("user_identity", "has_generated_matches", "BOOLEAN DEFAULT 0"),
         ("user_identity", "onboarding_completed_at", "DATETIME"),
         ("activity_event", "event_label", "VARCHAR(300)"),
+        # Bundle W — plan enforcement
+        ("user_identity", "subscription_status", "VARCHAR(20)"),
+        ("user_identity", "paid_started_at", "DATETIME"),
+        ("user_identity", "monthly_resume_analyses_used", "INTEGER DEFAULT 0"),
+        ("user_identity", "monthly_job_views_used", "INTEGER DEFAULT 0"),
+        ("user_identity", "monthly_resume_downloads_used", "INTEGER DEFAULT 0"),
+        ("user_identity", "usage_reset_at", "DATETIME"),
+        ("user_identity", "hard_gated_at", "DATETIME"),
+        ("user_identity", "last_upgrade_prompt_at", "DATETIME"),
     ]
     for table, column, col_type in migrations:
         try:

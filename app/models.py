@@ -51,6 +51,16 @@ class UserIdentity(db.Model):
     daily_matches_used = db.Column(db.Integer, default=0)
     last_usage_reset = db.Column(db.DateTime, nullable=True)
 
+    # Bundle W — Plan enforcement fields
+    subscription_status = db.Column(db.String(20), nullable=True)  # 'active' | None
+    paid_started_at = db.Column(db.DateTime, nullable=True)
+    monthly_resume_analyses_used = db.Column(db.Integer, default=0)
+    monthly_job_views_used = db.Column(db.Integer, default=0)
+    monthly_resume_downloads_used = db.Column(db.Integer, default=0)
+    usage_reset_at = db.Column(db.DateTime, nullable=True)
+    hard_gated_at = db.Column(db.DateTime, nullable=True)
+    last_upgrade_prompt_at = db.Column(db.DateTime, nullable=True)
+
     # relationships
     saved_jobs = db.relationship("SavedJob", backref="user", lazy=True)
     resume_versions = db.relationship("ResumeVersion", backref="user", lazy=True)

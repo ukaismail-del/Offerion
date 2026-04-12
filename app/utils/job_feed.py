@@ -143,9 +143,7 @@ def get_unified_jobs(
                 continue
             if external:
                 used_fallback = True
-                logger.info(
-                    "Fallback '%s' returned %d jobs", fq, len(external)
-                )
+                logger.info("Fallback '%s' returned %d jobs", fq, len(external))
                 break
 
     logger.info("Total external jobs: %d (fallback=%s)", len(external), used_fallback)

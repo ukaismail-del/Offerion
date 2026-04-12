@@ -260,25 +260,28 @@ class TestFallbackBannerUI(unittest.TestCase):
             return jobs
 
         with patch("app.routes.get_unified_jobs", side_effect=mock_unified):
-            with patch("app.routes.match_jobs", return_value=[
-                {
-                    "id": "fb",
-                    "title": "Dev",
-                    "company": "Co",
-                    "location": "Remote",
-                    "remote": True,
-                    "score": 0.5,
-                    "match_level": "Moderate",
-                    "matched_skills": ["python"],
-                    "missing_skills": [],
-                    "freshness_score": 0.5,
-                    "posted_at": None,
-                    "source": "external",
-                    "source_name": "mock",
-                    "url": None,
-                    "apply_url": None,
-                }
-            ]):
+            with patch(
+                "app.routes.match_jobs",
+                return_value=[
+                    {
+                        "id": "fb",
+                        "title": "Dev",
+                        "company": "Co",
+                        "location": "Remote",
+                        "remote": True,
+                        "score": 0.5,
+                        "match_level": "Moderate",
+                        "matched_skills": ["python"],
+                        "missing_skills": [],
+                        "freshness_score": 0.5,
+                        "posted_at": None,
+                        "source": "external",
+                        "source_name": "mock",
+                        "url": None,
+                        "apply_url": None,
+                    }
+                ],
+            ):
                 resp = self.client.get("/dashboard")
                 html = resp.data.decode()
                 self.assertIn("broader matches", html)
