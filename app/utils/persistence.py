@@ -15,6 +15,8 @@ from app.models import (
     Alert,
     ActivityEvent,
     UserIdentity,
+    UserState,
+    SharedReport,
 )
 
 logger = logging.getLogger(__name__)
@@ -395,4 +397,105 @@ def load_tier(user_id):
             return rec.tier or "free"
     except Exception as exc:
         logger.warning("load_tier failed: %s", exc)
+    return None
+
+
+# ------------------------------------------------------------------
+# Bundle T — Server-side heavy-state persistence
+# ------------------------------------------------------------------
+
+# Map session keys → UserState column names
+_SESSION_TO_COLUMN = {
+    "report_data": "report_data_json",
+    "resume_text": "resume_text",
+    "enhanced_resume": "enhanced_resume_json",
+    "cover_letter_draft": "cover_letter_draft_json",
+    "enhanced_cover_letter": "enhanced_cover_letter_json",
+    "selected_job_intelligence": "selected_job_intel_json",
+    "selected_job_gap": "selected_job_gap_json",
+}
+
+
+def save_user_state(user_id, session_obj):
+    """Persist heavy session blobs to UserState row (upsert)."""
+    try:
+        rec = UserState.query.filter_by(user_id=user_id).first()
+        if not rec:
+            rec = UserState(user_id=user_id)
+            db.session.add(rec)
+
+        for sess_key, col in _SESSION_TO_COLUMN.items():
+            val = session_obj.get(sess_key)
+            if val is None:
+                continue
+            if col.endswith("_json") and col != "resume_text":
+                setattr(rec, col, json.dumps(val))
+            else:
+                setattr(rec, col, val)
+
+        db.session.commit()
+        return True
+    except Exception as exc:
+        db.session.rollback()
+        logger.warning("save_user_state failed: %s", exc)
+        return False
+
+
+def load_user_state(user_id, session_obj):
+    """Load heavy-state blobs from UserState into session (if not already set)."""
+    try:
+        rec = UserState.query.filter_by(user_id=user_id).first()
+        if not rec:
+            return False
+
+        for sess_key, col in _SESSION_TO_COLUMN.items():
+            if session_obj.get(sess_key):
+                continue  # session already has data — don't overwrite
+            raw = getattr(rec, col, None)
+            if raw is None:
+                continue
+            if col.endswith("_json") and col != "resume_text":
+                parsed = json.loads(raw)
+                if parsed is not None and parsed != {} and parsed != "null":
+                    session_obj[sess_key] = parsed
+            else:
+                if raw:
+                    session_obj[sess_key] = raw
+
+        return True
+    except Exception as exc:
+        logger.warning("load_user_state failed: %s", exc)
+        return False
+
+
+# ------------------------------------------------------------------
+# Bundle T — Shared-report durability
+# ------------------------------------------------------------------
+
+
+def save_shared_report(report_id, snapshot, user_id=None):
+    """Persist a shared-report snapshot to the database."""
+    try:
+        rec = SharedReport(
+            id=report_id,
+            user_id=user_id,
+            snapshot_json=json.dumps(snapshot),
+        )
+        db.session.add(rec)
+        db.session.commit()
+        return rec
+    except Exception as exc:
+        db.session.rollback()
+        logger.warning("save_shared_report failed: %s", exc)
+        return None
+
+
+def load_shared_report(report_id):
+    """Load a shared-report snapshot by ID. Returns dict or None."""
+    try:
+        rec = SharedReport.query.filter_by(id=report_id).first()
+        if rec:
+            return json.loads(rec.snapshot_json)
+    except Exception as exc:
+        logger.warning("load_shared_report failed: %s", exc)
     return None

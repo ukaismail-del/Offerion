@@ -87,6 +87,10 @@ from app.utils.persistence import (
     persist_event,
     hydrate_session_from_db,
     persist_tier,
+    save_user_state,
+    load_user_state,
+    save_shared_report,
+    load_shared_report,
 )
 from app.utils.tier_config import (
     has_access,
@@ -402,6 +406,7 @@ def _bootstrap_persistence():
         path in ("/", "/login", "/signup", "/pricing", "/capture-email")
         or path.startswith("/share/")
         or path.startswith("/static/")
+        or path == "/stripe/webhook"
     )
 
     if not is_public and not session.get("is_authenticated"):
@@ -412,6 +417,8 @@ def _bootstrap_persistence():
     # Hydrate session for authenticated users (or test users with user_id)
     if session.get("user_id"):
         _ensure_user()
+        # Bundle T — load heavy state from DB (report_data, resume_text, etc.)
+        load_user_state(session["user_id"], session)
         # Bundle W — plan state sync on each request
         try:
             _bw_user = UserIdentity.query.get(session["user_id"])
@@ -496,6 +503,7 @@ def dashboard():
                                 "status": "extracted",
                                 "preview": preview_text(text),
                             }
+                            session["resume_text"] = text
                             profile = analyze_resume(text)
                             suggestions = suggest_roles(text, profile)
 
@@ -620,6 +628,9 @@ def dashboard():
                                     app_db.session.rollback()
 
                             logger.info("Analysis complete for: %s", filename)
+                            # Bundle T: persist heavy state to DB
+                            if user_id:
+                                save_user_state(user_id, session)
                     except Exception as exc:
                         logger.error("Error processing %s: %s", filename, exc)
                         error = "An error occurred while processing the file. Please try again."
@@ -1142,6 +1153,9 @@ def enhance_resume_route():
         session["enhanced_resume"] = enhanced
         set_last_action(session, "Resume enhanced")
         _record_activity(user_id, "resume_enhanced", "Enhanced resume")
+        # Bundle T: persist heavy state
+        if user_id:
+            save_user_state(user_id, session)
     else:
         session["resume_preview_message"] = (
             "We couldn't build an enhanced resume from the current data. "
@@ -1289,6 +1303,9 @@ def generate_cover_letter_route():
             "cover_letter_generated",
             "Generated cover letter draft",
         )
+        # Bundle T: persist heavy state
+        if user_id:
+            save_user_state(user_id, session)
         if not report_data.get("job_context"):
             session["resume_preview_message"] = (
                 "This cover letter was generated without a selected job. "
@@ -1335,6 +1352,9 @@ def enhance_cover_letter_route():
         session["enhanced_cover_letter"] = enhanced_cl
         set_last_action(session, "Cover letter enhanced")
         _record_activity(user_id, "cover_letter_enhanced", "Enhanced cover letter")
+        # Bundle T: persist heavy state
+        if user_id:
+            save_user_state(user_id, session)
     else:
         session["resume_preview_message"] = (
             "We couldn't enhance this cover letter with the current data. "
@@ -1883,6 +1903,10 @@ def prepare_application():
 
     session["next_best_action"] = get_next_action(session)
 
+    # Bundle T: persist heavy state after full application pipeline
+    if user_id:
+        save_user_state(user_id, session)
+
     return redirect(url_for("main.resume_preview"))
 
 
@@ -1926,6 +1950,102 @@ def upgrade(tier_name):
     if return_to and return_to.startswith("/"):
         return redirect(return_to)
     return redirect(url_for("main.pricing"))
+
+
+# ------------------------------------------------------------------
+# Bundle T — Stripe Checkout + Webhook
+# ------------------------------------------------------------------
+
+
+@main_bp.route("/checkout/<tier_name>", methods=["POST"])
+def checkout(tier_name):
+    """Start a Stripe Checkout session for the given tier."""
+    from app.utils.stripe_billing import create_checkout_session, get_stripe_config
+
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("main.login_page"))
+
+    conf = get_stripe_config()
+    if not conf["has_secret_key"]:
+        # Stripe not configured — fall back to direct upgrade
+        return redirect(url_for("main.upgrade", tier_name=tier_name))
+
+    user = UserIdentity.query.get(user_id)
+    if not user:
+        return redirect(url_for("main.pricing"))
+
+    checkout_url = create_checkout_session(
+        user,
+        tier_name,
+        success_url=request.host_url.rstrip("/") + url_for("main.checkout_success"),
+        cancel_url=request.host_url.rstrip("/") + url_for("main.pricing"),
+    )
+    if checkout_url:
+        app_db.session.commit()  # persist stripe_customer_id
+        return redirect(checkout_url)
+
+    # Stripe call failed — fall back
+    session["gate_message"] = "Payment processing is temporarily unavailable."
+    return redirect(url_for("main.pricing"))
+
+
+@main_bp.route("/checkout/success")
+def checkout_success():
+    """Return page after successful Stripe checkout."""
+    session["gate_message"] = (
+        "Payment received! Your plan will activate shortly."
+    )
+    return redirect(url_for("main.pricing"))
+
+
+@main_bp.route("/stripe/webhook", methods=["POST"])
+def stripe_webhook():
+    """Stripe webhook endpoint — exempted from CSRF."""
+    from app.utils.stripe_billing import (
+        handle_webhook_event,
+        process_checkout_completed,
+        process_subscription_updated,
+    )
+
+    payload = request.get_data()
+    sig = request.headers.get("Stripe-Signature", "")
+    event, err = handle_webhook_event(payload, sig)
+    if err:
+        logger.warning("Stripe webhook error: %s", err)
+        return err, 400
+
+    etype = event.get("type", "")
+    if etype == "checkout.session.completed":
+        result = process_checkout_completed(event.get("data", {}))
+        if result:
+            _user = UserIdentity.query.get(result["user_id"])
+            if _user:
+                _user.tier = result["tier"]
+                _user.stripe_subscription_id = result.get("subscription_id")
+                if result.get("customer_id"):
+                    _user.stripe_customer_id = result["customer_id"]
+                _user.subscription_status = "active"
+                app_db.session.commit()
+
+    elif etype in (
+        "customer.subscription.updated",
+        "customer.subscription.deleted",
+    ):
+        result = process_subscription_updated(event.get("data", {}))
+        if result and result.get("customer_id"):
+            _user = UserIdentity.query.filter_by(
+                stripe_customer_id=result["customer_id"]
+            ).first()
+            if _user:
+                if result["status"] in ("canceled", "unpaid"):
+                    _user.tier = "free"
+                    _user.subscription_status = None
+                elif result["status"] == "active":
+                    _user.subscription_status = "active"
+                app_db.session.commit()
+
+    return "ok", 200
 
 
 # ------------------------------------------------------------------
@@ -2249,6 +2369,11 @@ def share_create():
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
 
+    # Bundle T: persist to DB so shared reports survive logout/session reset
+    user_id = session.get("user_id")
+    save_shared_report(snapshot["id"], snapshot, user_id=user_id)
+
+    # Keep session copy for backward compat
     shared = session.get("shared_reports", [])
     shared.append(snapshot)
     session["shared_reports"] = shared
@@ -2260,8 +2385,11 @@ def share_create():
 @main_bp.route("/share/report/<report_id>")
 def share_report(report_id):
     """Public view of a shared report."""
-    shared = session.get("shared_reports", [])
-    report = next((r for r in shared if r["id"] == report_id), None)
+    # Bundle T: try DB first, fall back to session
+    report = load_shared_report(report_id)
+    if not report:
+        shared = session.get("shared_reports", [])
+        report = next((r for r in shared if r["id"] == report_id), None)
     if not report:
         return "Report not found.", 404
 
@@ -2354,6 +2482,11 @@ def job_match(job_id):
     report_data["job_context"]["intelligence"] = job_intel
     report_data["job_context"]["gap"] = job_gap
     session["report_data"] = report_data
+
+    # Bundle T: persist heavy state
+    user_id = session.get("user_id")
+    if user_id:
+        save_user_state(user_id, session)
 
     _log_event("job_match_clicked", {"job_id": job_id})
     return redirect(url_for("main.prepare_application"))

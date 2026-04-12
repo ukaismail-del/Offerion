@@ -19,7 +19,7 @@ def _make_app(**env_overrides):
     try:
         from app import create_app
 
-        app = create_app()
+        app = create_app(testing=True)
     finally:
         for k, prev_val in _prev.items():
             if k in env_overrides:
@@ -270,7 +270,9 @@ class TestPaidEmailActivation(unittest.TestCase):
             db.session.add(user)
             db.session.commit()
 
-            with patch.dict(os.environ, {"OFFERION_PAID_EMAILS": "vip@test.com,another@test.com"}):
+            with patch.dict(
+                os.environ, {"OFFERION_PAID_EMAILS": "vip@test.com,another@test.com"}
+            ):
                 result = sync_paid_status(user)
             self.assertTrue(result)
             self.assertEqual(user.subscription_status, "active")
@@ -334,9 +336,7 @@ class TestSignupTrial(unittest.TestCase):
             with app.app_context():
                 from app.models import ActivityEvent
 
-                events = ActivityEvent.query.filter_by(
-                    event_type="trial_started"
-                ).all()
+                events = ActivityEvent.query.filter_by(event_type="trial_started").all()
                 self.assertGreaterEqual(len(events), 1)
 
 
@@ -405,8 +405,12 @@ class TestRouteEnforcement(unittest.TestCase):
             data = {
                 "resume": (io.BytesIO(b"test resume content"), "resume.pdf"),
             }
-            resp = client.post("/dashboard", data=data, follow_redirects=True,
-                               content_type="multipart/form-data")
+            resp = client.post(
+                "/dashboard",
+                data=data,
+                follow_redirects=True,
+                content_type="multipart/form-data",
+            )
             self.assertEqual(resp.status_code, 200)
             self.assertIn(b"limit", resp.data.lower())
 
@@ -420,7 +424,9 @@ class TestRouteEnforcement(unittest.TestCase):
                 from app.models import UserIdentity
                 from app.db import db
 
-                user = UserIdentity.query.filter_by(email="reportlimit@test.com").first()
+                user = UserIdentity.query.filter_by(
+                    email="reportlimit@test.com"
+                ).first()
                 user.monthly_resume_downloads_used = 1
                 user.usage_reset_at = datetime.utcnow()
                 db.session.commit()
@@ -558,8 +564,12 @@ class TestDashboardBillingUI(unittest.TestCase):
             data = {
                 "resume": (io.BytesIO(b"test resume content"), "resume.pdf"),
             }
-            resp = client.post("/dashboard", data=data, follow_redirects=True,
-                               content_type="multipart/form-data")
+            resp = client.post(
+                "/dashboard",
+                data=data,
+                follow_redirects=True,
+                content_type="multipart/form-data",
+            )
             html = resp.data.decode()
             self.assertIn("limit", html.lower())
 

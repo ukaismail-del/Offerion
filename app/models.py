@@ -61,6 +61,10 @@ class UserIdentity(db.Model):
     hard_gated_at = db.Column(db.DateTime, nullable=True)
     last_upgrade_prompt_at = db.Column(db.DateTime, nullable=True)
 
+    # Bundle T — Stripe integration fields
+    stripe_customer_id = db.Column(db.String(100), nullable=True)
+    stripe_subscription_id = db.Column(db.String(100), nullable=True)
+
     # relationships
     saved_jobs = db.relationship("SavedJob", backref="user", lazy=True)
     resume_versions = db.relationship("ResumeVersion", backref="user", lazy=True)
@@ -252,3 +256,46 @@ class ActivityEvent(db.Model):
             ),
             "meta": json.loads(self.meta_json) if self.meta_json else {},
         }
+
+
+# ------------------------------------------------------------------
+# Bundle T — Server-side heavy-state persistence
+# ------------------------------------------------------------------
+
+
+class UserState(db.Model):
+    """Server-side storage for heavy session data (report_data, resume_text).
+
+    One row per user.  Replaces session cookie storage for large blobs
+    to avoid hitting cookie size limits (~4 KB).
+    """
+
+    __tablename__ = "user_state"
+
+    user_id = db.Column(
+        db.String(36), db.ForeignKey("user_identity.id"), primary_key=True
+    )
+    report_data_json = db.Column(db.Text, default="{}")
+    resume_text = db.Column(db.Text, default="")
+    enhanced_resume_json = db.Column(db.Text, default="null")
+    cover_letter_draft_json = db.Column(db.Text, default="null")
+    enhanced_cover_letter_json = db.Column(db.Text, default="null")
+    selected_job_intel_json = db.Column(db.Text, default="null")
+    selected_job_gap_json = db.Column(db.Text, default="null")
+    updated_at = db.Column(db.DateTime, default=_now, onupdate=_now)
+
+
+# ------------------------------------------------------------------
+# Bundle T — Shared report durability
+# ------------------------------------------------------------------
+
+
+class SharedReport(db.Model):
+    """Durable shared-report snapshot (survives logout/session reset)."""
+
+    __tablename__ = "shared_report"
+
+    id = db.Column(db.String(12), primary_key=True)
+    user_id = db.Column(db.String(36), db.ForeignKey("user_identity.id"), nullable=True)
+    snapshot_json = db.Column(db.Text, default="{}")
+    created_at = db.Column(db.DateTime, default=_now)

@@ -215,8 +215,7 @@ class TestFallbackBannerUI(unittest.TestCase):
         os.environ["DATABASE_URL"] = "sqlite://"
         from app import create_app
 
-        self.app = create_app()
-        self.app.config["TESTING"] = True
+        self.app = create_app(testing=True)
         self.app.config["SECRET_KEY"] = "test-secret"
         self.client = self.app.test_client()
 

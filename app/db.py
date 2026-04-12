@@ -71,6 +71,9 @@ def _migrate_add_columns(app):
         ("user_identity", "usage_reset_at", "DATETIME"),
         ("user_identity", "hard_gated_at", "DATETIME"),
         ("user_identity", "last_upgrade_prompt_at", "DATETIME"),
+        # Bundle T — Stripe + server-side state
+        ("user_identity", "stripe_customer_id", "VARCHAR(100)"),
+        ("user_identity", "stripe_subscription_id", "VARCHAR(100)"),
     ]
     for table, column, col_type in migrations:
         try:

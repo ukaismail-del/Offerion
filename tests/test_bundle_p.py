@@ -188,8 +188,7 @@ class TestJobMatchRouteIntelligence(unittest.TestCase):
     def setUp(self):
         from app import create_app
 
-        self.app = create_app()
-        self.app.config["TESTING"] = True
+        self.app = create_app(testing=True)
         self.app.config["SECRET_KEY"] = "test-secret"
         self.client = self.app.test_client()
 
@@ -338,8 +337,7 @@ class TestFitPanelVisibility(unittest.TestCase):
     def setUp(self):
         from app import create_app
 
-        self.app = create_app()
-        self.app.config["TESTING"] = True
+        self.app = create_app(testing=True)
         self.app.config["SECRET_KEY"] = "test-secret"
         self.client = self.app.test_client()
 
@@ -428,7 +426,7 @@ class TestExistingFlowsIntact(unittest.TestCase):
     def test_app_creates_ok(self):
         from app import create_app
 
-        app = create_app()
+        app = create_app(testing=True)
         self.assertIsNotNone(app)
 
     def test_resume_enhancer_backward_compatible(self):

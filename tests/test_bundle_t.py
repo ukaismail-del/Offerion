@@ -50,8 +50,7 @@ def _make_client(tier="elite"):
     from app.db import db
     from app.models import UserIdentity
 
-    app = create_app()
-    app.config["TESTING"] = True
+    app = create_app(testing=True)
     app.config["SECRET_KEY"] = "test-secret"
     client = app.test_client()
 
@@ -416,6 +415,238 @@ class TestM122PricingTiers(unittest.TestCase):
         html = resp.data.decode()
         self.assertIn("Full job matching engine", html)
         self.assertIn("One-click application prep", html)
+
+
+# ── BT-01 — CSRF Protection Tests ──────────────────────────────
+
+
+class TestBT01CsrfProtection(unittest.TestCase):
+    """CSRF is enforced in production and disabled in tests."""
+
+    def test_csrf_disabled_in_testing(self):
+        from app import create_app
+
+        app = create_app(testing=True)
+        self.assertFalse(app.config.get("WTF_CSRF_ENABLED"))
+
+    def test_csrf_enabled_in_production(self):
+        from app import create_app
+
+        app = create_app(testing=False)
+        self.assertTrue(app.config.get("WTF_CSRF_ENABLED"))
+
+    def test_dashboard_post_works_in_test_mode(self):
+        app, client = _make_client()
+        _seed_session(client)
+        resp = client.post("/dashboard")
+        self.assertIn(resp.status_code, (200, 302))
+
+
+# ── BT-02 — UserState Persistence Tests ────────────────────────
+
+
+class TestBT02UserStatePersistence(unittest.TestCase):
+    """Heavy session blobs survive via UserState table."""
+
+    def test_save_and_load_user_state(self):
+        from app.utils.persistence import save_user_state, load_user_state
+
+        app, _ = _make_client()
+        with app.app_context():
+            fake_session = {
+                "report_data": {"profile": _PROFILE, "match": _MATCH},
+                "resume_text": "Sample resume text for testing",
+                "enhanced_resume": _ENHANCED,
+            }
+            result = save_user_state("test-user-t", fake_session)
+            self.assertTrue(result)
+
+            target = {}
+            load_user_state("test-user-t", target)
+            self.assertIn("report_data", target)
+            self.assertEqual(target["report_data"]["match"]["score"], 72)
+            self.assertEqual(target["resume_text"], "Sample resume text for testing")
+            self.assertIn("enhanced_resume", target)
+
+    def test_load_does_not_overwrite_existing(self):
+        from app.utils.persistence import save_user_state, load_user_state
+
+        app, _ = _make_client()
+        with app.app_context():
+            save_user_state("test-user-t", {
+                "report_data": {"profile": _PROFILE, "match": _MATCH},
+            })
+
+            target = {"report_data": {"custom": "data"}}
+            load_user_state("test-user-t", target)
+            self.assertEqual(target["report_data"], {"custom": "data"})
+
+    def test_bootstrap_loads_user_state(self):
+        from app.utils.persistence import save_user_state
+
+        app, client = _make_client()
+        with app.app_context():
+            save_user_state("test-user-t", {
+                "report_data": {"profile": _PROFILE, "match": _MATCH},
+                "resume_text": "Persisted resume text",
+            })
+
+        with client.session_transaction() as sess:
+            sess["user_id"] = "test-user-t"
+            sess["user_tier"] = "elite"
+
+        resp = client.get("/dashboard")
+        self.assertEqual(resp.status_code, 200)
+
+        with client.session_transaction() as sess:
+            self.assertIn("report_data", sess)
+            self.assertEqual(sess["resume_text"], "Persisted resume text")
+
+
+# ── BT-03 — SharedReport Durability Tests ──────────────────────
+
+
+class TestBT03SharedReportDurability(unittest.TestCase):
+    """Shared reports persist in DB, survive session loss."""
+
+    def test_save_and_load_shared_report(self):
+        from app.utils.persistence import save_shared_report, load_shared_report
+        import uuid
+
+        app, _ = _make_client()
+        rid = "sr" + uuid.uuid4().hex[:8]
+        with app.app_context():
+            snapshot = {
+                "id": rid,
+                "score": 85,
+                "target_role": "Dev",
+                "top_skills": ["python"],
+                "summary": "Good match",
+                "strengths": [],
+                "created_at": "2025-01-01 00:00:00",
+            }
+            rec = save_shared_report(rid, snapshot, user_id="test-user-t")
+            self.assertIsNotNone(rec)
+
+            loaded = load_shared_report(rid)
+            self.assertIsNotNone(loaded)
+            self.assertEqual(loaded["score"], 85)
+            self.assertEqual(loaded["target_role"], "Dev")
+
+    def test_share_report_route_loads_from_db(self):
+        from app.utils.persistence import save_shared_report
+        import uuid
+
+        app, client = _make_client()
+        rid = "db" + uuid.uuid4().hex[:8]
+        with app.app_context():
+            snapshot = {
+                "id": rid,
+                "score": 90,
+                "target_role": "Engineer",
+                "top_skills": ["java"],
+                "summary": "Strong match",
+                "strengths": ["API design"],
+                "created_at": "2025-01-01 00:00:00",
+            }
+            save_shared_report(rid, snapshot)
+
+        resp = client.get(f"/share/report/{rid}")
+        self.assertEqual(resp.status_code, 200)
+        html = resp.data.decode()
+        self.assertIn("90", html)
+
+    def test_share_report_missing_returns_404(self):
+        _, client = _make_client()
+        resp = client.get("/share/report/nonexistent99")
+        self.assertEqual(resp.status_code, 404)
+
+
+# ── BT-04 — Stripe Foundation Tests ────────────────────────────
+
+
+class TestBT04StripeFoundation(unittest.TestCase):
+    """Stripe utility and route scaffolding."""
+
+    def test_stripe_config_no_key(self):
+        from app.utils.stripe_billing import get_stripe_config
+
+        conf = get_stripe_config()
+        self.assertIn("has_secret_key", conf)
+        self.assertIn("prices", conf)
+
+    def test_checkout_route_redirects_without_stripe(self):
+        app, client = _make_client()
+        _seed_session(client)
+        resp = client.post("/checkout/operator")
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("upgrade", resp.headers["Location"].lower())
+
+    def test_webhook_rejects_without_config(self):
+        app, client = _make_client()
+        resp = client.post(
+            "/stripe/webhook",
+            data=b"{}",
+            headers={"Stripe-Signature": "fake"},
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    def test_checkout_success_redirects_to_pricing(self):
+        app, client = _make_client()
+        _seed_session(client)
+        resp = client.get("/checkout/success")
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("pricing", resp.headers["Location"].lower())
+
+    def test_stripe_webhook_is_csrf_exempt(self):
+        from app import create_app
+
+        app = create_app(testing=False)
+        app.config["SECRET_KEY"] = "test"
+        client = app.test_client()
+        resp = client.post(
+            "/stripe/webhook",
+            data=b"{}",
+            headers={"Stripe-Signature": "test"},
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertNotIn(b"CSRF", resp.data)
+
+    def test_stripe_fields_on_user_model(self):
+        app, _ = _make_client()
+        with app.app_context():
+            from app.models import UserIdentity
+
+            user = UserIdentity.query.get("test-user-t")
+            self.assertTrue(hasattr(user, "stripe_customer_id"))
+            self.assertTrue(hasattr(user, "stripe_subscription_id"))
+
+
+# ── BT-05 — Model Existence Tests ──────────────────────────────
+
+
+class TestBT05ModelExistence(unittest.TestCase):
+    """New models are importable and tables are created."""
+
+    def test_user_state_model_exists(self):
+        from app.models import UserState
+
+        self.assertEqual(UserState.__tablename__, "user_state")
+
+    def test_shared_report_model_exists(self):
+        from app.models import SharedReport
+
+        self.assertEqual(SharedReport.__tablename__, "shared_report")
+
+    def test_user_state_table_created(self):
+        app, _ = _make_client()
+        with app.app_context():
+            from app.db import db
+
+            inspector = db.inspect(db.engine)
+            tables = inspector.get_table_names()
+            self.assertIn("user_state", tables)
+            self.assertIn("shared_report", tables)
 
 
 if __name__ == "__main__":

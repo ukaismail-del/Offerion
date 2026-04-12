@@ -14,7 +14,7 @@ def _make_app():
     _prev = os.environ.get("DATABASE_URL")
     os.environ["DATABASE_URL"] = "sqlite://"
     try:
-        app = create_app()
+        app = create_app(testing=True)
     finally:
         if _prev is None:
             os.environ.pop("DATABASE_URL", None)

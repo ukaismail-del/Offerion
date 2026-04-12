@@ -51,8 +51,7 @@ def _make_client(tier="elite"):
     from app.db import db
     from app.models import UserIdentity
 
-    app = create_app()
-    app.config["TESTING"] = True
+    app = create_app(testing=True)
     app.config["SECRET_KEY"] = "test-secret"
     client = app.test_client()
 

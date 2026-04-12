@@ -16,7 +16,7 @@ def _make_app(**env_overrides):
     try:
         from app import create_app
 
-        app = create_app()
+        app = create_app(testing=True)
     finally:
         if _prev_db is None:
             os.environ.pop("DATABASE_URL", None)
