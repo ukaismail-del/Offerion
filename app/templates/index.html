@@ -20,14 +20,13 @@
       <div class="top-nav-inner">
         <a href="/" class="top-nav-brand">Offerion</a>
         <div class="top-nav-links">
-          <a href="/dashboard#section-actions">Command Center</a>
+          <a href="/dashboard#section-actions">Dashboard</a>
           {% if report_data_exists %}<a href="/resume-preview">Resume</a>{%
           endif %}
-          <a href="#section-outputs">Active Targets</a>
           {% if match or match_explanation %}<a href="#section-intel"
             >Intelligence</a
           >{% endif %}
-          <a href="/pricing">Access Levels</a>
+          <a href="/pricing">Plans</a>
           {% if is_admin %}<a href="/founder/metrics">Metrics</a>{% endif %}
           <a href="/logout">Log Out</a>
         </div>
@@ -43,7 +42,7 @@
       {% endif %}
 
       <div class="system-bar">
-        <div class="system-online"><span class="system-dot"></span> SYSTEM ONLINE</div>
+        <div class="system-online"><span class="system-dot"></span> Active</div>
         <div class="system-meta">User: {{ current_user_email or 'Guest' }}</div>
         <div class="system-meta">Plan: {{ user_tier|title }}</div>
         <div class="system-meta">Targets: {{ saved_jobs|length }}</div>
@@ -51,28 +50,28 @@
       </div>
 
       <div class="system-header">
-        <h2>Command Center</h2>
+        <h2>Dashboard</h2>
         <div class="system-status">
-          System Status: Active<br>
-          Targets Tracked: {{ saved_jobs|length }}<br>
-          Signals Active: {{ alerts|length }}
+          Track your progress, manage your profile, and prepare for better job matches.<br>
+          Saved jobs: {{ saved_jobs|length }}<br>
+          Active reminders: {{ alerts|length }}
         </div>
       </div>
 
       {% if activation_checklist %}
       {% set activation_percent = activation_checklist.percent if activation_checklist.percent is defined else activation_checklist.pct %}
       <div class="system-progress">
-        <p><strong>SYSTEM SYNCHRONIZATION</strong></p>
+        <p><strong>Progress</strong></p>
         <p>{{ activation_percent }}% Complete</p>
         <div class="progress-bar">
           <div class="progress-fill" style="width: {{ activation_percent }}%"></div>
         </div>
         <div class="sync-markers">
-          <span>Profile Initialized</span>
-          <span>First Target Locked</span>
+          <span>Profile ready</span>
+          <span>First target saved</span>
           <span>Report Generated</span>
-          <span>Package Ready</span>
-          <span>Signals Active</span>
+          <span>Package ready</span>
+          <span>Reminders active</span>
         </div>
       </div>
       {% endif %}
@@ -114,7 +113,7 @@
       <div class="activation-checklist-card">
         <div class="activation-checklist-header">
           <div>
-            <strong>Mission Protocols</strong>
+            <strong>Action Plan</strong>
             <span class="visually-hidden">Your Activation Progress</span>
             <span class="activation-checklist-count">{{ activation_checklist.done_count }} of {{ activation_checklist.total }} complete</span>
           </div>
@@ -126,15 +125,15 @@
           {% for item in activation_checklist["items"] %}
           {% set mission_label = item.label %}
           {% if 'Upload' in item.label or 'Resume' in item.label %}
-          {% set mission_label = 'Initialize Profile' %}
+          {% set mission_label = 'Set Up Profile' %}
           {% elif 'Match' in item.label %}
-          {% set mission_label = 'Generate Match Intelligence' %}
+          {% set mission_label = 'Review Match Insights' %}
           {% elif 'Job' in item.label or 'Save' in item.label %}
-          {% set mission_label = 'Lock First Target' %}
+          {% set mission_label = 'Save First Job' %}
           {% elif 'Cover' in item.label %}
           {% set mission_label = 'Generate Cover Letter' %}
           {% elif 'Package' in item.label or 'Application' in item.label %}
-          {% set mission_label = 'Deploy Application Package' %}
+          {% set mission_label = 'Prepare Application Package' %}
           {% endif %}
           <div class="activation-checklist-item {% if item.done %}done{% endif %}">
             <span class="activation-item-icon">{% if item.done %}&#x2705;{% else %}{{ item.icon }}{% endif %}</span>
@@ -144,7 +143,7 @@
               <span class="activation-item-desc">{{ item.description }}</span>
             </div>
             {% if not item.done %}
-            <a href="{{ item.route }}" class="btn btn-primary btn-sm">Execute <span class="visually-hidden">Start</span></a>
+            <a href="{{ item.route }}" class="btn btn-primary btn-sm">Start <span class="visually-hidden">Start</span></a>
             {% else %}
             <span class="activation-item-done-badge">Complete <span class="visually-hidden">Done</span></span>
             {% endif %}
@@ -168,11 +167,11 @@
         </div>
         {% if is_trial and trial_days_left is not none %}
         <p style="margin:0 0 0.4rem;color:var(--text-muted);font-size:var(--font-sm)">
-          System trial ends in {{ trial_days_left }} day{{ 's' if trial_days_left != 1 else '' }}
+          Free trial ends in {{ trial_days_left }} day{{ 's' if trial_days_left != 1 else '' }}
           {% if trial_days_left <= 2 %}<span style="color:var(--color-warning);font-weight:600"> — expiring soon!</span>{% endif %}
         </p>
         {% elif billing.plan == 'free' and is_trial == false %}
-        <p style="margin:0 0 0.4rem;color:var(--text-muted);font-size:var(--font-sm)">System trial expired — upgrade to unlock premium features</p>
+        <p style="margin:0 0 0.4rem;color:var(--text-muted);font-size:var(--font-sm)">Your free trial has ended. Upgrade to unlock premium features.</p>
         {% endif %}
         <div style="display:flex;flex-wrap:wrap;gap:1rem;font-size:var(--font-sm);color:var(--text-secondary)">
           <span>Analyses: {{ billing.analyses_used }}/{% if billing.analyses_limit %}{{ billing.analyses_limit }}{% else %}&infin;{% endif %}</span>
@@ -181,7 +180,7 @@
         </div>
         {% if billing.plan != 'paid' %}
         <div style="margin-top:0.75rem">
-          <a href="/pricing" class="btn btn-primary btn-sm">Upgrade</a>
+          <a href="/pricing" class="btn btn-primary btn-sm">View Plans</a>
         </div>
         {% endif %}
       </div>
@@ -191,13 +190,13 @@
       {% if is_trial and trial_days_left is not none %}
       <div class="trial-banner">
         <span class="trial-icon">🚀</span>
-        <span>You're in your <strong>7-day system trial</strong> (7-day free trial) — all features unlocked.</span>
+        <span>You're in your <strong>7-day free trial</strong> — all features are available.</span>
         {% if trial_days_left <= 2 %}
         <span class="trial-urgent">Only {{ trial_days_left }} day{{ 's' if trial_days_left != 1 else '' }} left!</span>
         {% else %}
         <span>{{ trial_days_left }} days remaining.</span>
         {% endif %}
-        <a href="/pricing" class="btn btn-primary btn-sm" style="margin-left:auto">View Access Levels</a>
+        <a href="/pricing" class="btn btn-primary btn-sm" style="margin-left:auto">View Plans</a>
       </div>
       {% endif %}
 
@@ -273,7 +272,7 @@
         <div class="how-strip">
           <div class="how-step">
             <div class="how-num">1</div>
-            <h3>Initialize profile</h3>
+            <h3>Set up profile</h3>
             <p>PDF or DOCX &mdash; we extract the text automatically</p>
           </div>
           <div class="how-step">
@@ -335,7 +334,7 @@
         {% if upgrade_nudge_message %}
         <div class="upgrade-nudge">
           <span>{{ upgrade_nudge_message }}</span>
-          <a href="/pricing" class="btn btn-primary btn-sm">View Access Levels</a>
+          <a href="/pricing" class="btn btn-primary btn-sm">View Plans</a>
         </div>
         {% endif %}
 
@@ -370,7 +369,7 @@
         <!-- Next Best Action (M42) -->
         {% if next_best_action %}
         <div class="nba-card has-action">
-          <p class="nba-label">System Recommendation</p>
+          <p class="nba-label">Recommended Next Step</p>
           <a href="{{ next_best_action.route }}" class="nba-btn {% if next_best_action.route in ['/enhance-resume', '/generate-cover-letter', '/enhance-cover-letter', '/prepare-application'] %}btn-loading-trigger{% endif %}"
             >{{ next_best_action.label }}</a
           >
@@ -408,12 +407,12 @@
 
         <!-- Initialize Profile Form -->
         <div class="card profile-console-card">
-          <h2 class="card-title">Initialize Profile</h2>
+          <h2 class="card-title">Set Up Profile</h2>
           <span class="visually-hidden">Upload &amp; Analyze</span>
-          <p class="console-subtitle">Import your profile and target role to generate match intelligence.</p>
+          <p class="console-subtitle">Upload your resume and add target details to get clearer matches and guidance.</p>
           <hr class="card-divider" />
           <p class="form-hint">
-            {% if report_data_exists %} Initialize another profile to start a new
+            {% if report_data_exists %} Upload another resume to start a new
             analysis cycle, or use the actions above. {% else %} Start by uploading a
             PDF or DOCX. Add a target role and job description for deeper
             tailoring. {% endif %}
@@ -437,7 +436,7 @@
             />
 
             <label class="form-label console-label" for="target_keywords"
-              >Signal Keywords (optional, comma-separated)</label
+              >Keywords (optional, comma-separated)</label
             >
             <input
               type="text"
@@ -447,7 +446,7 @@
             />
 
             <label class="form-label console-label" for="job_description"
-              >Mission Brief (optional &mdash; paste to compare)</label
+              >Job Description (optional &mdash; paste to compare)</label
             >
             <textarea
               id="job_description"
@@ -462,7 +461,7 @@
                 class="btn btn-primary btn-lg btn-action btn-loading-trigger"
                 data-loading-label="Analyzing…"
               >
-                Initialize System
+                Analyze Resume
                 <span class="visually-hidden">Upload &amp; Analyze</span>
               </button>
             </div>
@@ -686,7 +685,7 @@
           {% if job_query or job_location or job_remote or job_source %}
           <a href="/#section-jobs" class="btn btn-secondary btn-sm">Clear Filters</a>
           {% elif not report_data_exists %}
-          <a href="#section-actions" class="btn btn-primary btn-sm">Initialize Profile</a>
+          <a href="#section-actions" class="btn btn-primary btn-sm">Set Up Profile</a>
           {% endif %}
         </div>
         {% endif %}
@@ -698,7 +697,7 @@
 
         <aside class="command-right-panel">
           <div class="card live-panel">
-            <h2 class="card-title">LIVE SIGNALS</h2>
+            <h2 class="card-title">Reminders</h2>
             <hr class="card-divider" />
             {% if alerts %}
             <p class="field"><strong>Next:</strong> {{ alerts[0].message }}</p>
@@ -712,13 +711,13 @@
               <a href="/complete-alert/{{ alerts[0].id }}" class="btn btn-success btn-sm">Resolve</a>
             </div>
             {% else %}
-            <p class="empty-state-text">No active signals</p>
-            <p class="empty-state-text">Schedule a follow-up signal to activate tracking.</p>
+            <p class="empty-state-text">No active reminders</p>
+            <p class="empty-state-text">Create a follow-up reminder to keep your search moving.</p>
             {% endif %}
           </div>
 
           <div class="card live-panel">
-            <h2 class="card-title">ACTIVE TARGETS</h2>
+            <h2 class="card-title">Active Targets</h2>
             <hr class="card-divider" />
             <p class="field"><strong>Total:</strong> {{ saved_jobs|length }}</p>
             {% if saved_jobs %}
@@ -730,8 +729,8 @@
               <a href="/delete-job/{{ saved_jobs[0].id }}" class="btn btn-danger btn-sm">Remove</a>
             </div>
             {% else %}
-            <p class="empty-state-text">No active targets locked.</p>
-            <p class="empty-state-text">Lock a target to begin tracking.</p>
+            <p class="empty-state-text">No active targets yet.</p>
+            <p class="empty-state-text">Save a role to start tracking it here.</p>
             {% endif %}
           </div>
         </aside>

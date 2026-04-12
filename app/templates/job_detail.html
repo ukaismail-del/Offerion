@@ -18,9 +18,9 @@
       <div class="top-nav-inner">
         <a href="/" class="top-nav-brand">Offerion</a>
         <div class="top-nav-links">
-          <a href="/dashboard">Command Center</a>
+          <a href="/dashboard">Dashboard</a>
           <a href="/resume-preview">Resume</a>
-          <a href="/pricing">Access Levels</a>
+          <a href="/pricing">Plans</a>
           <a href="/logout">Log Out</a>
         </div>
         <span class="tier-badge tier-badge-{{ user_tier }}"
@@ -30,7 +30,7 @@
     </nav>
 
     <div class="container">
-      <a href="/dashboard" class="back-link">&larr; Back to Command Center</a>
+      <a href="/dashboard" class="back-link">&larr; Back to Dashboard</a>
 
       <!-- System Trial Countdown -->
       {% if is_trial and trial_days_left is not none and trial_days_left <= 2 %}
@@ -44,14 +44,14 @@
       {% endif %} {% if not has_report_data %}
       <div class="guidance-banner">
         <p class="guidance-text">
-          Analyze your resume and initialize your profile in the <a href="/dashboard">command center</a> first to
+          Analyze your resume and set up your profile in the <a href="/dashboard">dashboard</a> first to
           see how this role fits and to prepare a targeted application.
         </p>
       </div>
       {% elif not job_match_info and not job_gap_info %}
       <div class="guidance-banner guidance-warning">
         <p class="guidance-text">
-          This active target is ready to track. Reopen it from the command center after
+          This active target is ready to track. Reopen it from the dashboard after
           analyzing your resume to unlock fit analysis and tailored prep.
         </p>
       </div>
@@ -321,7 +321,7 @@
         {% endif %}
         <div style="flex: 1"></div>
         <a href="/delete-job/{{ job.id }}" class="btn btn-danger">Delete Job</a>
-        <a href="/dashboard" class="btn btn-secondary">Back to Command Center</a>
+        <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
       </div>
     </div>
     <!-- /container -->

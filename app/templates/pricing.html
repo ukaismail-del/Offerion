@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Access Levels — Offerion</title>
+    <title>Plans — Offerion</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -19,12 +19,12 @@
         <a href="/" class="top-nav-brand">Offerion</a>
         <div class="top-nav-links">
           {% if is_authenticated %}
-          <a href="/dashboard">Command Center</a>
-          <a href="/pricing" class="active">Access Levels</a>
+          <a href="/dashboard">Dashboard</a>
+          <a href="/pricing" class="active">Plans</a>
           {% if is_admin %}<a href="/founder/metrics">Metrics</a>{% endif %}
           <a href="/logout">Log Out</a>
           {% else %}
-          <a href="/pricing" class="active">Access Levels</a>
+          <a href="/pricing" class="active">Plans</a>
           <a href="/login">Log In</a>
           <a href="/signup">Sign Up</a>
           {% endif %}
@@ -66,7 +66,7 @@
       </div>
       {% endif %}
 
-      <!-- Access Levels Header -->
+      <!-- Plans Header -->
       <div style="text-align: center; margin-bottom: var(--space-2xl)">
         <h1
           style="
@@ -76,7 +76,7 @@
             color: var(--text-primary);
           "
         >
-          Select Access Level
+          Choose a Plan
         </h1>
         <p
           style="
@@ -100,7 +100,7 @@
         </p>
       </div>
 
-      <!-- Access Levels Grid -->
+      <!-- Plans Grid -->
       {% set access_labels = { "free": "Observer", "comet": "Builder",
       "operator": "Operator", "professional": "Commander" } %} {% set
       designed_for = { "free": "Designed for: getting started and exploring core

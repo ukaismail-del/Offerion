@@ -3301,3 +3301,432 @@ textarea:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
 }
+
+/* ========================================================================== 
+   Bundle X.2 — Minimal UI Reset
+   ========================================================================== */
+
+body {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+body::before {
+  display: none;
+}
+
+.top-nav {
+  background: rgba(248, 250, 252, 0.92);
+  border-bottom: 1px solid #e2e8f0;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.top-nav-inner,
+.container,
+.main-container {
+  max-width: 1240px;
+}
+
+.main-container {
+  padding: 24px;
+}
+
+.top-nav-links a {
+  color: #475569;
+}
+
+.top-nav-links a:hover,
+.top-nav-links a.active {
+  color: #0f172a;
+  background: #eef2ff;
+}
+
+.card,
+.system-panel,
+.system-header,
+.system-progress,
+.command-left-panel > .card,
+.command-right-panel > .card,
+.command-main-panel > .section > .card,
+.live-panel,
+.profile-console-card,
+.pricing-card,
+.feature-card,
+.share-card,
+.fit-panel,
+.job-card {
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  backdrop-filter: none;
+}
+
+.card:hover,
+.job-card:hover,
+.activation-checklist-item:hover,
+.btn:hover,
+button:hover {
+  transform: none;
+}
+
+.system-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+.system-online {
+  color: #0f172a;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+.system-dot {
+  width: 8px;
+  height: 8px;
+  background: #22c55e;
+  box-shadow: none;
+  animation: none;
+}
+
+.system-meta,
+.system-status,
+.hero-sub,
+.console-subtitle,
+.form-hint,
+.empty-state-text,
+.job-alignment-note,
+.landing-hero-sub,
+.social-proof-text,
+.share-summary,
+.share-role,
+.job-card-company,
+.job-meta,
+.job-provider,
+.pricing-card p,
+.feature-card p,
+.system-panel li,
+.system-panel p,
+.live-panel p,
+.live-panel span,
+.sync-markers span {
+  color: #475569;
+}
+
+.system-header {
+  margin-bottom: 1rem;
+  padding: 1.25rem;
+}
+
+.system-header h2,
+.system-panel h2,
+.system-panel h3,
+.live-panel h2,
+.profile-console-card h2,
+.command-left-panel .card-title,
+.command-right-panel .card-title,
+.command-main-panel .card-title,
+.pricing-card h2,
+.pricing-card h3,
+.feature-card h3,
+.job-card-title,
+.hero h1,
+.landing-hero h1,
+h1,
+h2,
+h3 {
+  color: #0f172a;
+}
+
+.system-progress {
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.progress-bar,
+.activation-progress-bar-bg {
+  background: #e2e8f0;
+  border-radius: 999px;
+}
+
+.progress-fill,
+.activation-progress-bar {
+  background: linear-gradient(90deg, #2563eb, #3b82f6);
+  box-shadow: none;
+  animation: none;
+}
+
+.sync-markers {
+  gap: 0.5rem;
+}
+
+.sync-markers span {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+}
+
+.command-grid-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.9fr) minmax(0, 1.65fr) minmax(260px, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.command-left-panel,
+.command-main-panel,
+.command-right-panel {
+  min-width: 0;
+}
+
+.command-left-panel,
+.command-right-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.command-main-panel {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.command-main-panel > .section {
+  margin-bottom: 0;
+}
+
+.command-main-panel > .section > .card,
+.command-left-panel > .card,
+.command-right-panel > .card,
+.live-panel,
+.profile-console-card {
+  padding: 1.2rem 1.25rem;
+}
+
+.hero,
+.landing-hero,
+.cta-section {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+  animation: none;
+}
+
+.hero {
+  padding: 1.5rem;
+}
+
+.hero-benefits {
+  gap: 0.6rem;
+}
+
+.activation-checklist-card,
+.onboarding-progress-card,
+.billing-status-card,
+.trial-banner,
+.guidance-banner,
+.quick-start-card,
+.upgrade-nudge,
+.success-toast,
+.empty-state-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+}
+
+.activation-checklist-card .activation-checklist-header strong,
+.live-panel .card-title,
+.nba-label,
+.profile-console-card .console-label,
+.section-heading {
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.activation-checklist-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.75rem;
+  box-shadow: none;
+}
+
+.activation-checklist-item.done {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.profile-console-card .console-label {
+  font-size: var(--font-sm);
+  color: #334155;
+}
+
+.form-actions {
+  margin-top: 1rem;
+}
+
+.btn,
+button {
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.btn-primary,
+button,
+.btn-action {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.btn-primary:hover,
+button:hover,
+.btn-action:hover {
+  background: #1d4ed8;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
+}
+
+.btn-secondary,
+.btn-outline,
+.btn-dark,
+.btn-purple,
+.btn-teal,
+.btn-success,
+.btn-accent {
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  box-shadow: none;
+}
+
+.btn-secondary:hover,
+.btn-outline:hover,
+.btn-dark:hover,
+.btn-purple:hover,
+.btn-teal:hover,
+.btn-success:hover,
+.btn-accent:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.nba-card {
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  border-left: 4px solid #2563eb;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: var(--space-lg);
+  text-align: left;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
+  animation: none;
+}
+
+.nba-card::before,
+.nba-card.has-action,
+.profile-console-card .btn-action,
+.section,
+.progress-dot,
+.loading-shimmer {
+  animation: none;
+}
+
+.nba-label {
+  color: #334155;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.nba-btn,
+.nba-secondary a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  box-shadow: none;
+}
+
+.nba-btn:hover,
+.nba-secondary a:hover {
+  background: #1d4ed8;
+  color: #ffffff;
+}
+
+.nba-reason {
+  color: #475569;
+  font-style: normal;
+}
+
+.live-panel .card-title,
+.section-heading {
+  color: #334155;
+}
+
+.job-card {
+  gap: 0.65rem;
+}
+
+.job-card.signal-high,
+.job-card.signal-moderate,
+.job-card.signal-low {
+  background: #ffffff;
+}
+
+.job-signal-badge {
+  text-transform: none;
+  letter-spacing: normal;
+  box-shadow: none;
+}
+
+.pricing-card-featured {
+  border-color: #bfdbfe;
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.08);
+}
+
+@media (max-width: 1100px) {
+  .command-grid-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .command-left-panel,
+  .command-right-panel,
+  .command-main-panel {
+    display: grid;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .main-container,
+  .container {
+    padding: 16px;
+  }
+
+  .system-bar,
+  .system-header,
+  .system-progress,
+  .hero,
+  .landing-hero,
+  .profile-console-card,
+  .live-panel,
+  .pricing-card,
+  .card {
+    padding: 1rem;
+  }
+}
