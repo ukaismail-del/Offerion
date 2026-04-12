@@ -545,6 +545,23 @@
         </form>
 
         {% if recommended_jobs %}
+        {% if jobs_used_static_fallback %}
+        <div class="fallback-banner" style="background: var(--bg-card); border-left: 4px solid var(--color-primary); padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 6px; font-size: 0.9rem;">
+          <strong style="color: var(--text-secondary)">Recommendations ready</strong>
+          <span style="display:block;font-size:var(--font-xs);color:var(--text-faint)">Showing reliable fallback matches while live sources refresh.</span>
+        </div>
+        {% elif jobs_used_mock_fallback %}
+        <div class="fallback-banner" style="background: var(--bg-card); border-left: 4px solid var(--color-primary); padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 6px; font-size: 0.9rem;">
+          <strong style="color: var(--text-secondary)">Recommendations ready</strong>
+          <span style="display:block;font-size:var(--font-xs);color:var(--text-faint)">Showing broader matches from backup sources for now.</span>
+        </div>
+        {% elif jobs_live_source_status == 'unavailable' %}
+        <div class="fallback-banner" style="background: var(--bg-card); border-left: 4px solid var(--color-primary); padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 6px; font-size: 0.9rem;">
+          <strong style="color: var(--text-secondary)">Recommendations loaded</strong>
+          <span style="display:block;font-size:var(--font-xs);color:var(--text-faint)">Live sources are temporarily limited, so we loaded the best available matches.</span>
+        </div>
+        {% endif %}
+
         {% if jobs_used_fallback %}
         <div class="fallback-banner" style="background: var(--bg-card); border-left: 4px solid var(--color-warning); padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 6px; font-size: 0.9rem;">
           <strong style="color: var(--text-secondary)">System expanded search scope</strong>
@@ -555,7 +572,8 @@
             {% if jobs_query_source == 'target_role' %} Source: target role.{% elif jobs_query_source == 'resume_skills' %} Source: profile skills.{% endif %}
           </span>
         </div>
-        {% else %}
+        {% endif %}
+        {% if not jobs_used_fallback %}
         <p style="color: var(--text-muted); font-size: var(--font-sm); margin-bottom: var(--space-md);">
           These jobs were matched based on your resume skills{% if job_query %} and search query{% endif %}. Higher scores mean better skill alignment.
         </p>

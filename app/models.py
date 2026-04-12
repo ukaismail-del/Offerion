@@ -282,6 +282,7 @@ class UserState(db.Model):
     enhanced_cover_letter_json = db.Column(db.Text, default="null")
     selected_job_intel_json = db.Column(db.Text, default="null")
     selected_job_gap_json = db.Column(db.Text, default="null")
+    recommended_jobs_json = db.Column(db.Text, default="{}")
     updated_at = db.Column(db.DateTime, default=_now, onupdate=_now)
 
 

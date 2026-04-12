@@ -413,6 +413,7 @@ _SESSION_TO_COLUMN = {
     "enhanced_cover_letter": "enhanced_cover_letter_json",
     "selected_job_intelligence": "selected_job_intel_json",
     "selected_job_gap": "selected_job_gap_json",
+    "recommended_jobs_lookup": "recommended_jobs_json",
 }
 
 
@@ -425,13 +426,13 @@ def save_user_state(user_id, session_obj):
             db.session.add(rec)
 
         for sess_key, col in _SESSION_TO_COLUMN.items():
-            val = session_obj.get(sess_key)
-            if val is None:
+            if sess_key not in session_obj:
                 continue
+            val = session_obj.get(sess_key)
             if col.endswith("_json") and col != "resume_text":
                 setattr(rec, col, json.dumps(val))
             else:
-                setattr(rec, col, val)
+                setattr(rec, col, val or "")
 
         db.session.commit()
         return True

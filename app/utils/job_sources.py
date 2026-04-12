@@ -448,13 +448,19 @@ _PROVIDERS = {
 # ── public API ────────────────────────────────────────────────────
 
 
-def fetch_external_jobs(query=None, location=None, remote=None, limit=25):
+def fetch_external_jobs(
+    query=None,
+    location=None,
+    remote=None,
+    limit=25,
+    provider_override=None,
+):
     """Return normalised jobs from configured external sources.
 
     Falls back to an empty list when no source is configured or the
     provider raises an exception.
     """
-    provider = _get_provider()
+    provider = (provider_override or _get_provider() or "").strip().lower()
     if not provider or provider == "none":
         return []
 

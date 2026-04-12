@@ -74,6 +74,7 @@ def _migrate_add_columns(app):
         # Bundle T — Stripe + server-side state
         ("user_identity", "stripe_customer_id", "VARCHAR(100)"),
         ("user_identity", "stripe_subscription_id", "VARCHAR(100)"),
+        ("user_state", "recommended_jobs_json", "TEXT"),
     ]
     for table, column, col_type in migrations:
         try:

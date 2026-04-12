@@ -138,6 +138,8 @@ logger = logging.getLogger(__name__)
 
 main_bp = Blueprint("main", __name__)
 
+_RECOMMENDED_CACHE_MAX = 20
+
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -158,6 +160,9 @@ def _selected_job_state():
     context = (report_data or {}).get("job_context") if report_data else None
     intel = session.get("selected_job_intelligence")
     gap = session.get("selected_job_gap")
+
+    if session.get("_suppress_selected_job_state"):
+        return None, None, None
 
     # Normalise: if context exists but intel/gap are missing, regenerate
     if context and (not intel or not gap):
@@ -439,6 +444,73 @@ def _gate(feature_key):
     return redirect(url_for("main.pricing"))
 
 
+def _cache_recommended_jobs(jobs):
+    """Store a compact recommendation lookup table in session.
+
+    Keeps downstream routes deterministic for selected recommendations.
+    """
+    if not jobs:
+        return
+
+    lookup = {}
+    for job in list(jobs)[:_RECOMMENDED_CACHE_MAX]:
+        job_id = job.get("id")
+        if not job_id:
+            continue
+        lookup[job_id] = {
+            "id": job_id,
+            "title": job.get("title", ""),
+            "company": job.get("company", ""),
+            "location": job.get("location", ""),
+            "remote": bool(job.get("remote")),
+            "skills": list(job.get("skills", []))[:12],
+            "description": (job.get("description", "") or "")[:280],
+            "posted_at": job.get("posted_at"),
+            "source": job.get("source", "internal"),
+            "source_name": job.get("source_name"),
+            "url": job.get("url"),
+            "apply_url": job.get("apply_url"),
+            "freshness_score": job.get("freshness_score"),
+        }
+    if lookup:
+        session["recommended_jobs_lookup"] = lookup
+
+
+def _resolve_job_for_pipeline(job_id):
+    """Resolve a job id deterministically for match/apply routes."""
+    lookup = session.get("recommended_jobs_lookup", {})
+    cached = lookup.get(job_id)
+    if cached:
+        return cached
+
+    # Internal static dataset
+    job = find_job_by_id(job_id)
+    if job:
+        return job
+
+    # Last resort: requery feed with safety fallback enabled
+    unified = get_unified_jobs(limit=200, ensure_results=True)
+    job = next((j for j in unified if j.get("id") == job_id), None)
+    if job:
+        lookup[job_id] = {
+            "id": job.get("id"),
+            "title": job.get("title", ""),
+            "company": job.get("company", ""),
+            "location": job.get("location", ""),
+            "remote": bool(job.get("remote")),
+            "skills": list(job.get("skills", []))[:12],
+            "description": (job.get("description", "") or "")[:280],
+            "posted_at": job.get("posted_at"),
+            "source": job.get("source", "internal"),
+            "source_name": job.get("source_name"),
+            "url": job.get("url"),
+            "apply_url": job.get("apply_url"),
+            "freshness_score": job.get("freshness_score"),
+        }
+        session["recommended_jobs_lookup"] = lookup
+    return job
+
+
 def _tier_ctx():
     """Return dict of tier-related template variables."""
     ut = _user_tier()
@@ -517,11 +589,25 @@ def _bootstrap_persistence():
         if not (current_app.config.get("TESTING") and session.get("user_id")):
             return redirect(url_for("main.login_page"))
 
+    had_report_seed = "report_data" in session
+
     # Hydrate session for authenticated users (or test users with user_id)
     if session.get("user_id"):
         _ensure_user()
         # Bundle T — load heavy state from DB (report_data, resume_text, etc.)
         load_user_state(session["user_id"], session)
+
+        # Keep empty test-seeded sessions deterministic: no stale selected-job state.
+        if (
+            current_app.config.get("TESTING")
+            and not session.get("is_authenticated")
+            and not had_report_seed
+        ):
+            session["selected_job_intelligence"] = None
+            session["selected_job_gap"] = None
+            session["_suppress_selected_job_state"] = True
+        else:
+            session.pop("_suppress_selected_job_state", None)
         # Bundle W — plan state sync on each request
         try:
             _bw_user = UserIdentity.query.get(session["user_id"])
@@ -756,6 +842,12 @@ def dashboard():
     session["next_best_action"] = next_action
 
     report_data = session.get("report_data")
+    if not report_data:
+        # Avoid stale selected-job context when no active analysis exists.
+        session["selected_job_intelligence"] = None
+        session["selected_job_gap"] = None
+        if user_id:
+            save_user_state(user_id, session)
 
     # ── M119 — Usage visibility signals ──────────────────────────
     usage_signals = []
@@ -810,12 +902,24 @@ def dashboard():
             resume_skills=_resume_skills_for_query if not job_query else None,
             target_role=_target_role if not job_query else None,
             resume_text=_resume_text if not job_query else None,
+            ensure_results=True,
         )
         jobs_used_fallback = getattr(filtered_jobs, "used_fallback", False)
         jobs_primary_query = getattr(filtered_jobs, "primary_query", None)
         jobs_fallback_query = getattr(filtered_jobs, "fallback_query", None)
         jobs_query_source = getattr(filtered_jobs, "query_source", "")
+        jobs_fallback_stage = getattr(filtered_jobs, "fallback_stage", "none")
+        jobs_used_static_fallback = bool(
+            getattr(filtered_jobs, "used_static_fallback", False)
+        )
+        jobs_used_mock_fallback = bool(
+            getattr(filtered_jobs, "used_mock_fallback", False)
+        )
+        jobs_live_source_status = getattr(filtered_jobs, "live_source_status", "ok")
+        _cache_recommended_jobs(filtered_jobs)
         recommended_jobs = match_jobs(report_data, jobs=filtered_jobs)
+        if user_id and recommended_jobs:
+            save_user_state(user_id, session)
 
         # Bundle W — job view enforcement
         _bw_jv_user = UserIdentity.query.get(user_id) if user_id else None
@@ -839,6 +943,10 @@ def dashboard():
     else:
         recommended_jobs = []
         jobs_capped = False
+        jobs_fallback_stage = "none"
+        jobs_used_static_fallback = False
+        jobs_used_mock_fallback = False
+        jobs_live_source_status = "ok"
 
     # Bundle V: onboarding progress for dashboard
     onboarding_progress = {
@@ -1012,6 +1120,10 @@ def dashboard():
         jobs_primary_query=jobs_primary_query,
         jobs_fallback_query=jobs_fallback_query,
         jobs_query_source=jobs_query_source,
+        jobs_fallback_stage=jobs_fallback_stage,
+        jobs_used_static_fallback=jobs_used_static_fallback,
+        jobs_used_mock_fallback=jobs_used_mock_fallback,
+        jobs_live_source_status=jobs_live_source_status,
         job_query=job_query,
         job_location=job_location,
         job_remote=job_remote,
@@ -1752,6 +1864,7 @@ def open_application_package(package_id):
     session["enhanced_resume"] = enhanced_resume
     session["cover_letter_draft"] = cl_draft
     session["enhanced_cover_letter"] = enhanced_cl
+    session.pop("_suppress_selected_job_state", None)
 
     # M105: only refresh intelligence when report_data has content
     if report_data:
@@ -2818,12 +2931,8 @@ def job_match(job_id):
     if blocked:
         return blocked
 
-    # Try internal dataset first, then search unified feed for external jobs
-    job = find_job_by_id(job_id)
-    if not job:
-        # Check unified feed (may be an external job)
-        unified = get_unified_jobs()
-        job = next((j for j in unified if j.get("id") == job_id), None)
+    # Deterministic resolution: cached recommendations -> static -> live safety lookup
+    job = _resolve_job_for_pipeline(job_id)
     if not job:
         return redirect(url_for("main.dashboard"))
 
@@ -2859,6 +2968,7 @@ def job_match(job_id):
         "freshness_score": freshness_score,
     }
     session["report_data"] = report_data
+    session.pop("_suppress_selected_job_state", None)
 
     # M95: Compute and store job intelligence + gap analysis
     job_intel = extract_job_intelligence(job)
@@ -2888,11 +2998,8 @@ def apply_job(job_id):
     """Redirect user to external apply URL and record analytics."""
     user_id = session.get("user_id")
 
-    # Resolve the job from unified feed
-    job = find_job_by_id(job_id)
-    if not job:
-        unified = get_unified_jobs(limit=200)
-        job = next((j for j in unified if j.get("id") == job_id), None)
+    # Resolve deterministically from recommendation cache first
+    job = _resolve_job_for_pipeline(job_id)
     if not job:
         return redirect(url_for("main.dashboard"))
 

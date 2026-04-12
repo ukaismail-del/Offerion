@@ -106,7 +106,7 @@
       organized and never miss opportunities" } %} {% set plan_features = {
       "free": ["Daily job matches", "Basic resume analysis", "View-only
       results"], "comet": ["Resume improvements", "Cover letter generation",
-      "Save and manage versions"], "operator": ["Full job matching", "Job
+      "Save and manage versions"], "operator": ["Full job matching engine", "Job
       tracking", "Application tools"], "professional": ["Everything in
       Operator", "Follow-up reminders", "Workflow automation"] } %}
       <div class="pricing-grid">
@@ -133,7 +133,8 @@
           <ul class="pricing-features">
             {% for feat in plan_features.get(tier_key, tier.features) %}
             <li>
-              {{ feat }}{% if tier_key == 'operator' and feat == 'Full job matching' %}
+              {{ feat }}{% if tier_key == 'operator' and feat == 'Full job
+              matching engine' %}
               <span class="visually-hidden">Full job matching engine</span>
               {% elif tier_key == 'operator' and feat == 'Application tools' %}
               <span class="visually-hidden">One-click application prep</span>
