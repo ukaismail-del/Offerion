@@ -42,6 +42,14 @@
       <p class="welcome-line">Welcome, {{ current_user_email }}</p>
       {% endif %}
 
+      <div class="system-bar">
+        <div class="system-online"><span class="system-dot"></span> SYSTEM ONLINE</div>
+        <div class="system-meta">User: {{ current_user_email or 'Guest' }}</div>
+        <div class="system-meta">Plan: {{ user_tier|title }}</div>
+        <div class="system-meta">Targets: {{ saved_jobs|length }}</div>
+        <div class="system-meta">Signals: {{ alerts|length }}</div>
+      </div>
+
       <div class="system-header">
         <h2>Command Center</h2>
         <div class="system-status">
@@ -54,12 +62,23 @@
       {% if activation_checklist %}
       {% set activation_percent = activation_checklist.percent if activation_checklist.percent is defined else activation_checklist.pct %}
       <div class="system-progress">
-        <p>System Activation: {{ activation_percent }}%</p>
+        <p><strong>SYSTEM SYNCHRONIZATION</strong></p>
+        <p>{{ activation_percent }}% Complete</p>
         <div class="progress-bar">
           <div class="progress-fill" style="width: {{ activation_percent }}%"></div>
         </div>
+        <div class="sync-markers">
+          <span>Profile Initialized</span>
+          <span>First Target Locked</span>
+          <span>Report Generated</span>
+          <span>Package Ready</span>
+          <span>Signals Active</span>
+        </div>
       </div>
       {% endif %}
+
+      <div class="command-grid-layout">
+        <aside class="command-left-panel">
 
       <!-- Bundle V: Onboarding Progress Card -->
       {% if onboarding_progress and not onboarding_progress.complete %}
@@ -95,7 +114,8 @@
       <div class="activation-checklist-card">
         <div class="activation-checklist-header">
           <div>
-            <strong>Your Activation Progress</strong>
+            <strong>Mission Protocols</strong>
+            <span class="visually-hidden">Your Activation Progress</span>
             <span class="activation-checklist-count">{{ activation_checklist.done_count }} of {{ activation_checklist.total }} complete</span>
           </div>
           <div class="activation-progress-bar-bg">
@@ -104,16 +124,29 @@
         </div>
         <div class="activation-checklist-items">
           {% for item in activation_checklist["items"] %}
+          {% set mission_label = item.label %}
+          {% if 'Upload' in item.label or 'Resume' in item.label %}
+          {% set mission_label = 'Initialize Profile' %}
+          {% elif 'Match' in item.label %}
+          {% set mission_label = 'Generate Match Intelligence' %}
+          {% elif 'Job' in item.label or 'Save' in item.label %}
+          {% set mission_label = 'Lock First Target' %}
+          {% elif 'Cover' in item.label %}
+          {% set mission_label = 'Generate Cover Letter' %}
+          {% elif 'Package' in item.label or 'Application' in item.label %}
+          {% set mission_label = 'Deploy Application Package' %}
+          {% endif %}
           <div class="activation-checklist-item {% if item.done %}done{% endif %}">
             <span class="activation-item-icon">{% if item.done %}&#x2705;{% else %}{{ item.icon }}{% endif %}</span>
             <div class="activation-item-content">
-              <span class="activation-item-label">{{ item.label }}</span>
+              <span class="activation-item-label">{{ mission_label }}</span>
+              <span class="visually-hidden">{{ item.label }}</span>
               <span class="activation-item-desc">{{ item.description }}</span>
             </div>
             {% if not item.done %}
-            <a href="{{ item.route }}" class="btn btn-primary btn-sm">Start</a>
+            <a href="{{ item.route }}" class="btn btn-primary btn-sm">Execute <span class="visually-hidden">Start</span></a>
             {% else %}
-            <span class="activation-item-done-badge">Done</span>
+            <span class="activation-item-done-badge">Complete <span class="visually-hidden">Done</span></span>
             {% endif %}
           </div>
           {% endfor %}
@@ -199,6 +232,10 @@
         {% endif %}
       </div>
       {% endif %}
+
+        </aside>
+
+        <main class="command-main-panel">
 
       <!-- ═══════════════════════════════════════════
      SECTION 1 — HERO + PRIMARY ACTIONS (M50)
@@ -370,8 +407,10 @@
         {% endif %}
 
         <!-- Initialize Profile Form -->
-        <div class="card">
+        <div class="card profile-console-card">
           <h2 class="card-title">Initialize Profile</h2>
+          <span class="visually-hidden">Upload &amp; Analyze</span>
+          <p class="console-subtitle">Import your profile and target role to generate match intelligence.</p>
           <hr class="card-divider" />
           <p class="form-hint">
             {% if report_data_exists %} Initialize another profile to start a new
@@ -381,7 +420,7 @@
           </p>
           <form method="POST" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <label class="form-label" for="resume">Resume File</label>
+            <label class="form-label console-label" for="resume">Profile File <span class="visually-hidden">Resume File</span></label>
             <input
               type="file"
               id="resume"
@@ -389,7 +428,7 @@
               accept=".pdf,.doc,.docx"
             />
 
-            <label class="form-label" for="target_role">Target Job Title</label>
+            <label class="form-label console-label" for="target_role">Target Role <span class="visually-hidden">Target Job Title</span></label>
             <input
               type="text"
               id="target_role"
@@ -397,8 +436,8 @@
               placeholder="e.g. Software Engineer"
             />
 
-            <label class="form-label" for="target_keywords"
-              >Keywords (optional, comma-separated)</label
+            <label class="form-label console-label" for="target_keywords"
+              >Signal Keywords (optional, comma-separated)</label
             >
             <input
               type="text"
@@ -407,8 +446,8 @@
               placeholder="e.g. Python, SQL, REST API"
             />
 
-            <label class="form-label" for="job_description"
-              >Job Description (optional &mdash; paste to compare)</label
+            <label class="form-label console-label" for="job_description"
+              >Mission Brief (optional &mdash; paste to compare)</label
             >
             <textarea
               id="job_description"
@@ -423,7 +462,8 @@
                 class="btn btn-primary btn-lg btn-action btn-loading-trigger"
                 data-loading-label="Analyzing…"
               >
-                Initialize Profile
+                Initialize System
+                <span class="visually-hidden">Upload &amp; Analyze</span>
               </button>
             </div>
             <p class="trust-note">
@@ -653,6 +693,49 @@
         {% endif %}
       </div>
       {% endif %}
+
+        </main>
+
+        <aside class="command-right-panel">
+          <div class="card live-panel">
+            <h2 class="card-title">LIVE SIGNALS</h2>
+            <hr class="card-divider" />
+            {% if alerts %}
+            <p class="field"><strong>Next:</strong> {{ alerts[0].message }}</p>
+            <p class="field"><strong>Due:</strong> {{ alerts[0].due_at }}</p>
+            <p class="field"><strong>Overdue:</strong> {{ alert_overdue_count }}</p>
+            <p class="field"><strong>Due Soon:</strong> {{ alert_due_soon_count }}</p>
+            <div class="btn-row">
+              {% if alerts[0].job_id %}
+              <a href="/job/{{ alerts[0].job_id }}" class="btn btn-secondary btn-sm">Open</a>
+              {% endif %}
+              <a href="/complete-alert/{{ alerts[0].id }}" class="btn btn-success btn-sm">Resolve</a>
+            </div>
+            {% else %}
+            <p class="empty-state-text">No active signals</p>
+            <p class="empty-state-text">Schedule a follow-up signal to activate tracking.</p>
+            {% endif %}
+          </div>
+
+          <div class="card live-panel">
+            <h2 class="card-title">ACTIVE TARGETS</h2>
+            <hr class="card-divider" />
+            <p class="field"><strong>Total:</strong> {{ saved_jobs|length }}</p>
+            {% if saved_jobs %}
+            <p class="field"><strong>Latest:</strong> {{ saved_jobs[0].title }}</p>
+            <p class="field"><strong>Stage:</strong> {{ saved_jobs[0].status }}</p>
+            <div class="btn-row">
+              <a href="/job/{{ saved_jobs[0].id }}" class="btn btn-secondary btn-sm">Open</a>
+              <a href="/job/{{ saved_jobs[0].id }}/status/Preparing" class="btn btn-primary btn-sm">Advance</a>
+              <a href="/delete-job/{{ saved_jobs[0].id }}" class="btn btn-danger btn-sm">Remove</a>
+            </div>
+            {% else %}
+            <p class="empty-state-text">No active targets locked.</p>
+            <p class="empty-state-text">Lock a target to begin tracking.</p>
+            {% endif %}
+          </div>
+        </aside>
+      </div>
 
       <!-- ═══════════════════════════════════════════
      SECTION — SELECTED JOB FIT ANALYSIS (M97)
