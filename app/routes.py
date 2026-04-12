@@ -117,6 +117,7 @@ from app.utils.tier_config import (
 )
 from app.utils.billing import (
     get_user_plan_state,
+    apply_subscription_state,
     can_run_resume_analysis,
     can_view_jobs,
     can_download_tailored_resume,
@@ -126,6 +127,7 @@ from app.utils.billing import (
     record_resume_download_usage,
     get_upgrade_reason,
     get_usage_summary,
+    normalize_subscription_status,
     sync_paid_status,
     reset_monthly_usage_if_needed,
 )
@@ -135,7 +137,7 @@ from app.utils.job_matcher import match_jobs
 from app.utils.job_intelligence import extract_job_intelligence
 from app.utils.job_gap_analyzer import analyze_job_gap
 from app.db import db as app_db
-from app.models import UserIdentity, ActivityEvent
+from app.models import UserIdentity, ActivityEvent, ProcessedWebhookEvent
 
 logger = logging.getLogger(__name__)
 
@@ -539,6 +541,120 @@ def _billing_ctx(user_id):
         return get_usage_summary(user)
     except Exception:
         return get_usage_summary(None)
+
+
+def _sync_billing_session(user):
+    """Mirror persisted billing state into the current session when relevant."""
+    if not user:
+        return
+    if session.get("user_id") == user.id:
+        session["user_tier"] = user.tier or "free"
+
+
+def _set_billing_notice(pricing_message=None, dashboard_message=None):
+    if pricing_message:
+        session["gate_message"] = pricing_message
+    if dashboard_message:
+        session["dashboard_notice_message"] = dashboard_message
+
+
+def _find_processed_webhook_event(event_id):
+    if not event_id:
+        return None
+    return ProcessedWebhookEvent.query.filter_by(event_id=event_id).first()
+
+
+def _record_processed_webhook_event(event_id, event_type, status, user_id=None):
+    if not event_id:
+        return None
+    existing = _find_processed_webhook_event(event_id)
+    if existing:
+        existing.status = status
+        if user_id:
+            existing.user_id = user_id
+        return existing
+    record = ProcessedWebhookEvent(
+        event_id=event_id,
+        event_type=event_type or "unknown",
+        status=status,
+        user_id=user_id,
+    )
+    app_db.session.add(record)
+    return record
+
+
+def _apply_checkout_completion(result, source="checkout"):
+    if not result:
+        return None
+    user = UserIdentity.query.filter_by(id=result.get("user_id")).first()
+    if not user:
+        return None
+
+    apply_subscription_state(
+        user,
+        result.get("status") or "active",
+        tier_name=result.get("tier"),
+        subscription_id=result.get("subscription_id"),
+        customer_id=result.get("customer_id"),
+        price_id=result.get("price_id"),
+    )
+    _sync_billing_session(user)
+    _log_db_activity(
+        user.id,
+        "checkout_success",
+        f"Subscription activated via {source}",
+        {
+            "tier": result.get("tier"),
+            "subscription_id": result.get("subscription_id"),
+            "source": source,
+        },
+    )
+    return user
+
+
+def _apply_subscription_update(result, source="webhook"):
+    if not result:
+        return None
+
+    user = None
+    if result.get("user_id"):
+        user = UserIdentity.query.filter_by(id=result.get("user_id")).first()
+    if not user and result.get("customer_id"):
+        user = UserIdentity.query.filter_by(
+            stripe_customer_id=result.get("customer_id")
+        ).first()
+    if not user:
+        return None
+
+    previous_status = normalize_subscription_status(user.subscription_status)
+    previous_tier = user.tier
+
+    apply_subscription_state(
+        user,
+        result.get("status"),
+        tier_name=result.get("tier"),
+        subscription_id=result.get("subscription_id"),
+        customer_id=result.get("customer_id"),
+        price_id=result.get("price_id"),
+        current_period_end=result.get("current_period_end"),
+        cancel_at_period_end=result.get("cancel_at_period_end", False),
+    )
+    _sync_billing_session(user)
+
+    _log_db_activity(
+        user.id,
+        "subscription_updated",
+        f"Subscription updated via {source}",
+        {
+            "from_status": previous_status,
+            "to_status": result.get("status"),
+            "from_tier": previous_tier,
+            "to_tier": user.tier,
+            "subscription_id": result.get("subscription_id"),
+            "source": source,
+        },
+    )
+    return user
 
 
 def _onboarding_ctx():
@@ -2328,6 +2444,7 @@ def pricing():
         gate_return_to=gate_return_to,
         stripe_enabled=stripe_enabled,
         stripe_config=stripe_config,
+        billing=_billing_ctx(session.get("user_id")),
         is_authenticated=session.get("is_authenticated", False),
         is_admin=session.get("is_admin", False),
         **_tier_ctx(),
@@ -2374,7 +2491,11 @@ def checkout(tier_name):
     if not user_id:
         return redirect(url_for("main.login_page"))
 
-    if tier_name not in TIER_ORDER or tier_name == "trial":
+    if tier_name not in TIER_ORDER or tier_name in ("trial", "free"):
+        _set_billing_notice(
+            pricing_message="That plan cannot be purchased through checkout.",
+            dashboard_message="Please choose a valid paid plan to continue.",
+        )
         return redirect(url_for("main.pricing"))
 
     conf = get_stripe_config()
@@ -2390,10 +2511,13 @@ def checkout(tier_name):
     )
     if not conf.get("checkout_ready"):
         # Stripe not configured — fall back to direct upgrade
-        session["gate_message"] = (
-            conf.get("reason")
-            or "Payments are not enabled in this environment. "
-            "Your upgrade is applied immediately for beta testing."
+        _set_billing_notice(
+            pricing_message=(
+                conf.get("reason")
+                or "Payments are not enabled in this environment. "
+                "Your upgrade is applied immediately for beta testing."
+            ),
+            dashboard_message="Payments are disabled in this environment, so the upgrade was applied in beta mode.",
         )
         _log_db_activity(
             user_id,
@@ -2407,29 +2531,52 @@ def checkout(tier_name):
     if not user:
         return redirect(url_for("main.pricing"))
 
-    checkout_url = create_checkout_session(
+    if (
+        normalize_subscription_status(user.subscription_status)
+        in ("active", "trialing")
+        and user.tier == tier_name
+    ):
+        _set_billing_notice(
+            pricing_message="That plan is already active on your account.",
+            dashboard_message="Your current subscription is already active.",
+        )
+        return redirect(url_for("main.pricing"))
+
+    checkout_result = create_checkout_session(
         user,
         tier_name,
-        success_url=request.host_url.rstrip("/") + url_for("main.checkout_success"),
-        cancel_url=request.host_url.rstrip("/") + url_for("main.pricing"),
+        success_url=(
+            request.host_url.rstrip("/")
+            + url_for("main.checkout_success")
+            + "?session_id={CHECKOUT_SESSION_ID}"
+        ),
+        cancel_url=request.host_url.rstrip("/") + url_for("main.checkout_cancel"),
     )
-    if checkout_url:
-        app_db.session.commit()  # persist stripe_customer_id
+    if checkout_result.get("ok"):
+        user.stripe_price_id = checkout_result.get("price_id")
+        app_db.session.commit()  # persist stripe customer/price references
+        session["pending_checkout_tier"] = tier_name
         _log_db_activity(
             user_id,
             "checkout_started",
             "Stripe checkout started",
-            {"tier": tier_name},
+            {
+                "tier": tier_name,
+                "checkout_session_id": checkout_result.get("checkout_session_id"),
+            },
         )
-        return redirect(checkout_url)
+        return redirect(checkout_result["url"])
 
     # Stripe call failed — fall back
-    session["gate_message"] = "Payment processing is temporarily unavailable."
+    _set_billing_notice(
+        pricing_message="Payment processing is temporarily unavailable. Please try again in a moment.",
+        dashboard_message="Checkout could not be started. Your current plan has not changed.",
+    )
     _log_db_activity(
         user_id,
         "checkout_failed",
         "Stripe checkout failed to start",
-        {"tier": tier_name},
+        {"tier": tier_name, "reason": checkout_result.get("reason")},
     )
     return redirect(url_for("main.pricing"))
 
@@ -2437,15 +2584,51 @@ def checkout(tier_name):
 @main_bp.route("/checkout/success")
 def checkout_success():
     """Return page after successful Stripe checkout."""
-    session["gate_message"] = (
-        "Payment received! Your plan is now active. "
-        "New features are unlocked and ready on your dashboard."
+    from app.utils.stripe_billing import (
+        get_stripe_config,
+        process_checkout_completed,
+        retrieve_checkout_session,
     )
-    session["dashboard_notice_message"] = (
-        "Payment confirmed and your plan is active. Continue your workflow below."
+
+    session_id = request.args.get("session_id", "").strip()
+    user = None
+
+    if session_id and get_stripe_config().get("checkout_ready"):
+        checkout_session = retrieve_checkout_session(session_id)
+        if checkout_session:
+            result = process_checkout_completed({"object": checkout_session})
+            user = _apply_checkout_completion(result, source="checkout_success")
+            app_db.session.commit()
+
+    if user:
+        _set_billing_notice(
+            pricing_message="Payment received and your subscription is active.",
+            dashboard_message="Your plan is active and ready to use.",
+        )
+    else:
+        _set_billing_notice(
+            pricing_message=(
+                "Payment received. New features are unlocked as soon as "
+                "subscription confirmation completes."
+            ),
+            dashboard_message="Payment completed. Your account will update as soon as Stripe confirmation arrives.",
+        )
+    session.pop("pending_checkout_tier", None)
+    return redirect(url_for("main.pricing"))
+
+
+@main_bp.route("/checkout/cancel")
+def checkout_cancel():
+    pending_tier = session.pop("pending_checkout_tier", None)
+    _set_billing_notice(
+        pricing_message="Checkout was canceled. Your current plan is unchanged.",
+        dashboard_message="Checkout was canceled before payment completed.",
     )
     _log_db_activity(
-        session.get("user_id"), "checkout_success", "Stripe checkout completed"
+        session.get("user_id"),
+        "checkout_canceled",
+        "Stripe checkout canceled",
+        {"tier": pending_tier},
     )
     return redirect(url_for("main.pricing"))
 
@@ -2456,6 +2639,7 @@ def stripe_webhook():
     from app.utils.stripe_billing import (
         handle_webhook_event,
         process_checkout_completed,
+        process_invoice_payment_failed,
         process_subscription_updated,
     )
 
@@ -2466,54 +2650,51 @@ def stripe_webhook():
         logger.warning("Stripe webhook error: %s", err)
         return err, 400
 
+    event_id = event.get("id")
     etype = event.get("type", "")
     event_data = event.get("data", {})
+    if not event_id or not etype:
+        return "malformed event", 400
+
+    existing = _find_processed_webhook_event(event_id)
+    if existing and existing.status == "processed":
+        return "ok", 200
+
     if etype == "checkout.session.completed":
         result = process_checkout_completed(event_data)
         if result:
-            _user = UserIdentity.query.get(result["user_id"])
-            if _user:
-                _user.tier = result["tier"]
-                _user.stripe_subscription_id = result.get("subscription_id")
-                if result.get("customer_id"):
-                    _user.stripe_customer_id = result["customer_id"]
-                _user.subscription_status = "active"
-                app_db.session.commit()
-                _log_db_activity(
-                    _user.id,
-                    "checkout_success",
-                    "Stripe webhook activated subscription",
-                    {
-                        "tier": result["tier"],
-                        "subscription_id": result.get("subscription_id"),
-                    },
-                )
+            user = _apply_checkout_completion(result, source="webhook")
+            _record_processed_webhook_event(
+                event_id, etype, "processed", user_id=user.id if user else None
+            )
+            app_db.session.commit()
+        else:
+            _record_processed_webhook_event(event_id, etype, "ignored")
+            app_db.session.commit()
 
     elif etype in (
+        "customer.subscription.created",
         "customer.subscription.updated",
         "customer.subscription.deleted",
     ):
         result = process_subscription_updated(event_data)
-        if result and result.get("customer_id"):
-            _user = UserIdentity.query.filter_by(
-                stripe_customer_id=result["customer_id"]
-            ).first()
-            if _user:
-                if result["status"] in ("canceled", "unpaid"):
-                    _user.tier = "free"
-                    _user.subscription_status = None
-                elif result["status"] == "active":
-                    _user.subscription_status = "active"
-                app_db.session.commit()
-                _log_db_activity(
-                    _user.id,
-                    "subscription_updated",
-                    "Stripe subscription state updated",
-                    {
-                        "status": result.get("status"),
-                        "subscription_id": result.get("subscription_id"),
-                    },
-                )
+        user = _apply_subscription_update(result, source="webhook")
+        _record_processed_webhook_event(
+            event_id, etype, "processed", user_id=user.id if user else None
+        )
+        app_db.session.commit()
+
+    elif etype == "invoice.payment_failed":
+        result = process_invoice_payment_failed(event_data)
+        user = _apply_subscription_update(result, source="invoice.payment_failed")
+        _record_processed_webhook_event(
+            event_id, etype, "processed", user_id=user.id if user else None
+        )
+        app_db.session.commit()
+
+    else:
+        _record_processed_webhook_event(event_id, etype, "ignored")
+        app_db.session.commit()
 
     return "ok", 200
 

@@ -11,6 +11,10 @@ Plan states (normalised):
 
 from datetime import datetime, timedelta
 
+PAID_ACCESS_STATUSES = {"active", "trialing"}
+FALLBACK_TO_FREE_STATUSES = {"canceled", "incomplete_expired", "unpaid", "past_due"}
+BILLING_ISSUE_STATUSES = {"past_due", "incomplete", "unpaid"}
+
 # ── Limits ────────────────────────────────────────────────────────
 
 FREE_RESUME_ANALYSES = 2  # per month
@@ -33,7 +37,10 @@ def get_user_plan_state(user):
     """
     if not user:
         return "free"
-    if getattr(user, "subscription_status", None) == "active":
+    if (
+        normalize_subscription_status(getattr(user, "subscription_status", None))
+        in PAID_ACCESS_STATUSES
+    ):
         return "paid"
     tier = getattr(user, "tier", "free") or "free"
     if tier == "trial":
@@ -58,6 +65,69 @@ def _is_trial_active(user):
 def is_trial_active(user):
     """Public wrapper."""
     return _is_trial_active(user) and (getattr(user, "tier", "") == "trial")
+
+
+def normalize_subscription_status(status):
+    """Normalize Stripe subscription status values to lowercase strings."""
+    if not status:
+        return None
+    return str(status).strip().lower()
+
+
+def subscription_has_paid_access(status):
+    """Return True when a Stripe status should keep paid entitlements active."""
+    return normalize_subscription_status(status) in PAID_ACCESS_STATUSES
+
+
+def apply_subscription_state(
+    user,
+    status,
+    tier_name=None,
+    subscription_id=None,
+    customer_id=None,
+    price_id=None,
+    current_period_end=None,
+    cancel_at_period_end=False,
+    now=None,
+):
+    """Apply a Stripe lifecycle update to the user consistently."""
+    if not user:
+        return None
+
+    now = now or datetime.utcnow()
+    normalized_status = normalize_subscription_status(status)
+
+    if customer_id:
+        user.stripe_customer_id = customer_id
+    if subscription_id:
+        user.stripe_subscription_id = subscription_id
+    if price_id:
+        user.stripe_price_id = price_id
+
+    user.subscription_status = normalized_status
+    user.subscription_updated_at = now
+    user.subscription_current_period_end = current_period_end
+    user.cancel_at_period_end = bool(cancel_at_period_end)
+
+    if subscription_has_paid_access(normalized_status):
+        if tier_name and tier_name not in ("free", "trial"):
+            user.tier = tier_name
+        user.paid_started_at = user.paid_started_at or now
+        user.subscription_canceled_at = None
+        user.billing_issue_at = None
+    elif normalized_status in BILLING_ISSUE_STATUSES:
+        user.billing_issue_at = now
+        user.cancel_at_period_end = False
+        user.tier = "free"
+    elif normalized_status in FALLBACK_TO_FREE_STATUSES:
+        user.tier = "free"
+        user.subscription_canceled_at = now
+        if normalized_status != "past_due":
+            user.billing_issue_at = None
+        if normalized_status == "canceled":
+            user.cancel_at_period_end = False
+
+    return normalized_status
 
 
 # ── Monthly reset ─────────────────────────────────────────────────
@@ -203,10 +273,21 @@ def get_usage_summary(user):
     analyses_used = getattr(user, "monthly_resume_analyses_used", 0)
     jobs_used = getattr(user, "monthly_job_views_used", 0)
     downloads_used = getattr(user, "monthly_resume_downloads_used", 0)
+    current_period_end = getattr(user, "subscription_current_period_end", None)
+    current_period_end_label = (
+        current_period_end.strftime("%Y-%m-%d") if current_period_end else None
+    )
 
     if plan == "paid":
         return {
             "plan": "paid",
+            "subscription_status": normalize_subscription_status(
+                getattr(user, "subscription_status", None)
+            ),
+            "cancel_at_period_end": bool(getattr(user, "cancel_at_period_end", False)),
+            "current_period_end": current_period_end,
+            "current_period_end_label": current_period_end_label,
+            "billing_issue": bool(getattr(user, "billing_issue_at", None)),
             "analyses_used": analyses_used,
             "analyses_limit": None,  # unlimited
             "analyses_left": None,
@@ -230,6 +311,21 @@ def get_usage_summary(user):
 
     return {
         "plan": plan,
+        "subscription_status": (
+            normalize_subscription_status(getattr(user, "subscription_status", None))
+            if user
+            else None
+        ),
+        "cancel_at_period_end": (
+            bool(getattr(user, "cancel_at_period_end", False)) if user else False
+        ),
+        "current_period_end": (
+            getattr(user, "subscription_current_period_end", None) if user else None
+        ),
+        "current_period_end_label": current_period_end_label,
+        "billing_issue": (
+            bool(getattr(user, "billing_issue_at", None)) if user else False
+        ),
         "analyses_used": analyses_used,
         "analyses_limit": a_limit,
         "analyses_left": max((a_limit or 0) - analyses_used, 0) if a_limit else None,
@@ -257,8 +353,10 @@ def sync_paid_status(user):
         return False
     paid_list = [e.strip().lower() for e in paid_emails.split(",") if e.strip()]
     if user.email.lower() in paid_list:
-        if getattr(user, "subscription_status", None) != "active":
-            user.subscription_status = "active"
-            user.paid_started_at = user.paid_started_at or datetime.utcnow()
+        if (
+            normalize_subscription_status(getattr(user, "subscription_status", None))
+            != "active"
+        ):
+            apply_subscription_state(user, "active", tier_name="operator")
             return True
     return False

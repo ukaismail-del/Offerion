@@ -71,6 +71,12 @@ class UserIdentity(db.Model):
     # Bundle T — Stripe integration fields
     stripe_customer_id = db.Column(db.String(100), nullable=True)
     stripe_subscription_id = db.Column(db.String(100), nullable=True)
+    stripe_price_id = db.Column(db.String(100), nullable=True)
+    subscription_updated_at = db.Column(db.DateTime, nullable=True)
+    subscription_canceled_at = db.Column(db.DateTime, nullable=True)
+    subscription_current_period_end = db.Column(db.DateTime, nullable=True)
+    billing_issue_at = db.Column(db.DateTime, nullable=True)
+    cancel_at_period_end = db.Column(db.Boolean, default=False)
 
     # relationships
     saved_jobs = db.relationship("SavedJob", backref="user", lazy=True)
@@ -306,4 +312,16 @@ class SharedReport(db.Model):
     id = db.Column(db.String(12), primary_key=True)
     user_id = db.Column(db.String(36), db.ForeignKey("user_identity.id"), nullable=True)
     snapshot_json = db.Column(db.Text, default="{}")
+    created_at = db.Column(db.DateTime, default=_now)
+
+
+class ProcessedWebhookEvent(db.Model):
+    """Idempotency record for Stripe webhook deliveries."""
+
+    __tablename__ = "processed_webhook_event"
+
+    event_id = db.Column(db.String(255), primary_key=True)
+    event_type = db.Column(db.String(120), nullable=False, index=True)
+    status = db.Column(db.String(30), default="processed")
+    user_id = db.Column(db.String(36), db.ForeignKey("user_identity.id"), nullable=True)
     created_at = db.Column(db.DateTime, default=_now)

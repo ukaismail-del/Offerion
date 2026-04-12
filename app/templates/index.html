@@ -170,6 +170,14 @@
           Free trial ends in {{ trial_days_left }} day{{ 's' if trial_days_left != 1 else '' }}
           {% if trial_days_left <= 2 %}<span style="color:var(--color-warning);font-weight:600"> — expiring soon!</span>{% endif %}
         </p>
+        {% elif billing.billing_issue %}
+        <p style="margin:0 0 0.4rem;color:var(--color-warning);font-size:var(--font-sm)">
+          There is a billing issue on your subscription. Your account is currently on free access until payment is resolved.
+        </p>
+        {% elif billing.cancel_at_period_end and billing.current_period_end_label %}
+        <p style="margin:0 0 0.4rem;color:var(--text-muted);font-size:var(--font-sm)">
+          Your subscription will remain active until {{ billing.current_period_end_label }}, then return to free access.
+        </p>
         {% elif billing.plan == 'free' and is_trial == false %}
         <p style="margin:0 0 0.4rem;color:var(--text-muted);font-size:var(--font-sm)">Your free trial has ended. Upgrade to unlock premium features.</p>
         {% endif %}

@@ -81,6 +81,12 @@ def _migrate_add_columns(app):
         # Bundle T — Stripe + server-side state
         ("user_identity", "stripe_customer_id", "VARCHAR(100)"),
         ("user_identity", "stripe_subscription_id", "VARCHAR(100)"),
+        ("user_identity", "stripe_price_id", "VARCHAR(100)"),
+        ("user_identity", "subscription_updated_at", "DATETIME"),
+        ("user_identity", "subscription_canceled_at", "DATETIME"),
+        ("user_identity", "subscription_current_period_end", "DATETIME"),
+        ("user_identity", "billing_issue_at", "DATETIME"),
+        ("user_identity", "cancel_at_period_end", "BOOLEAN DEFAULT 0"),
         ("user_state", "recommended_jobs_json", "TEXT"),
     ]
     for table, column, col_type in migrations:
@@ -104,3 +110,19 @@ def _migrate_add_columns(app):
         app.logger.info("Migrated: added unique index on user_identity.email")
     except Exception:
         db.session.rollback()  # index already exists
+
+    try:
+        db.session.execute(
+            db.text(
+                "CREATE TABLE processed_webhook_event ("
+                "event_id VARCHAR(255) PRIMARY KEY, "
+                "event_type VARCHAR(120) NOT NULL, "
+                "status VARCHAR(30), "
+                "user_id VARCHAR(36), "
+                "created_at DATETIME)"
+            )
+        )
+        db.session.commit()
+        app.logger.info("Migrated: created processed_webhook_event")
+    except Exception:
+        db.session.rollback()

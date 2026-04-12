@@ -49,6 +49,28 @@
           {% endif %}
         </div>
       </div>
+      {% endif %} {% if billing and billing.billing_issue %}
+      <div class="gate-banner" style="border-left-color: var(--color-warning)">
+        <span class="gate-banner-icon">!</span>
+        <div>
+          <span
+            >We could not confirm the latest payment. Your account is currently
+            using free access until billing is updated.</span
+          >
+        </div>
+      </div>
+      {% elif billing and billing.cancel_at_period_end and
+      billing.current_period_end_label %}
+      <div class="gate-banner">
+        <span class="gate-banner-icon">i</span>
+        <div>
+          <span
+            >Your current subscription remains active until {{
+            billing.current_period_end_label }} and will then return to free
+            access.</span
+          >
+        </div>
+      </div>
       {% endif %}
 
       <!-- Trial Banner -->
