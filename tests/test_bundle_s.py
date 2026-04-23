@@ -447,8 +447,8 @@ class TestTrialEngine(unittest.TestCase):
             sess["trial_days_left"] = 5
         resp = client.get("/dashboard")
         html = resp.data.decode()
-        self.assertIn("trial-banner", html)
-        self.assertIn("7-day free trial", html)
+        self.assertIn("billing-status-card", html)
+        self.assertIn("Free trial ends in", html)
 
 
 # ── M116 — Dashboard Stability Regression ────────────────────────

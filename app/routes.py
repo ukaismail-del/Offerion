@@ -714,6 +714,7 @@ def _bootstrap_persistence():
         or path.startswith("/reset-password/")
         or path.startswith("/verify-email/")
         or path == "/stripe/webhook"
+        or path == "/healthz"
     )
 
     if session.get("is_authenticated") and not session.get("user_id"):
@@ -2821,6 +2822,91 @@ def founder_metrics():
         due_today_alerts=due_today_alerts,
         metrics_generated_at=current_timestamp(),
     )
+
+# ------------------------------------------------------------------
+# Bundle AC -- Deployment Traceability + Webhook Visibility
+# ------------------------------------------------------------------
+
+
+@main_bp.route('/healthz')
+def healthz():
+    """Deployment health and version traceability. Exposes no secrets."""
+    import subprocess
+
+    from app.utils.stripe_billing import get_stripe_config
+
+    commit = os.environ.get('RENDER_GIT_COMMIT', '').strip()
+    if commit:
+        commit = commit[:12]
+    else:
+        try:
+            commit = (
+                subprocess.check_output(
+                    ['git', 'rev-parse', '--short', 'HEAD'],
+                    stderr=subprocess.DEVNULL,
+                    timeout=3,
+                )
+                .decode()
+                .strip()
+            )
+        except Exception:
+            commit = 'unknown'
+
+    stripe_conf = get_stripe_config()
+    env_label = (
+        os.environ.get('RENDER_SERVICE_NAME')
+        or os.environ.get('FLASK_ENV')
+        or 'local'
+    )
+
+    payload = {
+        'status': 'ok',
+        'commit': commit,
+        'env': env_label,
+        'stripe_ready': stripe_conf.get('checkout_ready', False),
+        'webhook_ready': stripe_conf.get('webhook_ready', False),
+        'stripe_mode': stripe_conf.get('mode', 'beta-fallback'),
+        'timestamp': datetime.utcnow().isoformat() + 'Z',
+    }
+    return Response(
+        json.dumps(payload, indent=2),
+        status=200,
+        mimetype='application/json',
+    )
+
+
+@main_bp.route('/admin/webhooks')
+def admin_webhooks():
+    """Admin-only view of recent processed Stripe webhook events."""
+    if not session.get('is_authenticated'):
+        return redirect(url_for('main.login_page'))
+    if not session.get('is_admin'):
+        return 'Forbidden', 403
+
+    events = (
+        ProcessedWebhookEvent.query.order_by(
+            ProcessedWebhookEvent.created_at.desc()
+        )
+        .limit(50)
+        .all()
+    )
+    rows = [
+        {
+            'event_id': e.event_id,
+            'event_type': e.event_type,
+            'status': e.status,
+            'user_id': e.user_id,
+            'created_at': e.created_at.isoformat() if e.created_at else None,
+        }
+        for e in events
+    ]
+    return Response(
+        json.dumps({'events': rows, 'count': len(rows)}, indent=2),
+        status=200,
+        mimetype='application/json',
+    )
+
+
 
 
 # ------------------------------------------------------------------

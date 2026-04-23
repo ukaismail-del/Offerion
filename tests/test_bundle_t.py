@@ -101,7 +101,7 @@ class TestM117ConversionClarity(unittest.TestCase):
         _seed_session(client, report_data={"profile": _PROFILE, "match": _MATCH})
         resp = client.get("/dashboard")
         html = resp.data.decode()
-        self.assertIn("analyzed your resume", html)
+        self.assertIn("Resume analyzed", html)
 
     def test_pricing_operator_tagline(self):
         app, client = _make_client()
