@@ -37,44 +37,60 @@
     </nav>
 
     <div class="container main-container">
-      {% if current_user_email %}
-      <p class="welcome-line">Welcome, {{ current_user_email }}</p>
-      {% endif %}
 
-      <div class="system-bar">
-        <div class="system-online"><span class="system-dot"></span> Active</div>
-        <div class="system-meta">User: {{ current_user_email or 'Guest' }}</div>
-        <div class="system-meta">Plan: {{ user_tier|title }}</div>
-        <div class="system-meta">Targets: {{ saved_jobs|length }}</div>
-        <div class="system-meta">Signals: {{ alerts|length }}</div>
-      </div>
-
-      <div class="system-header">
-        <h2>Dashboard</h2>
-        <div class="system-status">
-          Track your progress, manage your profile, and prepare for better job matches.<br>
-          Saved jobs: {{ saved_jobs|length }}<br>
-          Active reminders: {{ alerts|length }}
+      <!-- ═══════════════════════════════════════════
+           DASHBOARD HEADER
+           ═══════════════════════════════════════════ -->
+      <div class="dash-header">
+        <div class="dash-header-left">
+          <h2 class="dash-title">Dashboard</h2>
+          {% if current_user_email %}
+          <span class="dash-subtitle">{{ current_user_email }}</span>
+          {% endif %}
+        </div>
+        <div class="dash-stats">
+          <div class="dash-stat">
+            <span class="dash-stat-value">{{ tier_label }}</span>
+            <span class="dash-stat-label">Plan</span>
+          </div>
+          <div class="dash-stat">
+            <span class="dash-stat-value">{{ saved_jobs|length }}</span>
+            <span class="dash-stat-label">Targets</span>
+          </div>
+          <div class="dash-stat {% if alert_overdue_count %}dash-stat-warn{% endif %}">
+            <span class="dash-stat-value">{{ alerts|length }}</span>
+            <span class="dash-stat-label">Signals{% if alert_overdue_count %} <span class="dash-overdue-dot" title="{{ alert_overdue_count }} overdue"></span>{% endif %}</span>
+          </div>
+          {% if activation_checklist %}
+          {% set activation_percent = activation_checklist.percent if activation_checklist.percent is defined else activation_checklist.pct %}
+          <div class="dash-stat">
+            <div class="dash-progress-mini">
+              <div class="dash-progress-fill" style="width: {{ activation_percent }}%"></div>
+            </div>
+            <span class="dash-stat-label">{{ activation_percent }}% Setup</span>
+          </div>
+          {% endif %}
         </div>
       </div>
 
-      {% if activation_checklist %}
-      {% set activation_percent = activation_checklist.percent if activation_checklist.percent is defined else activation_checklist.pct %}
-      <div class="system-progress">
-        <p><strong>Progress</strong></p>
-        <p>{{ activation_percent }}% Complete</p>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width: {{ activation_percent }}%"></div>
-        </div>
-        <div class="sync-markers">
-          <span>Profile ready</span>
-          <span>First target saved</span>
-          <span>Report Generated</span>
-          <span>Package ready</span>
-          <span>Reminders active</span>
-        </div>
-      </div>
-      {% endif %}
+      <!-- ═══════════════════════════════════════════
+           SECTION NAVIGATION
+           ═══════════════════════════════════════════ -->
+      <nav class="dash-section-nav" aria-label="Dashboard sections">
+        <a href="#section-actions" class="dash-tab" data-target="section-actions">Setup</a>
+        {% if recommended_jobs or report_data_exists %}
+        <a href="#section-jobs" class="dash-tab" data-target="section-jobs">Opportunities</a>
+        {% endif %}
+        {% if resume_versions or application_packages or saved_jobs or alerts or history %}
+        <a href="#section-outputs" class="dash-tab" data-target="section-outputs">Saved Work</a>
+        {% endif %}
+        {% if match_explanation or keyword_gaps or priority_fixes or role_fit %}
+        <a href="#section-intel" class="dash-tab" data-target="section-intel">Intelligence</a>
+        {% endif %}
+        {% if match or jd_comparison or suggestions or scorecard or action_plan or feedback or rewrite or tailored or profile or result %}
+        <a href="#section-details" class="dash-tab" data-target="section-details">Analysis</a>
+        {% endif %}
+      </nav>
 
       <div class="command-grid-layout">
         <aside class="command-left-panel">
@@ -194,8 +210,8 @@
       </div>
       {% endif %}
 
-      <!-- System Trial Banner (M-Bundle Pricing) -->
-      {% if is_trial and trial_days_left is not none %}
+      <!-- System Trial Banner (only shown when no billing card is present) -->
+      {% if is_trial and trial_days_left is not none and not billing %}
       <div class="trial-banner">
         <span class="trial-icon">🚀</span>
         <span>You're in your <strong>7-day free trial</strong> — all features are available.</span>
@@ -257,23 +273,26 @@
      ═══════════════════════════════════════════ -->
       <div class="section" id="section-actions">
         <!-- Hero -->
+        {% if report_data_exists %}
+        <div class="hero hero-compact">
+          <h1 class="hero-compact-title">Resume analyzed &amp; ready</h1>
+          <p class="hero-sub" style="font-size:var(--font-base);margin-bottom:0.5rem">
+            Offerion has your profile. Generate targeted applications, browse opportunities, and track your search.
+          </p>
+        </div>
+        {% else %}
         <div class="hero">
           <h1>Turn your resume into a job-winning system</h1>
           <p class="hero-sub">
-            From resume &rarr; application &rarr; follow-up &mdash; all in one
-            flow.
+            From resume &rarr; application &rarr; follow-up &mdash; all in one flow.
           </p>
-          {% if report_data_exists %}
-          <p class="hero-value" style="font-size:var(--font-sm);color:var(--text-muted);margin-top:0.3rem">
-            Offerion analyzed your resume and is ready to build targeted applications.
-          </p>
-          {% endif %}
           <ul class="hero-benefits">
             <li>Match your resume to target roles</li>
             <li>Generate complete applications in one click</li>
             <li>Track jobs and never miss a follow-up</li>
           </ul>
         </div>
+        {% endif %}
 
         <!-- How It Works (show only when no analysis exists) -->
         {% if not report_data_exists %}
@@ -730,41 +749,78 @@
         </main>
 
         <aside class="command-right-panel">
+          <!-- Reminders Panel -->
           <div class="card live-panel">
-            <h2 class="card-title">Reminders</h2>
+            <div class="live-panel-header">
+              <h2 class="card-title">Reminders</h2>
+              {% if alerts %}
+              <span class="live-panel-count {% if alert_overdue_count %}live-count-warn{% endif %}">{{ alerts|length }}</span>
+              {% endif %}
+            </div>
             <hr class="card-divider" />
             {% if alerts %}
-            <p class="field"><strong>Next:</strong> {{ alerts[0].message }}</p>
-            <p class="field"><strong>Due:</strong> {{ alerts[0].due_at }}</p>
-            <p class="field"><strong>Overdue:</strong> {{ alert_overdue_count }}</p>
-            <p class="field"><strong>Due Soon:</strong> {{ alert_due_soon_count }}</p>
-            <div class="btn-row">
-              {% if alerts[0].job_id %}
-              <a href="/job/{{ alerts[0].job_id }}" class="btn btn-secondary btn-sm">Open</a>
-              {% endif %}
-              <a href="/complete-alert/{{ alerts[0].id }}" class="btn btn-success btn-sm">Resolve</a>
+            {% if alert_overdue_count or alert_due_soon_count %}
+            <div class="live-alert-summary">
+              {% if alert_overdue_count %}<span class="live-chip live-chip-warn">{{ alert_overdue_count }} overdue</span>{% endif %}
+              {% if alert_due_soon_count %}<span class="live-chip live-chip-soon">{{ alert_due_soon_count }} due soon</span>{% endif %}
             </div>
+            {% endif %}
+            <div class="live-alert-item">
+              <p class="live-alert-msg">{{ alerts[0].message }}</p>
+              <p class="live-alert-due">Due: {{ alerts[0].due_at }}</p>
+              <div class="btn-row" style="margin-top:0.5rem">
+                {% if alerts[0].job_id %}
+                <a href="/job/{{ alerts[0].job_id }}" class="btn btn-secondary btn-sm">Open</a>
+                {% endif %}
+                <a href="/complete-alert/{{ alerts[0].id }}" class="btn btn-success btn-sm">&#10003; Resolve</a>
+              </div>
+            </div>
+            {% if alerts|length > 1 %}
+            <p class="live-more-hint">+{{ alerts|length - 1 }} more &mdash; <a href="#section-outputs">View all</a></p>
+            {% endif %}
             {% else %}
-            <p class="empty-state-text">No active reminders</p>
-            <p class="empty-state-text">Create a follow-up reminder to keep your search moving.</p>
+            <div class="live-empty">
+              <span class="live-empty-icon">&#x23F0;</span>
+              <p>No active reminders.</p>
+              {% if saved_jobs %}
+              <a href="/job/{{ saved_jobs[0].id }}" class="btn btn-secondary btn-sm" style="margin-top:0.4rem">Add reminder</a>
+              {% endif %}
+            </div>
             {% endif %}
           </div>
 
+          <!-- Active Targets Panel -->
           <div class="card live-panel">
-            <h2 class="card-title">Active Targets</h2>
+            <div class="live-panel-header">
+              <h2 class="card-title">Active Targets</h2>
+              {% if saved_jobs %}
+              <span class="live-panel-count">{{ saved_jobs|length }}</span>
+              {% endif %}
+            </div>
             <hr class="card-divider" />
-            <p class="field"><strong>Total:</strong> {{ saved_jobs|length }}</p>
             {% if saved_jobs %}
-            <p class="field"><strong>Latest:</strong> {{ saved_jobs[0].title }}</p>
-            <p class="field"><strong>Stage:</strong> {{ saved_jobs[0].status }}</p>
-            <div class="btn-row">
-              <a href="/job/{{ saved_jobs[0].id }}" class="btn btn-secondary btn-sm">Open</a>
+            {% for job in saved_jobs[:3] %}
+            <div class="live-target-item {% if loop.first %}live-target-first{% endif %}">
+              <div class="live-target-info">
+                <span class="live-target-title">{{ job.title }}</span>
+                {% if job.company %}<span class="live-target-company">{{ job.company }}</span>{% endif %}
+              </div>
+              <span class="status-badge status-{{ job.status }}">{{ job.status }}</span>
+            </div>
+            {% endfor %}
+            {% if saved_jobs|length > 3 %}
+            <p class="live-more-hint">+{{ saved_jobs|length - 3 }} more &mdash; <a href="#section-outputs">View all</a></p>
+            {% endif %}
+            <div class="btn-row" style="margin-top:0.75rem">
+              <a href="/job/{{ saved_jobs[0].id }}" class="btn btn-secondary btn-sm">Open latest</a>
               <a href="/job/{{ saved_jobs[0].id }}/status/Preparing" class="btn btn-primary btn-sm">Advance</a>
-              <a href="/delete-job/{{ saved_jobs[0].id }}" class="btn btn-danger btn-sm">Remove</a>
             </div>
             {% else %}
-            <p class="empty-state-text">No active targets yet.</p>
-            <p class="empty-state-text">Save a role to start tracking it here.</p>
+            <div class="live-empty">
+              <span class="live-empty-icon">&#x1F3AF;</span>
+              <p>No active targets yet.</p>
+              <p style="margin-top:0.3rem">Save a role from the Opportunities section to track it here.</p>
+            </div>
             {% endif %}
           </div>
         </aside>
@@ -912,8 +968,9 @@
      ═══════════════════════════════════════════ -->
       {% if not session_memory_empty or activity_timeline or (provenance and
       provenance.resume_source != 'none') %}
+      <details class="collapsible-section" id="section-workflow-wrap">
+        <summary class="collapsible-summary">Active Workflow</summary>
       <div class="section" id="section-workflow">
-        <h2 class="section-heading">Active Workflow</h2>
 
         <!-- Current Session Context (M38) -->
         {% if not session_memory_empty %}
@@ -999,6 +1056,7 @@
         {% endif %}
       </div>
       <!-- /section-workflow -->
+      </details>
       {% endif %}
 
       <!-- ═══════════════════════════════════════════
@@ -1226,8 +1284,9 @@
      SECTION 4 — MATCH INTELLIGENCE (M50)
      ═══════════════════════════════════════════ -->
       {% if match_explanation or keyword_gaps or priority_fixes or role_fit %}
-      <div class="section" id="section-intel">
-        <h2 class="section-heading">Match Intelligence</h2>
+      <details class="collapsible-section" open>
+        <summary class="collapsible-summary" id="section-intel">Match Intelligence</summary>
+      <div class="section">
 
         <!-- M30: Match Score Explanation -->
         {% if match_explanation %}
@@ -1343,7 +1402,7 @@
         </div>
         {% endif %}
       </div>
-      <!-- /section-intel -->
+      </details>
       {% endif %}
 
       <!-- ═══════════════════════════════════════════
@@ -1351,7 +1410,9 @@
      ═══════════════════════════════════════════ -->
       {% if match or jd_comparison or suggestions or scorecard or action_plan or
       feedback or rewrite or tailored or profile or result %}
-      <div class="section" id="section-details">
+      <details class="collapsible-section" open>
+        <summary class="collapsible-summary" id="section-details">Analysis Details</summary>
+      <div class="section">
         <h2 class="section-heading">Analysis Details</h2>
 
         <!-- Match Analysis -->
@@ -1806,6 +1867,7 @@
         {% endif %}
       </div>
       <!-- /section-details -->
+      </details>
       {% endif %}
     </div>
     <!-- /container -->
@@ -1846,6 +1908,28 @@
         el.textContent = label || 'Processing\u2026';
         return true;
       }
+      /* Dashboard section nav — highlight active tab on scroll */
+      (function () {
+        var tabs = document.querySelectorAll('.dash-tab[data-target]');
+        if (!tabs.length) return;
+        var sections = Array.from(tabs).map(function (t) {
+          return document.getElementById(t.dataset.target);
+        });
+        function onScroll() {
+          var scrollY = window.scrollY + 120;
+          var active = null;
+          sections.forEach(function (sec, i) {
+            if (sec && sec.getBoundingClientRect().top + window.scrollY <= scrollY) {
+              active = i;
+            }
+          });
+          tabs.forEach(function (t, i) {
+            t.classList.toggle('dash-tab-active', i === active);
+          });
+        }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+      })();
     </script>
   </body>
 </html>
